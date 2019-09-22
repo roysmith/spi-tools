@@ -27,6 +27,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET')
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    '127.0.0.1',
     'tools.wmflabs.org',
 ]
 
