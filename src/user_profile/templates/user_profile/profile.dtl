@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>Profile</h1>
+  {{ user }}
+</body>
+</html>

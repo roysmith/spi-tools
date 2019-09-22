@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>My first Django OAuth app</h1>
+  <a href="{% url 'profile' %}">Profile</a>
+</body>
+</html>
+  
