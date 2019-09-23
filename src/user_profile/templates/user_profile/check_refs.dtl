@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>Check Refs</h1>
+  <form action="/check_refs" method="post">
+    {% csrf_token %}
+    <label for="check_refs">Page title: </label>
+    <input id="check_refs" type="text" name="check_refs" value ="{{ current_name }}">
+    <input type="submit" value="OK">
+  </form>
+</body>
+</html>

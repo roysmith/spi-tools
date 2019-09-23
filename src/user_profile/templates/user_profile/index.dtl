@@ -2,7 +2,10 @@
 <html>
 <body>
   <h1>My first Django OAuth app</h1>
-  <a href="{% url 'profile' %}">Profile</a>
+  <ul>
+    <li><a href="{% url 'profile' %}">Profile</a></li>
+    <li><a href="{% url 'check_refs' %}">Check references</a></li>
+  </ul>
 </body>
 </html>
   

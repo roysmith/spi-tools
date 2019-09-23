@@ -13,3 +13,9 @@ def profile(request):
 def login_oauth(request):
     context = {}
     return render(request, 'user_profile/login.dtl', context)
+
+def check_refs(request):
+    context = {}
+    return render(request, 'user_profile/check_refs.dtl', context)
+
+
