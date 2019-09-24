@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>Page Title</h1>
+  The page title is: [[{{ title }}]].
+</body>
+</html>

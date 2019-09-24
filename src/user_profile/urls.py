@@ -6,5 +6,6 @@ urlpatterns = [
     path('accounts/login', views.login_oauth, name='login'),
     path('oauth/', include('social_django.urls', namespace='social')),
     path('check_refs', views.check_refs, name='check_refs'),
+    path('page_title', views.page_title, name='page_title_name'),
     path('', views.index),
 ]
