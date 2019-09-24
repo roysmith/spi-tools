@@ -4,7 +4,7 @@
   <h1>My first Django OAuth app</h1>
   <ul>
     <li><a href="{% url 'profile' %}">Profile</a></li>
-    <li><a href="{% url 'check_refs' %}">Check references</a></li>
+    <li><a href="{% url 'get_page_title' %}">Check references</a></li>
   </ul>
 </body>
 </html>

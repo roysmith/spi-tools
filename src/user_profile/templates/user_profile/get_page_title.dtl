@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <body>
-  <h1>Check Refs</h1>
-  <form action="/check_refs" method="post">
+  <h1>Get Page Title</h1>
+  <form action="/get_page_title" method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="OK">

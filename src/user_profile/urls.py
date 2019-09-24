@@ -5,7 +5,7 @@ urlpatterns = [
     path('profile', views.profile, name='profile'),
     path('accounts/login', views.login_oauth, name='login'),
     path('oauth/', include('social_django.urls', namespace='social')),
-    path('check_refs', views.check_refs, name='check_refs'),
+    path('get_page_title', views.get_page_title, name='get_page_title'),
     path('page_title', views.page_title, name='page_title_name'),
     path('', views.index),
 ]

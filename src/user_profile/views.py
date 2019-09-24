@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 
-from .forms import CheckRefForm
+from .forms import GetPageTitleForm
 
 def index(request):
     context = {}
@@ -17,28 +17,24 @@ def login_oauth(request):
     context = {}
     return render(request, 'user_profile/login.dtl', context)
 
-def check_refs(request):
+def get_page_title(request):
     if request.method == 'POST':
-        form = CheckRefForm(request.POST)
+        form = GetPageTitleForm(request.POST)
         if form.is_valid():
             context = {
                 'title': form.cleaned_data['page_title'],
                 }
             return render(request, 'user_profile/page_title.dtl', context)
     else:
-        form = CheckRefForm()
+        form = GetPageTitleForm()
 
     context = {
         'form': form,
         }
-    return render(request, 'user_profile/check_refs.dtl', context)
+    return render(request, 'user_profile/get_page_title.dtl', context)
 
 def page_title(request):
     context = {
         'page_title': 'xxx',
         }
     return render(request, 'user_profile/page_title.dtl', context)
-
-    
-    
-    
