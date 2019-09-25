@@ -21,20 +21,10 @@ def get_page_title(request):
     if request.method == 'POST':
         form = GetPageTitleForm(request.POST)
         if form.is_valid():
-            context = {
-                'title': form.cleaned_data['page_title'],
-                }
+            context = {'title': form.cleaned_data['page_title']}
             return render(request, 'user_profile/page_title.dtl', context)
     else:
         form = GetPageTitleForm()
-
-    context = {
-        'form': form,
-        }
+    context = {'form': form} 
     return render(request, 'user_profile/get_page_title.dtl', context)
 
-def page_title(request):
-    context = {
-        'page_title': 'xxx',
-        }
-    return render(request, 'user_profile/page_title.dtl', context)
