@@ -3,5 +3,11 @@
 <body>
   <h1>Page Title</h1>
   The page title is: {{ title }}.
+  <h2>Categories</h2>
+  <ol>
+    {% for cat in categories %}
+    <li> {{ cat }} </li>
+    {% endfor %}
+  </ol>
 </body>
 </html>
