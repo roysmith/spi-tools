@@ -7,16 +7,16 @@ from .forms import GetPageTitleForm
 
 def index(request):
     context = {}
-    return render(request, 'user_profile/index.dtl', context)
+    return render(request, 'cat_checker/index.dtl', context)
 
 @login_required()
 def profile(request):
     context = {}
-    return render(request, 'user_profile/profile.dtl', context)
+    return render(request, 'cat_checker/profile.dtl', context)
 
 def login_oauth(request):
     context = {}
-    return render(request, 'user_profile/login.dtl', context)
+    return render(request, 'cat_checker/login.dtl', context)
 
 def get_page_title(request):
     if request.method == 'POST':
@@ -25,11 +25,11 @@ def get_page_title(request):
             page_title = form.cleaned_data['page_title']
             categories = _get_categories(page_title, 3)
             context = {'title': page_title, 'categories': categories}
-            return render(request, 'user_profile/page_title.dtl', context)
+            return render(request, 'cat_checker/page_title.dtl', context)
     else:
         form = GetPageTitleForm()
     context = {'form': form} 
-    return render(request, 'user_profile/get_page_title.dtl', context)
+    return render(request, 'cat_checker/get_page_title.dtl', context)
 
 
 def _get_categories(page_title, depth):

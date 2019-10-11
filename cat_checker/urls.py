@@ -1,5 +1,5 @@
 from django.urls import path, include
-from user_profile import views
+from cat_checker import views
 
 urlpatterns = [
     path('profile', views.profile, name='profile'),
