@@ -15,14 +15,53 @@ class ViewTestCase(TestCase):
         self.install_mock({
             'page': {'c1', 'c2'},
         })
-        self.assertEqual(views._get_categories('page', 3),
-                         {views.CategoryGraph('c1'),
-                          views.CategoryGraph('c2')
-                         })
+
+        actual = views._get_categories('page', 3)
+
+        expected = {views.CategoryGraph('c1'),
+                    views.CategoryGraph('c2'),
+                    }
+        self.assertEqual(actual, expected)
 
     def test_get_categories_empty_set(self):
         self.install_mock({
             'page': {},
         })
-        self.assertEqual(views._get_categories('page', 3),
-                         set())
+
+        actual = views._get_categories('page', 3)
+
+        expected = set()
+        self.assertEqual(actual, expected)
+
+    def test_get_categories_two_deep(self):
+        self.install_mock({
+            'page': {'c1'},
+            'c1': {'c2'},
+        })
+
+        actual = views._get_categories('page', 3)
+
+        g = views.CategoryGraph('c1')
+        g.parents = {views.CategoryGraph('c2')}
+        expected = {g}
+        self.assertEqual(actual, expected)
+
+    def test_get_categories_deepth_limited(self):
+        self.install_mock({
+            'page': {'c1'},
+            'c1': {'c2'},
+            'c2': {'c3a', 'c3b'},
+            'c3a': {'c4'},
+            'c4': {'c5'},
+        })
+
+        actual = views._get_categories('page', 3)
+
+        g3a = views.CategoryGraph('c3a')
+        g3b = views.CategoryGraph('c3b')
+        g2 = views.CategoryGraph('c2')
+        g2.parents = {g3a, g3b}
+        g1 = views.CategoryGraph('c1')
+        g1.parents = {g2}
+        expected = {g1}
+        self.assertEqual(actual, expected)

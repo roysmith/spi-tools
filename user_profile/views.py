@@ -38,14 +38,11 @@ def _get_categories(page_title, depth):
     category_names = _get_category_names(page_title)
     categories = set()
     for name in category_names:
-        categories.add(CategoryGraph(name))
+        g = CategoryGraph(name)
+        if depth > 1:
+            g.parents = _get_categories(name, depth-1)
+        categories.add(g)
     return categories
-        
-    
-#    if depth > 1:
-#        for cat in categories:
-#            subcats.update(_get_category_graph(cat, depth-1))
-#    return cats
             
 
 def _get_category_names(page_title):
@@ -59,7 +56,7 @@ def _get_category_names(page_title):
 class CategoryGraph:
     def __init__(self, name):
         self.name = name
-        self.parents = {}
+        self.parents = set()
 
     def __iter__(self):
         for parent in self.parents:
@@ -72,3 +69,9 @@ class CategoryGraph:
         # Hashing just the name is rather minimal, but simple, and
         # probably good enough for our purposes.
         return hash(self.name)
+
+    def __str__(self):
+        return('%s: %s' % (self.name, self.parents))
+
+    def __repr__(self):
+        return('%s: %s' % (self.name, self.parents))
