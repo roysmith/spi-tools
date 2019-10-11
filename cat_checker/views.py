@@ -23,7 +23,7 @@ def get_page_title(request):
         form = GetPageTitleForm(request.POST)
         if form.is_valid():
             page_title = form.cleaned_data['page_title']
-            categories = _get_categories(page_title, 3)
+            categories = [cat.name for cat in _get_categories(page_title, 3)]
             context = {'title': page_title, 'categories': categories}
             return render(request, 'cat_checker/page_title.dtl', context)
     else:
