@@ -46,7 +46,7 @@ class ViewTestCase(TestCase):
         expected = {g}
         self.assertEqual(actual, expected)
 
-    def test_get_categories_deepth_limited(self):
+    def test_get_categories_depth_limited(self):
         self.install_mock({
             'page': {'c1'},
             'c1': {'c2'},
