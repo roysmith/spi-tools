@@ -65,3 +65,20 @@ class ViewTestCase(TestCase):
         g1.parents = {g2}
         expected = {g1}
         self.assertEqual(actual, expected)
+
+    def test_get_categories_multipath(self):
+        self.install_mock({
+            'page': {'c1', 'c2'},
+            'c1': {'c3'},
+            'c2': {'c3'},
+        })
+
+        actual = views._get_categories('page', 3)
+
+        g3 = views.CategoryGraph('c3')
+        g2 = views.CategoryGraph('c2')
+        g2.parents = {g3}
+        g1 = views.CategoryGraph('c1')
+        g1.parents = {g3}
+        expected = {g1, g2}
+        self.assertEqual(actual, expected)
