@@ -84,3 +84,15 @@ class ViewTestCase(TestCase):
         g1.parents = {g3}
         expected = {g1, g2}
         self.assertEqual(actual, expected)
+
+        
+class CategoryGraphTest(TestCase):
+    def test_no_parents(self):
+        g = CategoryGraph('c1')
+
+        actual = g.flatten()
+
+        self.assertEqual(actual, {'c1'})
+
+
+        

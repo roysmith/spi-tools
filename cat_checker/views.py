@@ -75,3 +75,13 @@ class CategoryGraph:
 
     def __repr__(self):
         return('%s: %s' % (self.name, self.parents))
+
+    def flatten(self):
+        """Return a set of all the category names in the graph.  This
+        includes the current node, and recursively all of its parents."""
+        names = {self.name}
+        for parent in self.parents:
+            names |= parent.flatten()
+        return names
+
+        
