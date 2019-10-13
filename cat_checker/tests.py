@@ -18,22 +18,22 @@ class ViewTestCase(TestCase):
             'page': {'c1', 'c2'},
         })
 
-        actual = views._get_categories('page', 3)
-
         expected = {CategoryGraph('c1'),
                     CategoryGraph('c2'),
                     }
-        self.assertEqual(actual, expected)
+
+        self.assertEqual(views._get_categories('page', 3),
+                         expected)
 
     def test_get_categories_empty_set(self):
         self.install_mock({
             'page': {},
         })
 
-        actual = views._get_categories('page', 3)
-
         expected = set()
-        self.assertEqual(actual, expected)
+
+        self.assertEqual(views._get_categories('page', 3),
+                         expected)
 
     def test_get_categories_two_deep(self):
         self.install_mock({
@@ -41,12 +41,12 @@ class ViewTestCase(TestCase):
             'c1': {'c2'},
         })
 
-        actual = views._get_categories('page', 3)
-
         g = CategoryGraph('c1')
         g.parents = {CategoryGraph('c2')}
         expected = {g}
-        self.assertEqual(actual, expected)
+
+        self.assertEqual(views._get_categories('page', 3),
+                         expected)
 
     def test_get_categories_depth_limited(self):
         self.install_mock({
@@ -57,7 +57,6 @@ class ViewTestCase(TestCase):
             'c4': {'c5'},
         })
 
-        actual = views._get_categories('page', 3)
 
         g3a = CategoryGraph('c3a')
         g3b = CategoryGraph('c3b')
@@ -66,7 +65,9 @@ class ViewTestCase(TestCase):
         g1 = CategoryGraph('c1')
         g1.parents = {g2}
         expected = {g1}
-        self.assertEqual(actual, expected)
+
+        self.assertEqual(views._get_categories('page', 3),
+                         expected)
 
     def test_get_categories_multipath(self):
         self.install_mock({
@@ -75,24 +76,22 @@ class ViewTestCase(TestCase):
             'c2': {'c3'},
         })
 
-        actual = views._get_categories('page', 3)
-
         g3 = CategoryGraph('c3')
         g2 = CategoryGraph('c2')
         g2.parents = {g3}
         g1 = CategoryGraph('c1')
         g1.parents = {g3}
         expected = {g1, g2}
-        self.assertEqual(actual, expected)
+
+        self.assertEqual(views._get_categories('page', 3),
+                         expected)
 
         
 class CategoryGraphTest(TestCase):
     def test_no_parents(self):
         g = CategoryGraph('c1')
 
-        actual = g.flatten()
+        expected = {'c1'}
 
-        self.assertEqual(actual, {'c1'})
-
-
+        self.assertEqual(g.flatten(), expected)
         
