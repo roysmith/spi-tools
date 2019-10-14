@@ -41,9 +41,7 @@ class ViewTestCase(TestCase):
             'c1': {'c2'},
         })
 
-        g = CategoryGraph('c1')
-        g.parents = {CategoryGraph('c2')}
-        expected = {g}
+        expected = {CategoryGraph('c1', {CategoryGraph('c2')})}
 
         self.assertEqual(views._get_categories('page', 3),
                          expected)
@@ -57,14 +55,12 @@ class ViewTestCase(TestCase):
             'c4': {'c5'},
         })
 
-
-        g3a = CategoryGraph('c3a')
-        g3b = CategoryGraph('c3b')
-        g2 = CategoryGraph('c2')
-        g2.parents = {g3a, g3b}
-        g1 = CategoryGraph('c1')
-        g1.parents = {g2}
-        expected = {g1}
+        expected = {
+            CategoryGraph('c1',
+                          {CategoryGraph('c2',
+                                         {CategoryGraph('c3a'),
+                                          CategoryGraph('c3b'),
+                                          })})}
 
         self.assertEqual(views._get_categories('page', 3),
                          expected)
@@ -76,12 +72,10 @@ class ViewTestCase(TestCase):
             'c2': {'c3'},
         })
 
-        g3 = CategoryGraph('c3')
-        g2 = CategoryGraph('c2')
-        g2.parents = {g3}
-        g1 = CategoryGraph('c1')
-        g1.parents = {g3}
-        expected = {g1, g2}
+        expected = {
+            CategoryGraph('c1', {CategoryGraph('c3')}),
+            CategoryGraph('c2', {CategoryGraph('c3')})
+            }
 
         self.assertEqual(views._get_categories('page', 3),
                          expected)
