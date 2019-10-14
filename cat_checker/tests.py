@@ -88,15 +88,27 @@ class CategoryGraphTest(TestCase):
         self.assertEqual(g.name, 'c1')
         self.assertEqual(g.parents, set())
 
+
     def test_construct_with_parent_set(self):
         g = CategoryGraph('c1', {CategoryGraph('c2')})
 
         self.assertEqual(g.name, 'c1')
         self.assertEqual(g.parents, {CategoryGraph('c2')})
 
-    def test_no_parents(self):
+        
+    def test_flatten_with_no_parents(self):
         g = CategoryGraph('c1')
 
         expected = {'c1'}
 
         self.assertEqual(g.flatten(), expected)
+
+        
+    def test_flatten_with_parents(self):
+        g = CategoryGraph('c1',
+                          {CategoryGraph('c2',
+                                         {CategoryGraph('c3a'),
+                                          CategoryGraph('c3b')
+                                         })})
+
+        self.assertEqual(g.flatten(), {'c1', 'c2', 'c3a', 'c3b'})
