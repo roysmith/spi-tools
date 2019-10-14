@@ -90,4 +90,15 @@ class CategoryGraph:
             names |= parent.flatten()
         return names
 
-        
+    def dfs(self, search_name, previous_path=None):
+        """Find the node named search_name in the graph.  Returns
+        the path to the node if found, None otherwise."""
+        path = list(previous_path) if previous_path else []
+        path.append(self.name)
+        if search_name == self.name:
+            return path
+        for g in self.parents:
+            found_path = g.dfs(search_name, path)
+            if found_path:
+                return found_path
+        return None

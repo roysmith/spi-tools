@@ -112,3 +112,27 @@ class CategoryGraphTest(TestCase):
                                          })})
 
         self.assertEqual(g.flatten(), {'c1', 'c2', 'c3a', 'c3b'})
+
+
+    def test_dfs_one_layer_not_found(self):
+        g = CategoryGraph('c1', {CategoryGraph('c2'),
+                                 CategoryGraph('c3')})
+        self.assertIsNone(g.dfs('c4'))
+
+    def test_dfs_empty_tree(self):
+        g = CategoryGraph('c1')
+        self.assertIsNone(g.dfs('c2'))
+        
+    def test_dfs_name_found(self):
+        g = CategoryGraph('c1', {CategoryGraph('c2')})
+        self.assertEqual(g.dfs('c2'), ['c1', 'c2'])
+
+    def test_dfs_name_found_three_deep(self):
+        g = CategoryGraph('c1',
+                          {CategoryGraph('c2',
+                                         {CategoryGraph('c3a'),
+                                          CategoryGraph('c3b')
+                                         })})
+        self.assertEqual(g.dfs('c3a'), ['c1', 'c2', 'c3a'])
+
+        
