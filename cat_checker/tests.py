@@ -88,10 +88,21 @@ class ViewTestCase(TestCase):
 
         
 class CategoryGraphTest(TestCase):
+    def test_construct_no_parents(self):
+        g = CategoryGraph('c1')
+
+        self.assertEqual(g.name, 'c1')
+        self.assertEqual(g.parents, set())
+
+    def test_construct_with_parent_set(self):
+        g = CategoryGraph('c1', {CategoryGraph('c2')})
+
+        self.assertEqual(g.name, 'c1')
+        self.assertEqual(g.parents, {CategoryGraph('c2')})
+
     def test_no_parents(self):
         g = CategoryGraph('c1')
 
         expected = {'c1'}
 
         self.assertEqual(g.flatten(), expected)
-        

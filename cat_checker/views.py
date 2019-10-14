@@ -54,9 +54,15 @@ def _get_category_names(page_title):
 
 
 class CategoryGraph:
-    def __init__(self, name):
+    def __init__(self, name, parents=None):
+        """Construct a CategoryGraph.  If parents is present, it should be
+        an iterable over CategoryGraphs.
+        """
         self.name = name
-        self.parents = set()
+        if parents:
+            self.parents = set(parents)
+        else:
+            self.parents = set()
 
     def __iter__(self):
         for parent in self.parents:
