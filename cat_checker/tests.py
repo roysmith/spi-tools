@@ -134,5 +134,3 @@ class CategoryGraphTest(TestCase):
                                           CategoryGraph('c3b')
                                          })})
         self.assertEqual(g.dfs('c3a'), ['c1', 'c2', 'c3a'])
-
-        
