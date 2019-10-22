@@ -23,14 +23,22 @@ def get_page_title(request):
         form = GetPageTitleForm(request.POST)
         if form.is_valid():
             page_title = form.cleaned_data['page_title']
-            categories = [cat.name for cat in _get_categories(page_title, 3)]
-            context = {'title': page_title, 'categories': categories}
+            context = _find_supercategories(page_title)
             return render(request, 'cat_checker/page_title.dtl', context)
     else:
         form = GetPageTitleForm()
     context = {'form': form} 
     return render(request, 'cat_checker/get_page_title.dtl', context)
 
+def _find_supercategories(page_title):
+    """Return a context."""
+    categories = _get_categories(page_title, 3)
+    context = {
+        'title': page_title,
+        'categories': [c.name for c in categories],
+    }
+    return context
+    
 
 def _get_categories(page_title, depth):
     """Return a set of CategoryGraphs for the given page.
