@@ -4,6 +4,7 @@
   <h1>SPI Tools</h1>
   <ul>
     <li><a href="{% url 'spi-index' %}">Index</a></li>
+    <li><a href="{% url 'spi-summary' %}">Summary</a></li>
   </ul>
 </body>
 </html>
