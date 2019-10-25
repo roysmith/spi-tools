@@ -35,7 +35,7 @@ def _get_wikitext(page_title):
     return page.text()
 
 
-class SPIArchive:
+class SPICase:
     def __init__(self, text):
         self.text = text
         self.code = mwparserfromhell.parse(text)
@@ -44,8 +44,8 @@ class SPIArchive:
         templates = self.code.filter_templates(
             matches = lambda n: n.name.matches('SPIarchive notice'))
         n = len(templates)
-        if n != 1:
-            raise ValueError("wrong number of SPIarchive notices: expected 1, got %s" % n)
+        if n > 1:
+            raise ValueError("Found %d SPIarchive notices, expected 1, at most" % n)
         return templates[0].get('1').value
 
 

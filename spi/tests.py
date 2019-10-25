@@ -4,14 +4,14 @@ from django.test import TestCase
 from . import views
 
 
-class SPIArchiveTestCase(TestCase):
+class SPICaseTestCase(TestCase):
     def test_get_master_name(self):
         text = '''
         {{SPIarchive notice|1=KaranSharma0445}}
         '''
-        archive = views.SPIArchive(text)
+        case = views.SPICase(text)
         expected =  'KaranSharma0445'
-        self.assertEqual(archive.master_name(), expected)
+        self.assertEqual(case.master_name(), expected)
 
 
     def test_get_socks(self):
@@ -20,15 +20,15 @@ class SPIArchiveTestCase(TestCase):
         * {{checkuser|1=PoSharvind}}
         * {{checkIP|86.170.34.216}}
         '''
-        archive = views.SPIArchive(text)
+        case = views.SPICase(text)
         expected =  {'Sharvind Page', 'PoSharvind', '86.170.34.216'}
-        self.assertEqual(archive.socks(), expected)
+        self.assertEqual(case.socks(), expected)
 
 
     def test_get_socks_extra_whitespace(self):
         text = '''
         * {{checkuser|1=DipikaKakar346 }}
         '''
-        archive = views.SPIArchive(text)
+        case = views.SPICase(text)
         expected =  {'DipikaKakar346'}
-        self.assertEqual(archive.socks(), expected)
+        self.assertEqual(case.socks(), expected)
