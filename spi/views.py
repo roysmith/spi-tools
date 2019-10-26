@@ -41,12 +41,15 @@ class SPICase:
         self.code = mwparserfromhell.parse(text)
 
     def master_name(self):
+        """Return the name of the sockmaster, parsed from a {{SPIarchive notice}}
+        template.   Throws ValueError if there is not exactly one such template.
+        """
         templates = self.code.filter_templates(
             matches = lambda n: n.name.matches('SPIarchive notice'))
         n = len(templates)
-        if n > 1:
-            raise ValueError("Found %d SPIarchive notices, expected 1, at most" % n)
-        return templates[0].get('1').value
+        if n ==  1:
+            return templates[0].get('1').value
+        raise ValueError("Found %d SPIarchive notices, expected exactly 1" % n)
 
 
     def socks(self):
