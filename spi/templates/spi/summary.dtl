@@ -3,7 +3,7 @@
 <body>
   <h1>SPI Summary</h1>
   <h2>Input</h2>
-  <form action="/spi/summary" method="post">
+  <form action="/spi/summary/" method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="OK">
