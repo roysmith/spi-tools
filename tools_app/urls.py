@@ -9,4 +9,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('cat_checker/', include('cat_checker.urls')),
     path('spi/', include('spi.urls')),
+    path('pageutils/', include('pageutils.urls')),
 ]

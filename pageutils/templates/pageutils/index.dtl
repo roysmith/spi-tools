@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>Page Utilities</h1>
+  <ul>
+    <li><a href="{% url 'pageutils-index' %}">Index</a></li>
+  </ul>
+</body>
+</html>
