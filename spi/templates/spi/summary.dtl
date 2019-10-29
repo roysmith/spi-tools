@@ -9,8 +9,12 @@
     <input type="submit" value="OK">
   </form>
   {% if info %}
-    <h2>Info</h2>
-    {{ info }}
+  <h2>Socks</h2>
+  <ul>
+    {% for sock in info %}
+    <li>{{ sock.username }} {% if sock.blocked %} (blocked){% endif %}</li>
+    {% endfor %}
+  </ul>
   {% endif %}
 </body>
 </html>
