@@ -1,9 +1,17 @@
 from unittest import TestCase
+import os.path
 
 from spi_utils import SPICase, ArchiveError
 
 
 class SPICaseTest(TestCase):
+    def datafile(self, filename):
+        """Open a data file and Return a read-only file object"""
+        dirname = os.path.dirname(__file__) 
+        path = os.path.join(dirname, 'test-data', filename)
+        return open(path, 'r')
+    
+
     def test_wikitext_is_stored(self):
         text = '''
         foo
@@ -37,3 +45,11 @@ class SPICaseTest(TestCase):
         case = SPICase(text)
         with self.assertRaises(ArchiveError):
             case.master_name()
+
+
+    def test_dates_returns_correct_date(self):
+        with self.datafile('spi-simmerdon3448') as datafile:
+            case = SPICase(datafile)
+            self.assertEqual(case.dates(), ['30 October 2019'])
+
+        
