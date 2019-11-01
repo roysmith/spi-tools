@@ -75,6 +75,44 @@ class SPICaseTest(TestCase):
             self.assertIsInstance(d, SPICaseDay)
 
 
+    def test_find_all_ips(self):
+        text1 = '''
+        __TOC__
+        {{SPIarchive notice|1=Crazyalien}}
+        {{SPIpriorcases}}
+        ===21 March 2019===
+        ====Suspected sockpuppets====
+        {{checkip|1.2.3.6}}
+
+        ===22 May 2019===
+        ====Suspected sockpuppets====
+        {{checkip|1.2.3.7}}
+
+        ===13 July 2019===
+        ====Suspected sockpuppets====
+        {{checkip|1.2.3.8}}
+        '''
+
+        text2 = '''
+        __TOC__
+        {{SPIarchive notice|1=Crazyalien}}
+        {{SPIpriorcases}}
+        ===1 January 2018===
+        ====Suspected sockpuppets====
+        {{checkip|1.2.3.4}}
+        {{checkip|1.2.3.5}}
+        '''
+
+        case = SPICase(make_code(text1), make_code(text2))
+        ips = set(case.find_all_ips())
+        self.assertEqual(ips, set([
+            SPICheckIP('1.2.3.4', '1 January 2018'),
+            SPICheckIP('1.2.3.5', '1 January 2018'),
+            SPICheckIP('1.2.3.6', '21 March 2019'),
+            SPICheckIP('1.2.3.7', '22 May 2019'),
+            SPICheckIP('1.2.3.8', '13 July 2019')]))
+
+
 class SPICaseDayTest(TestCase):
     def test_date_returns_correct_date(self):
         text = '''

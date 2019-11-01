@@ -53,6 +53,16 @@ class SPICase:
                 yield SPICaseDay(section)
 
 
+    def find_all_ips(self):
+        '''Iterates over all the IPs mentioned in checkuser templates.
+        Each user is represented as a SpiCheckIP tuple.  Order of iteration
+        is not guaranteed, and templates are not deduplicated.
+        '''
+        for day in self.days():
+            for ip in day.find_ips():
+                yield ip
+
+
 class SPICaseDay:
     def __init__(self, wikicode):
         self.wikicode = wikicode
@@ -76,7 +86,7 @@ class SPICaseDay:
             matches = lambda n: n.name.matches('checkuser'))
         for t in templates:
             username = t.get('1').value
-            yield SPICheckUser(username, date)
+            yield SPICheckUser(str(username), str(date))
 
 
     def find_ips(self):
@@ -89,4 +99,4 @@ class SPICaseDay:
             matches = lambda n: n.name.matches('checkip'))
         for t in templates:
             ip = t.get('1').value
-            yield SPICheckIP(ip, date)
+            yield SPICheckIP(str(ip), str(date))
