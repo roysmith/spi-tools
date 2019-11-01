@@ -10,17 +10,35 @@ class ArchiveError(ValueError):
       
 
 class SPICase:
-    def __init__(self, wikitext):
-        self.wikitext = wikitext
-        self.wikicode = mwparserfromhell.parse(wikitext)
+    def __init__(self, *wikitexts):
+        """A case can be made up of multiple source documents.  In practice,
+        there will usually be two; the currently active page, and the archive
+        page.
+        """
+        self.wikitexts = list(wikitexts)
+        self.wikicodes = [mwparserfromhell.parse(t) for t in wikitexts]
+
+        master_names = set(str(self.find_master_name(code)) for code in self.wikicodes)
+        if len(master_names) == 0:
+            raise ArchiveError("No sockmaster name found")
+        if len(master_names) > 1:
+            raise ArchiveError("Multiple sockmaster names found: %s" % master_names)
+        self._master_name = master_names.pop()
 
 
     def master_name(self):
-        """Return the name of the sockmaster, parsed from a {{SPIarchive
-        notice}} template.  Raises ArchiveError if the template is not
-        found, or if multiple such templates are found.
+        return self._master_name
+
+
+    @staticmethod
+    def find_master_name(wikicode):
+        """Return the name of the sockmaster, parsed from a
+        {{SPIarchive notice}} template.  Raises ArchiveError if the
+        template is not found, or if multiple such templates are
+        found.
+
         """
-        templates = self.wikicode.filter_templates(
+        templates = wikicode.filter_templates(
             matches = lambda n: n.name.matches('SPIarchive notice'))
         n = len(templates)
         if n == 1:
@@ -30,8 +48,9 @@ class SPICase:
 
     def days(self):
         """Return an iterable of SPICaseDays"""
-        sections = self.wikicode.get_sections(levels=[3])
-        return [SPICaseDay(s) for s in sections]
+        for code in self.wikicodes:
+            for section in code.get_sections(levels=[3]):
+                yield SPICaseDay(section)
 
 
 class SPICaseDay:

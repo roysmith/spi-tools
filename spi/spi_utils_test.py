@@ -11,12 +11,26 @@ def make_code(text):
 
 
 class SPICaseTest(TestCase):
-    def test_wikitext_is_stored(self):
+    def test_single_wikitext_is_stored(self):
         text = '''
+        {{SPIarchive notice|1=test-user}}
         foo
         '''
         case = SPICase(text)
-        self.assertEqual(case.wikitext, text)
+        self.assertEqual(case.wikitexts, [text])
+
+
+    def test_multiple_wikitexts_are_stored(self):
+        text1 = '''
+        {{SPIarchive notice|1=test-user}}
+        foo
+        '''
+        text2 = '''
+        {{SPIarchive notice|1=test-user}}
+        bar
+        '''
+        case = SPICase(text1, text2)
+        self.assertEqual(case.wikitexts, [text1, text2])
 
 
     def test_master_name_returns_correct_value(self):
@@ -27,23 +41,21 @@ class SPICaseTest(TestCase):
         self.assertEqual(case.master_name(), 'KaranSharma0445')
 
 
-    def test_master_name_with_no_archive_notice_raises_archive_error(self):
+    def test_construct_with_no_archive_notice_raises_archive_error(self):
         text = '''
         * {{checkuser|1=DipikaKakar346 }}
         '''
-        case = SPICase(text)
         with self.assertRaises(ArchiveError):
-            case.master_name()
+            SPICase(text)
 
 
-    def test_master_name_with_multiple_archive_notices_raises_archive_error(self):
+    def test_construct_with_multiple_archive_notices_raises_archive_error(self):
         text = '''
         {{SPIarchive notice|1=Foo}}
         {{SPIarchive notice|1=Bar}}
         '''
-        case = SPICase(text)
         with self.assertRaises(ArchiveError):
-            case.master_name()
+            SPICase(text)
 
 
     def test_days_returns_iterable_of_case_days(self):
