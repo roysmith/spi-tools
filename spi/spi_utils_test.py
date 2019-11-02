@@ -33,6 +33,20 @@ class SPICaseTest(TestCase):
         self.assertEqual(case.wikitexts, [text1, text2])
 
 
+    def test_multiple_wikitexts_with_different_master_names_raises_archive_error(self):
+        text1 = '''
+        {{SPIarchive notice|1=user1}}
+        foo
+        '''
+        text2 = '''
+        {{SPIarchive notice|1=user2}}
+        bar
+        '''
+        with self.assertRaises(ArchiveError) as cm:
+            case = SPICase(text1, text2)
+        self.assertRegex(str(cm.exception), r'(?i)multiple')
+
+        
     def test_master_name_returns_correct_value(self):
         text = '''
         {{SPIarchive notice|1=KaranSharma0445}}
