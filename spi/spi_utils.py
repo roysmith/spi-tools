@@ -6,7 +6,7 @@ class ArchiveError(ValueError):
     pass
       
 
-class SPICase:
+class SpiCase:
     def __init__(self, *wikitexts):
         """A case can be made up of multiple source documents.  In practice,
         there will usually be two; the currently active page, and the archive
@@ -44,15 +44,15 @@ class SPICase:
 
 
     def days(self):
-        """Return an iterable of SPICaseDays"""
+        """Return an iterable of SpiCaseDays"""
         for code in self.wikicodes:
             for section in code.get_sections(levels=[3]):
-                yield SPICaseDay(section)
+                yield SpiCaseDay(section)
 
 
     def find_all_ips(self):
         '''Iterates over all the IPs mentioned in checkuser templates.
-        Each user is represented as a SPIPInfo.  Order of iteration
+        Each user is represented as a SpiPInfo.  Order of iteration
         is not guaranteed, and templates are not deduplicated.
         '''
         for day in self.days():
@@ -60,7 +60,7 @@ class SPICase:
                 yield ip
 
 
-class SPICaseDay:
+class SpiCaseDay:
     def __init__(self, wikicode):
         self.wikicode = wikicode
 
@@ -75,7 +75,7 @@ class SPICaseDay:
 
     def find_users(self):
         '''Iterates over all the accounts mentioned in checkuser templates.
-        Each user is represented as an SPIUserInfo.  Order of iteration
+        Each user is represented as an SpiUserInfo.  Order of iteration
         is not guaranteed, and templates are not deduplicated.
 
         '''
@@ -84,12 +84,12 @@ class SPICaseDay:
             matches = lambda n: n.name.matches('checkuser'))
         for t in templates:
             username = t.get('1').value
-            yield SPIUserInfo(str(username), str(date))
+            yield SpiUserInfo(str(username), str(date))
 
 
     def find_ips(self):
         '''Iterates over all the IPs mentioned in checkuser templates.
-        Each user is represented as an SPIIPInfo.  Order of iteration
+        Each user is represented as an SpiIpInfo.  Order of iteration
         is not guaranteed, and templates are not deduplicated.
         '''
         date = self.date()
@@ -97,10 +97,10 @@ class SPICaseDay:
             matches = lambda n: n.name.matches('checkip'))
         for t in templates:
             ip = t.get('1').value
-            yield SPIIPInfo(str(ip), str(date))
+            yield SpiIpInfo(str(ip), str(date))
 
 
-class SPIUserInfo:
+class SpiUserInfo:
     def __init__(self, username, date):
         self.username = username
         self.date = date
@@ -112,7 +112,7 @@ class SPIUserInfo:
         return hash((self.username, self.date))
 
 
-class SPIIPInfo:
+class SpiIpInfo:
     def __init__(self, ip, date):
         self.ip = ip
         self.date = date

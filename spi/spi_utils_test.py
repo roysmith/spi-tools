@@ -3,20 +3,20 @@ import textwrap
 import os.path
 import mwparserfromhell
 
-from spi_utils import SPICase, SPICaseDay, SPIIPInfo, SPIUserInfo, ArchiveError
+from spi_utils import SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo, ArchiveError
 
 
 def make_code(text):
     return mwparserfromhell.parse(textwrap.dedent(text))
 
 
-class SPICaseTest(TestCase):
+class SpiCaseTest(TestCase):
     def test_single_wikitext_is_stored(self):
         text = '''
         {{SPIarchive notice|1=test-user}}
         foo
         '''
-        case = SPICase(text)
+        case = SpiCase(text)
         self.assertEqual(case.wikitexts, [text])
 
 
@@ -29,7 +29,7 @@ class SPICaseTest(TestCase):
         {{SPIarchive notice|1=test-user}}
         bar
         '''
-        case = SPICase(text1, text2)
+        case = SpiCase(text1, text2)
         self.assertEqual(case.wikitexts, [text1, text2])
 
 
@@ -43,7 +43,7 @@ class SPICaseTest(TestCase):
         bar
         '''
         with self.assertRaises(ArchiveError) as cm:
-            case = SPICase(text1, text2)
+            case = SpiCase(text1, text2)
         self.assertRegex(str(cm.exception), r'(?i)multiple')
 
         
@@ -51,7 +51,7 @@ class SPICaseTest(TestCase):
         text = '''
         {{SPIarchive notice|1=KaranSharma0445}}
         '''
-        case = SPICase(text)
+        case = SpiCase(text)
         self.assertEqual(case.master_name(), 'KaranSharma0445')
 
 
@@ -60,7 +60,7 @@ class SPICaseTest(TestCase):
         * {{checkuser|1=DipikaKakar346 }}
         '''
         with self.assertRaises(ArchiveError):
-            SPICase(text)
+            SpiCase(text)
 
 
     def test_construct_with_multiple_archive_notices_raises_archive_error(self):
@@ -69,7 +69,7 @@ class SPICaseTest(TestCase):
         {{SPIarchive notice|1=Bar}}
         '''
         with self.assertRaises(ArchiveError):
-            SPICase(text)
+            SpiCase(text)
 
 
     def test_days_returns_iterable_of_case_days(self):
@@ -84,9 +84,9 @@ class SPICaseTest(TestCase):
         ===13 July 2019===
         ====Suspected sockpuppets====
         '''
-        case = SPICase(text)
+        case = SpiCase(text)
         for d in case.days():
-            self.assertIsInstance(d, SPICaseDay)
+            self.assertIsInstance(d, SpiCaseDay)
 
 
     def test_find_all_ips(self):
@@ -117,17 +117,17 @@ class SPICaseTest(TestCase):
         {{checkip|1.2.3.5}}
         '''
 
-        case = SPICase(make_code(text1), make_code(text2))
+        case = SpiCase(make_code(text1), make_code(text2))
         ips = set(case.find_all_ips())
         self.assertEqual(ips, set([
-            SPIIPInfo('1.2.3.4', '1 January 2018'),
-            SPIIPInfo('1.2.3.5', '1 January 2018'),
-            SPIIPInfo('1.2.3.6', '21 March 2019'),
-            SPIIPInfo('1.2.3.7', '22 May 2019'),
-            SPIIPInfo('1.2.3.8', '13 July 2019')]))
+            SpiIpInfo('1.2.3.4', '1 January 2018'),
+            SpiIpInfo('1.2.3.5', '1 January 2018'),
+            SpiIpInfo('1.2.3.6', '21 March 2019'),
+            SpiIpInfo('1.2.3.7', '22 May 2019'),
+            SpiIpInfo('1.2.3.8', '13 July 2019')]))
 
 
-class SPICaseDayTest(TestCase):
+class SpiCaseDayTest(TestCase):
     def test_date_returns_correct_date(self):
         text = '''
         {{SPIarchive notice|1=Crazyalien}}
@@ -135,7 +135,7 @@ class SPICaseDayTest(TestCase):
         ===21 March 2019===
         blah, blah, blaha
         '''
-        day = SPICaseDay(make_code(text))
+        day = SpiCaseDay(make_code(text))
         date = day.date()
         self.assertEqual(date, '21 March 2019')
 
@@ -148,7 +148,7 @@ class SPICaseDayTest(TestCase):
         ===22 March 2019===
         blah, blah, blaha
         '''
-        day = SPICaseDay(make_code(text))
+        day = SpiCaseDay(make_code(text))
         with self.assertRaises(ArchiveError):
             day.date()
 
@@ -159,7 +159,7 @@ class SPICaseDayTest(TestCase):
         {{SPIpriorcases}}
         blah, blah, blaha
         '''
-        day = SPICaseDay(make_code(text))
+        day = SpiCaseDay(make_code(text))
         with self.assertRaises(ArchiveError):
             day.date()
 
@@ -170,10 +170,10 @@ class SPICaseDayTest(TestCase):
         {{checkuser|user1}}
         {{checkuser|user2}}
         '''
-        day = SPICaseDay(make_code(text))
+        day = SpiCaseDay(make_code(text))
         users = list(day.find_users())
-        self.assertEqual(users, [SPIUserInfo('user1', '21 March 2019'),
-                                 SPIUserInfo('user2', '21 March 2019')])
+        self.assertEqual(users, [SpiUserInfo('user1', '21 March 2019'),
+                                 SpiUserInfo('user2', '21 March 2019')])
 
 
     def test_find_ips(self):
@@ -182,32 +182,32 @@ class SPICaseDayTest(TestCase):
         {{checkip|1.2.3.4}}
         {{checkip|5.6.7.8}}
         '''
-        day = SPICaseDay(make_code(text))
+        day = SpiCaseDay(make_code(text))
         ips = list(day.find_ips())
-        self.assertEqual(ips, [SPIIPInfo('1.2.3.4', '21 March 2019'),
-                               SPIIPInfo('5.6.7.8', '21 March 2019')])
+        self.assertEqual(ips, [SpiIpInfo('1.2.3.4', '21 March 2019'),
+                               SpiIpInfo('5.6.7.8', '21 March 2019')])
 
 
 
-class SPIIPUserTest(TestCase):
+class SpiIPUserTest(TestCase):
     def test_eq(self):
-        info1 = SPIUserInfo('user', '1 January 2019')
-        info2 = SPIUserInfo('user', '1 January 2019')
+        info1 = SpiUserInfo('user', '1 January 2019')
+        info2 = SpiUserInfo('user', '1 January 2019')
         self.assertEqual(info1, info2)
 
 
     def test_hashable(self):
-        info = SPIUserInfo('user', '1 January 2019')
+        info = SpiUserInfo('user', '1 January 2019')
         hash(info)
 
 
-class SPIIPInfoTest(TestCase):
+class SpiIpInfoTest(TestCase):
     def test_eq(self):
-        info1 = SPIUserInfo('1.2.3.4', '1 January 2019')
-        info2 = SPIUserInfo('1.2.3.4', '1 January 2019')
+        info1 = SpiUserInfo('1.2.3.4', '1 January 2019')
+        info2 = SpiUserInfo('1.2.3.4', '1 January 2019')
         self.assertEqual(info1, info2)
 
 
     def test_hashable(self):
-        info = SPIUserInfo('1.2.3.4', '1 January 2019')
+        info = SpiUserInfo('1.2.3.4', '1 January 2019')
         hash(info)
