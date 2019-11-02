@@ -12,8 +12,8 @@
   {{ master_name }}
   <h2>IPs</h2>
   <ul>
-  {% for ip in ips %}
-  <li><code>{{ ip }}</code></li>
+  {% for ip_info in ip_infos %}
+  <li><code>{{ ip_info.ip }}</code></li>
   {% endfor %}
   </ul>
 </body>

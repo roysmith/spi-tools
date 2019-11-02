@@ -4,7 +4,7 @@ from mwclient import Site
 import mwparserfromhell
 
 from .forms import SummaryForm
-from .spi_utils import SPICase
+from .spi_utils import SpiCase
 
 
 SITE_NAME = 'en.wikipedia.org'
@@ -22,7 +22,7 @@ def summary(request):
             master_name = form.cleaned_data['master_name']
             context = {'form': form,
                        'master_name': master_name,
-                       'ips': get_spi_case_ips(master_name),
+                       'ip_infos': sorted(get_spi_case_ips(master_name)),
             }
             return render(request, 'spi/summary.dtl', context)
     else:
@@ -32,12 +32,9 @@ def summary(request):
 
 
 def get_spi_case_ips(master_name):
-    "Returns a list of IP addresses as strings"
+    "Returns a list of SpiIpInfos"
     site = Site(SITE_NAME)
     case_page = 'Wikipedia:Sockpuppet investigations/%s' % master_name
     archive_page = '%s/Archive' % case_page
-    case = SPICase(site.pages[case_page].text(), site.pages[archive_page].text())
-    spi_case_ips = case.find_all_ips()
-    ips = sorted(s.ip for s in spi_case_ips)
-    return ips
-
+    case = SpiCase(site.pages[case_page].text(), site.pages[archive_page].text())
+    return case.find_all_ips()
