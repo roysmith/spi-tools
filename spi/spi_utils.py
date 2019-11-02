@@ -5,6 +5,9 @@ import mwparserfromhell
 
 class ArchiveError(ValueError):
     pass
+
+class InvalidIpV4Error(ValueError):
+    pass
       
 
 class SpiCase:
@@ -98,7 +101,10 @@ class SpiCaseDay:
             matches = lambda n: n.name.matches('checkip'))
         for t in templates:
             ip = t.get('1').value
-            yield SpiIpInfo(str(ip), str(date))
+            try:
+                yield SpiIpInfo(str(ip), str(date))
+            except InvalidIpV4Error:
+                pass
 
 
 class SpiUserInfo:
@@ -120,7 +126,7 @@ class SpiIpInfo:
         self.ip = ip
         self.date = date
         if not self.is_v4():
-            raise(ValueError('ip not a valid IPv4 address'))
+            raise(InvalidIpV4Error('ip not a valid IPv4 address'))
 
     def __eq__(self, other):
         return self.ip == other.ip and self.date == other.date

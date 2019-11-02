@@ -188,6 +188,17 @@ class SpiCaseDayTest(TestCase):
                                SpiIpInfo('5.6.7.8', '21 March 2019')])
 
 
+    def test_find_ips_silently_skips_non_v4_addresses(self):
+        text = '''
+        ===21 March 2019===
+        {{checkip|1.2.3.4}}
+        {{checkip|5:6::7}}
+        '''
+        day = SpiCaseDay(make_code(text))
+        ips = list(day.find_ips())
+        self.assertEqual(ips, [SpiIpInfo('1.2.3.4', '21 March 2019')])
+
+
 
 class SpiUserInfoTest(TestCase):
     def test_eq(self):
