@@ -224,6 +224,17 @@ class SpiIpInfoTest(TestCase):
         self.assertEqual(info1, info2)
 
 
+    def test_lt_by_ip(self):
+        info1 = SpiIpInfo('1.2.3.4', '1 January 2019')
+        info2 = SpiIpInfo('1.2.3.5', '1 January 2019')
+        self.assertLess(info1, info2)
+
+    def test_lt_by_date(self):
+        info1 = SpiIpInfo('1.2.3.4', '1 January 2019')
+        info2 = SpiIpInfo('1.2.3.4', '2 January 2019')
+        self.assertLess(info1, info2)
+
+
     def test_hashable(self):
         info = SpiIpInfo('1.2.3.4', '1 January 2019')
         hash(info)

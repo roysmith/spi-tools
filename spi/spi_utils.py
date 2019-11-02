@@ -130,7 +130,16 @@ class SpiIpInfo:
 
     def __eq__(self, other):
         return self.ip == other.ip and self.date == other.date
-    
+
+    def __lt__(self, other):
+        b1 = self.ip_to_binary()
+        b2 = other.ip_to_binary()
+        if b1 < b2:
+            return True
+        if b1 > b2:
+            return False
+        return self.date < other.date
+
     def __hash__(self):
         return hash((self.ip, self.date))
 
