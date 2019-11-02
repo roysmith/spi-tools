@@ -187,3 +187,27 @@ class SPICaseDayTest(TestCase):
         self.assertEqual(ips, [SPIIPInfo('1.2.3.4', '21 March 2019'),
                                SPIIPInfo('5.6.7.8', '21 March 2019')])
 
+
+
+class SPIIPUserTest(TestCase):
+    def test_eq(self):
+        info1 = SPIUserInfo('user', '1 January 2019')
+        info2 = SPIUserInfo('user', '1 January 2019')
+        self.assertEqual(info1, info2)
+
+
+    def test_hashable(self):
+        info = SPIUserInfo('user', '1 January 2019')
+        hash(info)
+
+
+class SPIIPInfoTest(TestCase):
+    def test_eq(self):
+        info1 = SPIUserInfo('1.2.3.4', '1 January 2019')
+        info2 = SPIUserInfo('1.2.3.4', '1 January 2019')
+        self.assertEqual(info1, info2)
+
+
+    def test_hashable(self):
+        info = SPIUserInfo('1.2.3.4', '1 January 2019')
+        hash(info)

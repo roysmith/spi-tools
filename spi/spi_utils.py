@@ -108,6 +108,10 @@ class SPIUserInfo:
     def __eq__(self, other):
         return self.username == other.username and self.date == other.date
 
+    def __hash__(self):
+        return hash((self.username, self.date))
+
+
 class SPIIPInfo:
     def __init__(self, ip, date):
         self.ip = ip
@@ -116,3 +120,5 @@ class SPIIPInfo:
     def __eq__(self, other):
         return self.ip == other.ip and self.date == other.date
     
+    def __hash__(self):
+        return hash((self.ip, self.date))
