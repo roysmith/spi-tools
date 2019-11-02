@@ -202,12 +202,28 @@ class SpiIPUserTest(TestCase):
 
 
 class SpiIpInfoTest(TestCase):
+    def test_constructor_raises_value_error_if_not_valid_ip_v4_address(self):
+        with self.assertRaises(ValueError):
+            SpiIpInfo('1:2:3:4::5', '1 January 2019')
+
+            
     def test_eq(self):
-        info1 = SpiUserInfo('1.2.3.4', '1 January 2019')
-        info2 = SpiUserInfo('1.2.3.4', '1 January 2019')
+        info1 = SpiIpInfo('1.2.3.4', '1 January 2019')
+        info2 = SpiIpInfo('1.2.3.4', '1 January 2019')
         self.assertEqual(info1, info2)
 
 
     def test_hashable(self):
-        info = SpiUserInfo('1.2.3.4', '1 January 2019')
+        info = SpiIpInfo('1.2.3.4', '1 January 2019')
         hash(info)
+
+
+    def test_is_v4_true(self):
+        info = SpiIpInfo('1.2.3.4', '1 January 2019')
+        self.assertTrue(info.is_v4())
+
+        
+    def test_ip_to_binary(self):
+        info = SpiIpInfo('1.2.3.4', '1 January 2019')
+        binary = info.ip_to_binary()
+        self.assertEqual(binary, '00000001000000100000001100000100')
