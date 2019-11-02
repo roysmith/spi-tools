@@ -3,7 +3,7 @@ import textwrap
 import os.path
 import mwparserfromhell
 
-from spi_utils import SPICase, SPICaseDay, SPICheckUser, SPICheckIP, ArchiveError
+from spi_utils import SPICase, SPICaseDay, SPIIPInfo, SPIUserInfo, ArchiveError
 
 
 def make_code(text):
@@ -120,11 +120,11 @@ class SPICaseTest(TestCase):
         case = SPICase(make_code(text1), make_code(text2))
         ips = set(case.find_all_ips())
         self.assertEqual(ips, set([
-            SPICheckIP('1.2.3.4', '1 January 2018'),
-            SPICheckIP('1.2.3.5', '1 January 2018'),
-            SPICheckIP('1.2.3.6', '21 March 2019'),
-            SPICheckIP('1.2.3.7', '22 May 2019'),
-            SPICheckIP('1.2.3.8', '13 July 2019')]))
+            SPIIPInfo('1.2.3.4', '1 January 2018'),
+            SPIIPInfo('1.2.3.5', '1 January 2018'),
+            SPIIPInfo('1.2.3.6', '21 March 2019'),
+            SPIIPInfo('1.2.3.7', '22 May 2019'),
+            SPIIPInfo('1.2.3.8', '13 July 2019')]))
 
 
 class SPICaseDayTest(TestCase):
@@ -172,8 +172,8 @@ class SPICaseDayTest(TestCase):
         '''
         day = SPICaseDay(make_code(text))
         users = list(day.find_users())
-        self.assertEqual(users, [SPICheckUser('user1', '21 March 2019'),
-                                 SPICheckUser('user2', '21 March 2019')])
+        self.assertEqual(users, [SPIUserInfo('user1', '21 March 2019'),
+                                 SPIUserInfo('user2', '21 March 2019')])
 
 
     def test_find_ips(self):
@@ -184,6 +184,6 @@ class SPICaseDayTest(TestCase):
         '''
         day = SPICaseDay(make_code(text))
         ips = list(day.find_ips())
-        self.assertEqual(ips, [SPICheckIP('1.2.3.4', '21 March 2019'),
-                               SPICheckIP('5.6.7.8', '21 March 2019')])
+        self.assertEqual(ips, [SPIIPInfo('1.2.3.4', '21 March 2019'),
+                               SPIIPInfo('5.6.7.8', '21 March 2019')])
 

@@ -1,9 +1,6 @@
 from collections import namedtuple
 import mwparserfromhell
 
-SPICheckUser = namedtuple('SPICheckUser', 'username, date')
-SPICheckIP = namedtuple('SPICheckIP', 'ip, date')
-
 
 class ArchiveError(ValueError):
     pass
@@ -55,7 +52,7 @@ class SPICase:
 
     def find_all_ips(self):
         '''Iterates over all the IPs mentioned in checkuser templates.
-        Each user is represented as a SpiCheckIP tuple.  Order of iteration
+        Each user is represented as a SPIPInfo.  Order of iteration
         is not guaranteed, and templates are not deduplicated.
         '''
         for day in self.days():
@@ -78,20 +75,21 @@ class SPICaseDay:
 
     def find_users(self):
         '''Iterates over all the accounts mentioned in checkuser templates.
-        Each user is represented as a SpiCheckUser tuple.  Order of iteration
+        Each user is represented as an SPIUserInfo.  Order of iteration
         is not guaranteed, and templates are not deduplicated.
+
         '''
         date = self.date()
         templates = self.wikicode.filter_templates(
             matches = lambda n: n.name.matches('checkuser'))
         for t in templates:
             username = t.get('1').value
-            yield SPICheckUser(str(username), str(date))
+            yield SPIUserInfo(str(username), str(date))
 
 
     def find_ips(self):
         '''Iterates over all the IPs mentioned in checkuser templates.
-        Each user is represented as a SpiCheckIP tuple.  Order of iteration
+        Each user is represented as an SPIIPInfo.  Order of iteration
         is not guaranteed, and templates are not deduplicated.
         '''
         date = self.date()
@@ -99,4 +97,22 @@ class SPICaseDay:
             matches = lambda n: n.name.matches('checkip'))
         for t in templates:
             ip = t.get('1').value
-            yield SPICheckIP(str(ip), str(date))
+            yield SPIIPInfo(str(ip), str(date))
+
+
+class SPIUserInfo:
+    def __init__(self, username, date):
+        self.username = username
+        self.date = date
+
+    def __eq__(self, other):
+        return self.username == other.username and self.date == other.date
+
+class SPIIPInfo:
+    def __init__(self, ip, date):
+        self.ip = ip
+        self.date = date
+
+    def __eq__(self, other):
+        return self.ip == other.ip and self.date == other.date
+    
