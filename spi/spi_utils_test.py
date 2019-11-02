@@ -189,7 +189,7 @@ class SpiCaseDayTest(TestCase):
 
 
 
-class SpiIPUserTest(TestCase):
+class SpiUserInfoTest(TestCase):
     def test_eq(self):
         info1 = SpiUserInfo('user', '1 January 2019')
         info2 = SpiUserInfo('user', '1 January 2019')
