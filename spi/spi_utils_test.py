@@ -217,7 +217,7 @@ class SpiIpInfoTest(TestCase):
         with self.assertRaises(ValueError):
             SpiIpInfo('1:2:3:4::5', '1 January 2019')
 
-            
+
     def test_eq(self):
         info1 = SpiIpInfo('1.2.3.4', '1 January 2019')
         info2 = SpiIpInfo('1.2.3.4', '1 January 2019')
@@ -229,6 +229,7 @@ class SpiIpInfoTest(TestCase):
         info2 = SpiIpInfo('1.2.3.5', '1 January 2019')
         self.assertLess(info1, info2)
 
+
     def test_lt_by_date(self):
         info1 = SpiIpInfo('1.2.3.4', '1 January 2019')
         info2 = SpiIpInfo('1.2.3.4', '2 January 2019')
@@ -238,14 +239,3 @@ class SpiIpInfoTest(TestCase):
     def test_hashable(self):
         info = SpiIpInfo('1.2.3.4', '1 January 2019')
         hash(info)
-
-
-    def test_is_v4_true(self):
-        info = SpiIpInfo('1.2.3.4', '1 January 2019')
-        self.assertTrue(info.is_v4())
-
-        
-    def test_ip_to_binary(self):
-        info = SpiIpInfo('1.2.3.4', '1 January 2019')
-        binary = info.ip_to_binary()
-        self.assertEqual(binary, '00000001000000100000001100000100')

@@ -1,6 +1,6 @@
 import re
+from ipaddress import IPv4Address
 import mwparserfromhell
-
 
 class ArchiveError(ValueError):
     pass
@@ -122,33 +122,21 @@ class SpiIpInfo:
     v4pattern = re.compile(r'^\d+\.\d+\.\d+\.\d+$')
 
     def __init__(self, ip, date):
-        self.ip = ip
+        try:
+            self.ip = IPv4Address(ip)
+        except ValueError as error:
+            raise InvalidIpV4Error(str(error))
         self.date = date
-        if not self.is_v4():
-            raise(InvalidIpV4Error('ip not a valid IPv4 address'))
 
     def __eq__(self, other):
         return self.ip == other.ip and self.date == other.date
 
     def __lt__(self, other):
-        b1 = self.ip_to_binary()
-        b2 = other.ip_to_binary()
-        if b1 < b2:
+        if self.ip < other.ip:
             return True
-        if b1 > b2:
+        if self.ip > other.ip:
             return False
         return self.date < other.date
 
     def __hash__(self):
         return hash((self.ip, self.date))
-
-    def is_v4(self):
-        "Return True if this is an IPv4 address"
-        return self.v4pattern.match(self.ip)
-
-    def ip_to_binary(self):
-        "Return the ip address as a 32-character long string of 0's and 1's"
-        string_parts = []
-        for ip_part in self.ip.split('.'):
-            string_parts.append(format(int(ip_part), '08b'))
-        return ''.join(string_parts)
