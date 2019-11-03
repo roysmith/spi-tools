@@ -10,6 +10,8 @@
   </form>
   <h2>Master Name</h2>
   {{ master_name }}
+  <h2>Network to block</h2>
+  {{ network }}
   <h2>IPs</h2>
   <ul>
   {% for ip_info in ip_infos %}

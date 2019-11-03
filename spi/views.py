@@ -4,7 +4,7 @@ from mwclient import Site
 import mwparserfromhell
 
 from .forms import SummaryForm
-from .spi_utils import SpiCase
+from .spi_utils import SpiCase, SpiIpInfo
 
 
 SITE_NAME = 'en.wikipedia.org'
@@ -20,9 +20,11 @@ def summary(request):
         form = SummaryForm(request.POST)
         if form.is_valid():
             master_name = form.cleaned_data['master_name']
+            infos = sorted(get_spi_case_ips(master_name))
             context = {'form': form,
                        'master_name': master_name,
-                       'ip_infos': sorted(get_spi_case_ips(master_name)),
+                       'network': SpiIpInfo.find_common_network(infos),
+                       'ip_infos': infos,
             }
             return render(request, 'spi/summary.dtl', context)
     else:

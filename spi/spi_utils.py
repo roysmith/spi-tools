@@ -1,5 +1,5 @@
 import re
-from ipaddress import IPv4Address
+from ipaddress import IPv4Address, IPv4Network
 import mwparserfromhell
 
 class ArchiveError(ValueError):
@@ -140,3 +140,23 @@ class SpiIpInfo:
 
     def __hash__(self):
         return hash((self.ip, self.date))
+
+    @staticmethod
+    def find_common_network(infos):
+        ips = [int(i.ip) for i in infos]
+        bits = [list(map(int, format(i, '032b'))) for i in ips]
+        slices = zip(*bits)
+        bit_sets = [set(s) for s in slices]
+        prefix = 0
+        prefix_length = 0
+        done = False
+        for bs in bit_sets:
+            prefix <<= 1
+            if done:
+                continue
+            if len(bs) > 1:
+                done = True
+                continue
+            prefix_length += 1
+            prefix |= bs.pop()
+        return IPv4Network((prefix, prefix_length))

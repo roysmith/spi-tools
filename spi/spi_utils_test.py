@@ -2,6 +2,7 @@ from unittest import TestCase
 import textwrap
 import os.path
 import mwparserfromhell
+from ipaddress import IPv4Address, IPv4Network
 
 from spi_utils import SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo, ArchiveError
 
@@ -239,3 +240,13 @@ class SpiIpInfoTest(TestCase):
     def test_hashable(self):
         info = SpiIpInfo('1.2.3.4', '1 January 2019')
         hash(info)
+
+
+    def test_find_common_network(self):
+        infos = [
+            SpiIpInfo('1.2.3.4', '1 January 2019'),
+            SpiIpInfo('1.2.3.17', '1 January 2019'),
+            SpiIpInfo('1.2.3.22', '1 January 2019'),
+            SpiIpInfo('1.2.3.26', '1 January 2019')]
+        network = SpiIpInfo.find_common_network(infos)
+        self.assertEqual(network, IPv4Network('1.2.3.0/27'))
