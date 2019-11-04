@@ -1,7 +1,6 @@
 {% include "./top.dtl" %}
 <div class="col-10">
-  <h1>SPI Summary</h1>
-  <h2>{{ case_name }}</h2>
+  <h1>IP analysis for User:{{ case_name }}</h1>
   Network to block: {{ network }}
   <h2>IPs</h2>
   <ul>

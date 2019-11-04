@@ -3,5 +3,5 @@ from spi import views
 
 urlpatterns = [
     path('', views.index, name="spi-index"),
-    path('summary/<case_name>/', views.summary, name="spi-summary"),
+    path('ip-analysis/<case_name>/', views.ip_analysis, name="spi-ip-analysis"),
 ]

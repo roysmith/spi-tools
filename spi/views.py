@@ -16,21 +16,21 @@ def index(request):
         form = CaseNameForm(request.POST)
         if form.is_valid():
             case_name = form.cleaned_data['case_name']
-            return redirect('spi-summary', case_name)
+            return redirect('spi-ip-analysis', case_name)
     else:
         form = CaseNameForm()
     context = {'form': form} 
     return render(request, 'spi/index.dtl', context)
 
 
-def summary(request, case_name):
+def ip_analysis(request, case_name):
     infos = sorted(get_spi_case_ips(case_name))
     network = SpiIpInfo.find_common_network(infos)
     context = {'case_name': case_name,
                'network': network,
                'ip_infos': infos,
     }
-    return render(request, 'spi/summary.dtl', context)
+    return render(request, 'spi/ip-analysis.dtl', context)
 
 
 def get_spi_case_ips(master_name):
