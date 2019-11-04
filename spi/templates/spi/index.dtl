@@ -1,17 +1,5 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    {% include "./header.dtl" %}
-  </head>
-  <body>
-    <div class="container">
-      <div class="row">
-	{% include "./navbar.dtl" %}
-	<div class="col-10">
-	  <h1>SPI Tools</h1>
-	</div>
-      </div>
-    </div>
-    {% include "./footer.dtl" %}
-  </body>
-</html>
+{% include "./top.dtl" %}
+<div class="col-10">
+  <h1>SPI Tools</h1>
+</div>
+{% include "./bottom.dtl" %}
