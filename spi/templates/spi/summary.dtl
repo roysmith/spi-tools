@@ -26,8 +26,6 @@
 	    {% endfor %}
 	  </ul>
 	</div>
-	<div class="col-1">
-	</div>
       </div>
     </div>
     {% include "./footer.dtl" %}
