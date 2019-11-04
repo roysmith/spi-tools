@@ -1,36 +1,22 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    {% include "./header.dtl" %}
-  </head>
-  <body>
-    <div class="container">
-      <div class="row">
-	<div class="col-1">
-	</div>
-	<div class="col-10">
-	  <h1>SPI Summary</h1>
-	  <h2>Input</h2>
-	  <form action="/spi/summary/" method="post">
-	    {% csrf_token %}
-	    {{ form }}
-	    <input type="submit" value="OK">
-	  </form>
-	  <h2>Master Name</h2>
-	  {{ master_name }}
-	  <h2>Network to block</h2>
-	  {{ network }}
-	  <h2>IPs</h2>
-	  <ul>
-	    {% for ip_info in ip_infos %}
-	    <li><code>{{ ip_info.ip }}</code></li>
-	    {% endfor %}
-	  </ul>
-	</div>
-	<div class="col-1">
-	</div>
-      </div>
-    </div>
-    {% include "./footer.dtl" %}
-  </body>
+<!DOCTYPE html>
+<html>
+<body>
+  <h1>SPI Summary</h1>
+  <h2>Input</h2>
+  <form action="/spi/summary/" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="OK">
+  </form>
+  <h2>Master Name</h2>
+  {{ master_name }}
+  <h2>Network to block</h2>
+  {{ network }}
+  <h2>IPs</h2>
+  <ul>
+  {% for ip_info in ip_infos %}
+  <li><code>{{ ip_info.ip }}</code></li>
+  {% endfor %}
+  </ul>
+</body>
 </html>
