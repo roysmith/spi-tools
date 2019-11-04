@@ -6,16 +6,9 @@
   <body>
     <div class="container">
       <div class="row">
-	<div class="col-1">
-	</div>
+	{% include "./navbar.dtl" %}
 	<div class="col-10">
 	  <h1>SPI Tools</h1>
-	  <ul>
-	    <li><a href="{% url 'spi-index' %}">Index</a></li>
-	    <li><a href="{% url 'spi-summary' %}">Summary</a></li>
-	  </ul>
-	</div>
-	<div class="col-1">
 	</div>
       </div>
     </div>

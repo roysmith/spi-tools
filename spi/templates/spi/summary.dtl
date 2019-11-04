@@ -6,8 +6,7 @@
   <body>
     <div class="container">
       <div class="row">
-	<div class="col-1">
-	</div>
+	{% include "./navbar.dtl" %}
 	<div class="col-10">
 	  <h1>SPI Summary</h1>
 	  <h2>Input</h2>
