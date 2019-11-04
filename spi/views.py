@@ -1,9 +1,10 @@
 from collections import namedtuple
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.urls import reverse
 from mwclient import Site
 import mwparserfromhell
 
-from .forms import SummaryForm
+from .forms import CaseNameForm
 from .spi_utils import SpiCase, SpiIpInfo
 
 
@@ -11,25 +12,24 @@ SITE_NAME = 'en.wikipedia.org'
 
 
 def index(request):
-    context = {}
+    if request.method == 'POST':
+        form = CaseNameForm(request.POST)
+        if form.is_valid():
+            case_name = form.cleaned_data['case_name']
+            return redirect('spi-summary', case_name)
+    else:
+        form = CaseNameForm()
+    context = {'form': form} 
     return render(request, 'spi/index.dtl', context)
 
 
-def summary(request):
-    if request.method == 'POST':
-        form = SummaryForm(request.POST)
-        if form.is_valid():
-            master_name = form.cleaned_data['master_name']
-            infos = sorted(get_spi_case_ips(master_name))
-            context = {'form': form,
-                       'master_name': master_name,
-                       'network': SpiIpInfo.find_common_network(infos),
-                       'ip_infos': infos,
-            }
-            return render(request, 'spi/summary.dtl', context)
-    else:
-        form = SummaryForm()
-    context = {'form': form} 
+def summary(request, case_name):
+    infos = sorted(get_spi_case_ips(case_name))
+    network = SpiIpInfo.find_common_network(infos)
+    context = {'case_name': case_name,
+               'network': network,
+               'ip_infos': infos,
+    }
     return render(request, 'spi/summary.dtl', context)
 
 
