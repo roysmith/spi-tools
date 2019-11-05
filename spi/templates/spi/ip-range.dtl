@@ -1,0 +1,6 @@
+{% include "./top.dtl" %}
+<div class="col-10">
+  <h1>IP range block for User:{{ case_name }}</h1>
+  Network to block = {{ network }}
+</div>
+{% include "./bottom.dtl" %}

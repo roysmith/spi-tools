@@ -4,7 +4,7 @@ from django.urls import reverse
 from mwclient import Site
 import mwparserfromhell
 
-from .forms import CaseNameForm
+from .forms import CaseNameForm, IpRangeForm
 from .spi_utils import SpiCase, SpiIpInfo
 
 
@@ -24,13 +24,28 @@ def index(request):
 
 
 def ip_analysis(request, case_name):
+    if request.method == 'POST':
+        form = IpRangeForm(request.POST)
+        if form.is_valid():
+            first_ip = form.cleaned_data['first_ip']
+            last_ip = form.cleaned_data['last_ip']
+            return redirect('spi-ip-range', case_name, first_ip, last_ip)
+        else:
+            form = IpRangeForm()
     infos = sorted(get_spi_case_ips(case_name))
-    network = SpiIpInfo.find_common_network(infos)
     context = {'case_name': case_name,
-               'network': network,
                'ip_infos': infos,
     }
     return render(request, 'spi/ip-analysis.dtl', context)
+
+def ip_range(request, case_name, first_ip, last_ip):
+    infos = [SpiIpInfo(first_ip, ''),
+             SpiIpInfo(last_ip, '')]
+    network = SpiIpInfo.find_common_network(infos)
+    context = {'case_name': case_name,
+               'network': network,
+    }
+    return render(request, 'spi/ip-range.dtl', context)
 
 
 def get_spi_case_ips(master_name):
