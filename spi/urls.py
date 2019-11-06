@@ -1,7 +1,7 @@
 from django.urls import path, include
-from spi import views
+from spi.views import IndexView, IpAnalysisView
 
 urlpatterns = [
-    path('', views.index, name="spi-index"),
-    path('ip-analysis/<case_name>/', views.ip_analysis, name="spi-ip-analysis"),
+    path('', IndexView.as_view(), name="spi-index"),
+    path('ip-analysis/<case_name>/', IpAnalysisView.as_view(), name="spi-ip-analysis"),
 ]
