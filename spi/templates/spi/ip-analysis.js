@@ -1,7 +1,7 @@
 /*
  * Extract from the DOM the first and last IP addresses to be blocked,
- * and update the #network div with the CIDR representation of the IP
- * range which covers those.
+ * and update the #network element with the CIDR representation of the
+ * IP range which covers those.
  */
 function updateBlockRange() {
     var first_ip = $(":radio[name='first_ip']:checked")[0].value;

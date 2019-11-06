@@ -1,7 +1,7 @@
 {% include "./top.dtl" %}
 <div class="col-10">
   <h1>IP analysis for User:{{ case_name }}</h1>
-  Network to block: <div id="network"></div>
+  Network to block: <span id="network"></span>
   <h2>IPs</h2>
   <ul>
     {% for ip_info in ip_infos %}
