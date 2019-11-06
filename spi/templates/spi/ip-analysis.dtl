@@ -25,3 +25,7 @@
   {% include "./ip-analysis.js" %}
 </script>
 {% include "./bottom.dtl" %}
+
+<script>
+  $(document).ready(updateBlockRange);
+</script>
