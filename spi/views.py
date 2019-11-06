@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
@@ -10,6 +10,8 @@ from .spi_utils import SpiCase, SpiIpInfo
 
 
 SITE_NAME = 'en.wikipedia.org'
+
+IpSummary = namedtuple('IpSummary', 'ip, spi_dates')
 
 
 class IndexView(View):
@@ -28,15 +30,19 @@ class IndexView(View):
 
 class IpAnalysisView(View):
     def get(self, request, case_name):
-        infos = sorted(get_spi_case_ips(case_name))
+        ip_data = defaultdict(list)
+        for i in get_spi_case_ips(case_name):
+            ip_data[i.ip].append(i.date)
+        summaries = [IpSummary(ip, sorted(ip_data[ip])) for ip in ip_data]
+        summaries.sort()
         context = {'case_name': case_name,
-                   'ip_infos': infos,
+                   'ip_summaries': summaries,
         }
         return render(request, 'spi/ip-analysis.dtl', context)
 
 
 def get_spi_case_ips(master_name):
-    "Returns a list of SpiIpInfos"
+    "Returns a iterable over SpiIpInfos"
     site = Site(SITE_NAME)
     case_page = 'Wikipedia:Sockpuppet investigations/%s' % master_name
     archive_page = '%s/Archive' % case_page

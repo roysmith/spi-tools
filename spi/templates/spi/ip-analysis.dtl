@@ -4,19 +4,22 @@
   Network to block: <span id="network"></span>
   <h2>IPs</h2>
   <ul>
-    {% for ip_info in ip_infos %}
+    {% for summary in ip_summaries %}
     <li>
       <input type="radio"
 	     name="first_ip"
-	     value="{{ ip_info.ip }}"
+	     value="{{ summary.ip }}"
 	     {% if forloop.first %} checked {% endif %}
 	     onchange="updateBlockRange()">
       <input type="radio"
 	     name="last_ip"
-	     value="{{ ip_info.ip }}"
+	     value="{{ summary.ip }}"
 	     {% if forloop.last %} checked {% endif %}
 	     onchange="updateBlockRange()">
-      <code>{{ ip_info.ip }}</code>
+      <code>{{ summary.ip }}</code>
+      {% for d in summary.spi_dates %}
+        <a href="{{ d }}"><i class="material-icons md-18">link</i></a>
+      {% endfor %}
     </li>
     {% endfor %}
   </ul>
