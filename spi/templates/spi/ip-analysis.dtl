@@ -3,27 +3,23 @@
   <h1>IP analysis for User:{{ case_name }}</h1>
   Network to block: <div id="network"></div>
   <h2>IPs</h2>
-  <form action="/spi/ip-analysis/{{ case_name }}/" method="post">
-    {% csrf_token %}
-    <ul>
-      {% for ip_info in ip_infos %}
-      <li>
-	<input type="radio"
-	       name="first_ip"
-	       value="{{ ip_info.ip }}"
-	       {% if forloop.first %} checked {% endif %}
-	       onchange="updateBlockRange()">
-	<input type="radio"
-	       name="last_ip"
-	       value="{{ ip_info.ip }}"
-	       {% if forloop.last %} checked {% endif %}
-	       onchange="updateBlockRange()">
-	<code>{{ ip_info.ip }}</code>
-      </li>
-      {% endfor %}
-      <input type="submit" value="OK">
-    </ul>
-  </form>
+  <ul>
+    {% for ip_info in ip_infos %}
+    <li>
+      <input type="radio"
+	     name="first_ip"
+	     value="{{ ip_info.ip }}"
+	     {% if forloop.first %} checked {% endif %}
+	     onchange="updateBlockRange()">
+      <input type="radio"
+	     name="last_ip"
+	     value="{{ ip_info.ip }}"
+	     {% if forloop.last %} checked {% endif %}
+	     onchange="updateBlockRange()">
+      <code>{{ ip_info.ip }}</code>
+    </li>
+    {% endfor %}
+  </ul>
 </div>
 <script>
     /*
