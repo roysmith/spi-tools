@@ -11,7 +11,7 @@ def make_code(text):
     return mwparserfromhell.parse(textwrap.dedent(text))
 
 def make_source(text):
-    return SpiSourceDocument(text, 'text')
+    return SpiSourceDocument(textwrap.dedent(text), 'text')
 
 
 class SpiCaseTest(TestCase):
@@ -99,7 +99,7 @@ class SpiCaseTest(TestCase):
         {{checkip|1.2.3.5}}
         '''
 
-        case = SpiCase(make_source(make_code(text1)), (make_source(make_code(text2))))
+        case = SpiCase(make_source(text1), (make_source(text2)))
         ips = set(case.find_all_ips())
         self.assertEqual(ips, set([
             SpiIpInfo('1.2.3.4', '1 January 2018'),
