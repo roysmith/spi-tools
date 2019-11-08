@@ -4,36 +4,17 @@ import os.path
 import mwparserfromhell
 from ipaddress import IPv4Address, IPv4Network
 
-from spi_utils import SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo, ArchiveError
+from spi_utils import SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo, ArchiveError
 
 
 def make_code(text):
     return mwparserfromhell.parse(textwrap.dedent(text))
 
+def make_source(text):
+    return SpiSourceDocument(text, 'text')
+
 
 class SpiCaseTest(TestCase):
-    def test_single_wikitext_is_stored(self):
-        text = '''
-        {{SPIarchive notice|1=test-user}}
-        foo
-        '''
-        case = SpiCase(text)
-        self.assertEqual(case.wikitexts, [text])
-
-
-    def test_multiple_wikitexts_are_stored(self):
-        text1 = '''
-        {{SPIarchive notice|1=test-user}}
-        foo
-        '''
-        text2 = '''
-        {{SPIarchive notice|1=test-user}}
-        bar
-        '''
-        case = SpiCase(text1, text2)
-        self.assertEqual(case.wikitexts, [text1, text2])
-
-
     def test_multiple_wikitexts_with_different_master_names_raises_archive_error(self):
         text1 = '''
         {{SPIarchive notice|1=user1}}
@@ -44,7 +25,7 @@ class SpiCaseTest(TestCase):
         bar
         '''
         with self.assertRaises(ArchiveError) as cm:
-            case = SpiCase(text1, text2)
+            case = SpiCase(make_source(text1), make_source(text2))
         self.assertRegex(str(cm.exception), r'(?i)multiple')
 
         
@@ -52,7 +33,7 @@ class SpiCaseTest(TestCase):
         text = '''
         {{SPIarchive notice|1=KaranSharma0445}}
         '''
-        case = SpiCase(text)
+        case = SpiCase(make_source(text))
         self.assertEqual(case.master_name(), 'KaranSharma0445')
 
 
@@ -61,7 +42,7 @@ class SpiCaseTest(TestCase):
         * {{checkuser|1=DipikaKakar346 }}
         '''
         with self.assertRaises(ArchiveError):
-            SpiCase(text)
+            SpiCase(make_source(text))
 
 
     def test_construct_with_multiple_archive_notices_raises_archive_error(self):
@@ -70,7 +51,7 @@ class SpiCaseTest(TestCase):
         {{SPIarchive notice|1=Bar}}
         '''
         with self.assertRaises(ArchiveError):
-            SpiCase(text)
+            SpiCase(make_source(text))
 
 
     def test_days_returns_iterable_of_case_days(self):
@@ -85,7 +66,7 @@ class SpiCaseTest(TestCase):
         ===13 July 2019===
         ====Suspected sockpuppets====
         '''
-        case = SpiCase(text)
+        case = SpiCase(make_source(text))
         for d in case.days():
             self.assertIsInstance(d, SpiCaseDay)
 
@@ -118,7 +99,7 @@ class SpiCaseTest(TestCase):
         {{checkip|1.2.3.5}}
         '''
 
-        case = SpiCase(make_code(text1), make_code(text2))
+        case = SpiCase(make_source(make_code(text1)), (make_source(make_code(text2))))
         ips = set(case.find_all_ips())
         self.assertEqual(ips, set([
             SpiIpInfo('1.2.3.4', '1 January 2018'),

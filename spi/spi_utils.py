@@ -1,6 +1,7 @@
 import re
+from collections import namedtuple
 from ipaddress import IPv4Address, IPv4Network
-import mwparserfromhell
+from mwparserfromhell import parse
 
 class ArchiveError(ValueError):
     pass
@@ -8,17 +9,21 @@ class ArchiveError(ValueError):
 class InvalidIpV4Error(ValueError):
     pass
       
+SpiSourceDocument = namedtuple('SpiSourceDocument', 'wikitext, page_title')
+SpiParsedDocument = namedtuple('SpiParsedDocument', 'wikicode, page_title')
 
 class SpiCase:
-    def __init__(self, *wikitexts):
+    def __init__(self, *sources):
         """A case can be made up of multiple source documents.  In practice,
         there will usually be two; the currently active page, and the archive
         page.
-        """
-        self.wikitexts = list(wikitexts)
-        self.wikicodes = [mwparserfromhell.parse(t) for t in wikitexts]
 
-        master_names = set(str(self.find_master_name(code)) for code in self.wikicodes)
+        Each source is SpiSourceDocument.
+        """
+        self.parsed_docs = [SpiParsedDocument(parse(s.wikitext), s.page_title)
+                            for s in sources]
+
+        master_names = set(str(self.find_master_name(doc.wikicode)) for doc in self.parsed_docs)
         if len(master_names) == 0:
             raise ArchiveError("No sockmaster name found")
         if len(master_names) > 1:
@@ -48,8 +53,8 @@ class SpiCase:
 
     def days(self):
         """Return an iterable of SpiCaseDays"""
-        for code in self.wikicodes:
-            for section in code.get_sections(levels=[3]):
+        for doc in self.parsed_docs:
+            for section in doc.wikicode.get_sections(levels=[3]):
                 yield SpiCaseDay(section)
 
 
