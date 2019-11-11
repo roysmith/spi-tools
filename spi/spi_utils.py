@@ -60,7 +60,7 @@ class SpiCase:
 
     def find_all_ips(self):
         '''Iterates over all the IPs mentioned in checkuser templates.
-        Each user is represented as a SpiPInfo.  Order of iteration
+        Each user is represented as a SpiIpInfo.  Order of iteration
         is not guaranteed, and templates are not deduplicated.
         '''
         for day in self.days():
