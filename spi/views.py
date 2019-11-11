@@ -44,8 +44,16 @@ class IpAnalysisView(View):
 def get_spi_case_ips(master_name):
     "Returns a iterable over SpiIpInfos"
     site = Site(SITE_NAME)
-    case_page = 'Wikipedia:Sockpuppet investigations/%s' % master_name
-    archive_page = '%s/Archive' % case_page
-    case = SpiCase(SpiSourceDocument(site.pages[case_page].text(), case_page),
-                   SpiSourceDocument(site.pages[archive_page].text(), archive_page))
+    case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
+    archive_title = '%s/Archive' % case_title
+
+    case_doc = SpiSourceDocument(site.pages[case_title].text(), case_title)
+    docs = [case_doc]
+
+    archive_text = site.pages[archive_title].text()
+    if archive_text:
+        archive_doc = SpiSourceDocument(archive_text, archive_title)
+        docs.append(archive_doc)
+
+    case = SpiCase(*docs)
     return case.find_all_ips()
