@@ -6,7 +6,7 @@ from mwclient import Site
 import mwparserfromhell
 
 from .forms import CaseNameForm, IpRangeForm
-from .spi_utils import SpiCase, SpiIpInfo
+from .spi_utils import SpiCase, SpiIpInfo, SpiSourceDocument
 
 
 SITE_NAME = 'en.wikipedia.org'
@@ -46,5 +46,6 @@ def get_spi_case_ips(master_name):
     site = Site(SITE_NAME)
     case_page = 'Wikipedia:Sockpuppet investigations/%s' % master_name
     archive_page = '%s/Archive' % case_page
-    case = SpiCase(site.pages[case_page].text(), site.pages[archive_page].text())
+    case = SpiCase(SpiSourceDocument(site.pages[case_page].text(), case_page),
+                   SpiSourceDocument(site.pages[archive_page].text(), archive_page))
     return case.find_all_ips()

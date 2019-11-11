@@ -55,7 +55,7 @@ class SpiCase:
         """Return an iterable of SpiCaseDays"""
         for doc in self.parsed_docs:
             for section in doc.wikicode.get_sections(levels=[3]):
-                yield SpiCaseDay(section)
+                yield SpiCaseDay(section, doc.page_title)
 
 
     def find_all_ips(self):
@@ -69,8 +69,9 @@ class SpiCase:
 
 
 class SpiCaseDay:
-    def __init__(self, wikicode):
+    def __init__(self, wikicode, page_title):
         self.wikicode = wikicode
+        self.page_title = page_title
 
 
     def date(self):
@@ -97,7 +98,7 @@ class SpiCaseDay:
 
     def find_ips(self):
         '''Iterates over all the IPs mentioned in checkuser templates.
-        Each user is represented as an SpiIpInfo.  Order of iteration
+        Each ip is represented as an SpiIpInfo.  Order of iteration
         is not guaranteed, and templates are not deduplicated.
         '''
         date = self.date()
@@ -106,7 +107,7 @@ class SpiCaseDay:
         for t in templates:
             ip = t.get('1').value
             try:
-                yield SpiIpInfo(str(ip), str(date))
+                yield SpiIpInfo(str(ip), str(date), self.page_title)
             except InvalidIpV4Error:
                 pass
 
@@ -126,25 +127,32 @@ class SpiUserInfo:
 class SpiIpInfo:
     v4pattern = re.compile(r'^\d+\.\d+\.\d+\.\d+$')
 
-    def __init__(self, ip, date):
+    def __init__(self, ip, date, page_title):
         try:
             self.ip = IPv4Address(ip)
         except ValueError as error:
             raise InvalidIpV4Error(str(error))
         self.date = date
+        self.page_title = page_title
 
     def __eq__(self, other):
-        return self.ip == other.ip and self.date == other.date
+        return (self.ip == other.ip and
+                self.date == other.date and
+                self.page_title == other.page_title)
 
     def __lt__(self, other):
         if self.ip < other.ip:
             return True
         if self.ip > other.ip:
             return False
-        return self.date < other.date
+        if self.date < other.date:
+            return True
+        if self.date > other.date:
+            return False
+        return self.page_title < other.page_title
 
     def __hash__(self):
-        return hash((self.ip, self.date))
+        return hash((self.ip, self.date, self.page_title))
 
     @staticmethod
     def find_common_network(infos):

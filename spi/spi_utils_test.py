@@ -102,11 +102,11 @@ class SpiCaseTest(TestCase):
         case = SpiCase(make_source(text1), (make_source(text2)))
         ips = set(case.find_all_ips())
         self.assertEqual(ips, set([
-            SpiIpInfo('1.2.3.4', '1 January 2018'),
-            SpiIpInfo('1.2.3.5', '1 January 2018'),
-            SpiIpInfo('1.2.3.6', '21 March 2019'),
-            SpiIpInfo('1.2.3.7', '22 May 2019'),
-            SpiIpInfo('1.2.3.8', '13 July 2019')]))
+            SpiIpInfo('1.2.3.4', '1 January 2018', 'text'),
+            SpiIpInfo('1.2.3.5', '1 January 2018', 'text'),
+            SpiIpInfo('1.2.3.6', '21 March 2019', 'text'),
+            SpiIpInfo('1.2.3.7', '22 May 2019', 'text'),
+            SpiIpInfo('1.2.3.8', '13 July 2019', 'text')]))
 
 
 class SpiCaseDayTest(TestCase):
@@ -117,7 +117,7 @@ class SpiCaseDayTest(TestCase):
         ===21 March 2019===
         blah, blah, blaha
         '''
-        day = SpiCaseDay(make_code(text))
+        day = SpiCaseDay(make_code(text), 'title')
         date = day.date()
         self.assertEqual(date, '21 March 2019')
 
@@ -130,7 +130,7 @@ class SpiCaseDayTest(TestCase):
         ===22 March 2019===
         blah, blah, blaha
         '''
-        day = SpiCaseDay(make_code(text))
+        day = SpiCaseDay(make_code(text), 'title')
         with self.assertRaises(ArchiveError):
             day.date()
 
@@ -141,7 +141,7 @@ class SpiCaseDayTest(TestCase):
         {{SPIpriorcases}}
         blah, blah, blaha
         '''
-        day = SpiCaseDay(make_code(text))
+        day = SpiCaseDay(make_code(text), 'title')
         with self.assertRaises(ArchiveError):
             day.date()
 
@@ -152,7 +152,7 @@ class SpiCaseDayTest(TestCase):
         {{checkuser|user1}}
         {{checkuser|user2}}
         '''
-        day = SpiCaseDay(make_code(text))
+        day = SpiCaseDay(make_code(text), 'title')
         users = list(day.find_users())
         self.assertEqual(users, [SpiUserInfo('user1', '21 March 2019'),
                                  SpiUserInfo('user2', '21 March 2019')])
@@ -164,10 +164,10 @@ class SpiCaseDayTest(TestCase):
         {{checkip|1.2.3.4}}
         {{checkip|5.6.7.8}}
         '''
-        day = SpiCaseDay(make_code(text))
+        day = SpiCaseDay(make_code(text), 'title')
         ips = list(day.find_ips())
-        self.assertEqual(ips, [SpiIpInfo('1.2.3.4', '21 March 2019'),
-                               SpiIpInfo('5.6.7.8', '21 March 2019')])
+        self.assertEqual(ips, [SpiIpInfo('1.2.3.4', '21 March 2019', 'title'),
+                               SpiIpInfo('5.6.7.8', '21 March 2019', 'title')])
 
 
     def test_find_ips_silently_skips_non_v4_addresses(self):
@@ -176,9 +176,9 @@ class SpiCaseDayTest(TestCase):
         {{checkip|1.2.3.4}}
         {{checkip|5:6::7}}
         '''
-        day = SpiCaseDay(make_code(text))
+        day = SpiCaseDay(make_code(text), 'title')
         ips = list(day.find_ips())
-        self.assertEqual(ips, [SpiIpInfo('1.2.3.4', '21 March 2019')])
+        self.assertEqual(ips, [SpiIpInfo('1.2.3.4', '21 March 2019', 'title')])
 
 
 
@@ -197,37 +197,37 @@ class SpiUserInfoTest(TestCase):
 class SpiIpInfoTest(TestCase):
     def test_constructor_raises_value_error_if_not_valid_ip_v4_address(self):
         with self.assertRaises(ValueError):
-            SpiIpInfo('1:2:3:4::5', '1 January 2019')
+            SpiIpInfo('1:2:3:4::5', '1 January 2019', 'title')
 
 
     def test_eq(self):
-        info1 = SpiIpInfo('1.2.3.4', '1 January 2019')
-        info2 = SpiIpInfo('1.2.3.4', '1 January 2019')
+        info1 = SpiIpInfo('1.2.3.4', '1 January 2019', 'title')
+        info2 = SpiIpInfo('1.2.3.4', '1 January 2019', 'title')
         self.assertEqual(info1, info2)
 
 
     def test_lt_by_ip(self):
-        info1 = SpiIpInfo('1.2.3.4', '1 January 2019')
-        info2 = SpiIpInfo('1.2.3.5', '1 January 2019')
+        info1 = SpiIpInfo('1.2.3.4', '1 January 2019', 'title')
+        info2 = SpiIpInfo('1.2.3.5', '1 January 2019', 'title')
         self.assertLess(info1, info2)
 
 
     def test_lt_by_date(self):
-        info1 = SpiIpInfo('1.2.3.4', '1 January 2019')
-        info2 = SpiIpInfo('1.2.3.4', '2 January 2019')
+        info1 = SpiIpInfo('1.2.3.4', '1 January 2019', 'title')
+        info2 = SpiIpInfo('1.2.3.4', '2 January 2019', 'title')
         self.assertLess(info1, info2)
 
 
     def test_hashable(self):
-        info = SpiIpInfo('1.2.3.4', '1 January 2019')
+        info = SpiIpInfo('1.2.3.4', '1 January 2019', 'title')
         hash(info)
 
 
     def test_find_common_network(self):
         infos = [
-            SpiIpInfo('1.2.3.4', '1 January 2019'),
-            SpiIpInfo('1.2.3.17', '1 January 2019'),
-            SpiIpInfo('1.2.3.22', '1 January 2019'),
-            SpiIpInfo('1.2.3.26', '1 January 2019')]
+            SpiIpInfo('1.2.3.4', '1 January 2019', 'title'),
+            SpiIpInfo('1.2.3.17', '1 January 2019', 'title'),
+            SpiIpInfo('1.2.3.22', '1 January 2019', 'title'),
+            SpiIpInfo('1.2.3.26', '1 January 2019', 'title')]
         network = SpiIpInfo.find_common_network(infos)
         self.assertEqual(network, IPv4Network('1.2.3.0/27'))
