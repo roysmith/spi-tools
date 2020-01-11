@@ -4,7 +4,8 @@
   <form action="/spi/" method="post">
     {% csrf_token %}
     {{ form }}
-    <input type="submit" value="OK">
+    <input type="submit" name="ip-info-button" value="IP Info">
+    <input type="submit" name="sock-info-button" value="Sock Info">
   </form>
 </div>
 {% include "./bottom.dtl" %}

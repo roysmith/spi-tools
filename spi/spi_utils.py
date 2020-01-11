@@ -68,6 +68,20 @@ class SpiCase:
                 yield ip
 
 
+    def find_all_users(self):
+        '''Iterates over all the users mentioned in checkuser templates.
+        Each user is represented as a SpiUserInfo.  Order of iteration
+        is not guaranteed, and templates are not deduplicated.
+
+        The master is included as a user, with date set to None.
+
+        '''
+        yield SpiUserInfo(self.master_name(), None)
+        for day in self.days():
+            for user in day.find_users():
+                yield user
+
+
 class SpiCaseDay:
     def __init__(self, wikicode, page_title):
         self.wikicode = wikicode
