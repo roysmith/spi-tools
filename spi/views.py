@@ -27,10 +27,13 @@ class IndexView(View):
         form = CaseNameForm(request.POST)
         if form.is_valid():
             case_name = form.cleaned_data['case_name']
+            use_archive = form.cleaned_data['use_archive']
             if 'ip-info-button' in request.POST:
                 return redirect('spi-ip-analysis', case_name)
             if 'sock-info-button' in request.POST:
-                return redirect('spi-sock-info', case_name)
+                base_url = reverse('spi-sock-info', args=[case_name])
+                url = base_url + '?archive=%d' % int(use_archive)
+                return redirect(url)
             print("Egad, unknown button!")
         return render(request, 'spi/index.dtl', context)
 
@@ -50,7 +53,8 @@ class IpAnalysisView(View):
 class SockInfoView(View):
     def get(self, request, case_name):
         socks = []
-        for sock in get_sock_names(case_name):
+        use_archive = int(request.GET.get('archive', 1))
+        for sock in get_sock_names(case_name, use_archive):
             socks.append(sock)
         summaries = [make_user_summary(sock) for sock in socks]
         # This is a hack to make users with no registration time sort to the
@@ -100,8 +104,13 @@ def get_spi_case_ips(master_name):
     return case.find_all_ips()
 
 
-def get_sock_names(master_name):
-    "Returns a iterable over SpiUserInfos"
+def get_sock_names(master_name, use_archive=True):
+    """Returns a iterable over SpiUserInfos.
+
+    If use_archive is true, both the current case and any existing
+    archive is used.  Otherwise, just the current case.
+
+    """
     site = Site(SITE_NAME)
     case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
     archive_title = '%s/Archive' % case_title
@@ -109,7 +118,7 @@ def get_sock_names(master_name):
     case_doc = SpiSourceDocument(site.pages[case_title].text(), case_title)
     docs = [case_doc]
 
-    archive_text = site.pages[archive_title].text()
+    archive_text = use_archive and site.pages[archive_title].text()
     if archive_text:
         archive_doc = SpiSourceDocument(archive_text, archive_title)
         docs.append(archive_doc)
