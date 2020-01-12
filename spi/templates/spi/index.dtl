@@ -1,7 +1,7 @@
 {% include "./top.dtl" %}
 <div class="col-10">
   <h1>SPI Tools</h1>
-  <form action="/spi/" method="post">
+<form action="" method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" name="ip-info-button" value="IP Info">
