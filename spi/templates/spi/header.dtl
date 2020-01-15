@@ -13,3 +13,11 @@
   https://google.github.io/material-design-icons/ -->
 <link
    href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+<!-- Selectize.js: https://github.com/selectize/selectize.js -->
+<!-- Consider using https://github.com/papakay/selectize-bootstrap-4-style -->
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/css/selectize.css"
+  integrity="sha256-PaAZL3VjvuBsQSngzjA8dTdYa2mU88xmjd0vw8biXfg="
+  crossorigin="anonymous"/>

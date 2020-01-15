@@ -13,3 +13,10 @@
   src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
   integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
   crossorigin="anonymous"></script>
+
+<!-- Selectize.js: https://github.com/selectize/selectize.js -->
+<script
+   src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.js"
+   integrity="sha256-412FxT7SHXk39AYYNe8+6YGQAhZhlKhthDw2Z3qp/B0="
+   crossorigin="anonymous"></script>
+
