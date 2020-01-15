@@ -23,7 +23,6 @@ class IndexView(View):
         return render(request, 'spi/index.dtl', context)
 
     def post(self, request):
-        print(request.POST)
         form = CaseNameForm(request.POST)
         if form.is_valid():
             case_name = form.cleaned_data['case_name']
