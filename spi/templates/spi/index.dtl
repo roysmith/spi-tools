@@ -15,9 +15,8 @@
     </tr>
   </table>
 </form>
+{% endblock %}
 
-<script>
-  {% include "./index.js" %}
-</script>
-
+{% block page_scripts %}
+{% include "./index.js" %}
 {% endblock %}
