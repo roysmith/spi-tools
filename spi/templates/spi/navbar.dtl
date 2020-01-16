@@ -1,5 +1,3 @@
-<div class="col-2">
-  <ul>
-    <li><a href="{% url 'spi-index' %}">Index</a></li>
-  </ul>
-</div>
+<ul>
+  <li><a href="{% url 'spi-index' %}">Index</a></li>
+</ul>

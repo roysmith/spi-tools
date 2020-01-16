@@ -1,34 +1,32 @@
-{% include "./top.dtl" %}
-<div class="col-10">
-  <h1>IP analysis for User:{{ case_name }}</h1>
-  Network to block: <span id="network"></span>
-  <h2>IPs</h2>
-  <ul>
-    {% for summary in ip_summaries %}
-    <li>
-      <input type="radio"
-	     name="first_ip"
-	     value="{{ summary.ip }}"
-	     {% if forloop.first %} checked {% endif %}
-	     onchange="updateBlockRange()">
-      <input type="radio"
-	     name="last_ip"
-	     value="{{ summary.ip }}"
-	     {% if forloop.last %} checked {% endif %}
-	     onchange="updateBlockRange()">
-      <code>{{ summary.ip }}</code>
-      {% for d in summary.spi_dates %}
-        <a href="{{ d }}"><i class="material-icons md-18">link</i></a>
-      {% endfor %}
-    </li>
+{% extends "./base.dtl" %}
+
+{% block content %}
+<h1>IP analysis for User:{{ case_name }}</h1>
+Network to block: <span id="network"></span>
+<h2>IPs</h2>
+<ul>
+  {% for summary in ip_summaries %}
+  <li>
+    <input type="radio"
+	   name="first_ip"
+	   value="{{ summary.ip }}"
+	   {% if forloop.first %} checked {% endif %}
+	   onchange="updateBlockRange()">
+    <input type="radio"
+	   name="last_ip"
+	   value="{{ summary.ip }}"
+	   {% if forloop.last %} checked {% endif %}
+	   onchange="updateBlockRange()">
+    <code>{{ summary.ip }}</code>
+    {% for d in summary.spi_dates %}
+    <a href="{{ d }}"><i class="material-icons md-18">link</i></a>
     {% endfor %}
-  </ul>
-</div>
-<script>
-  {% include "./ip-analysis.js" %}
-</script>
-{% include "./bottom.dtl" %}
+  </li>
+  {% endfor %}
+</ul>
 
 <script>
+  {% include "./ip-analysis.js" %}
   $(document).ready(updateBlockRange);
 </script>
+{% endblock %}

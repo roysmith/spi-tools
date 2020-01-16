@@ -1,9 +1,0 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    {% include "./header.dtl" %}
-  </head>
-  <body>
-    <div class="container">
-      <div class="row">
-	{% include "./navbar.dtl" %}

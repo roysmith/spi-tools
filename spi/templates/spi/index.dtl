@@ -1,22 +1,23 @@
-{% include "./top.dtl" %}
-<div class="col-10">
-  <h1>SPI Tools</h1>
-  <form action="" method="post">
-    {% csrf_token %}
-    <table>
-      {{ form }}
-      <tr>
-        <th></th>
-        <td>
-          <input type="submit" name="ip-info-button" value="IP Info">
-          <input type="submit" name="sock-info-button" value="Sock Info">
-        </td>
-      </tr>
-    </table>
-  </form>
-</div>
-{% include "./bottom.dtl" %}
+{% extends "./base.dtl" %}
+
+{% block content %}
+<h1>SPI Tools</h1>
+<form action="" method="post">
+  {% csrf_token %}
+  <table>
+    {{ form }}
+    <tr>
+      <th></th>
+      <td>
+        <input type="submit" name="ip-info-button" value="IP Info">
+        <input type="submit" name="sock-info-button" value="Sock Info">
+      </td>
+    </tr>
+  </table>
+</form>
 
 <script>
   {% include "./index.js" %}
 </script>
+
+{% endblock %}
