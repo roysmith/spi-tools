@@ -1,3 +1,6 @@
 $(function() {
-    $('select').selectize();
+    $('#id_case_name').selectize({
+	create: true,
+	createOnBlur: true,
+    });
 });

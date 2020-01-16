@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from mwclient import Site
 import mwparserfromhell
 
@@ -14,11 +15,28 @@ def get_current_case_names():
     return choices
 
 
+class SelectizeField(forms.ChoiceField):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def validate(self, value):
+        if not value:
+            raise ValidationError(self.error_messages['required'],
+                                  code='required',
+                                  params={'value': value})
+        case_page_title = f'Wikipedia:Sockpuppet investigations/{value}'
+        site = Site(SITE_NAME)
+        if not site.pages[case_page_title].text():
+            raise ValidationError(f'{case_page_title} does not exist.',
+                                  code='invalid_choice',
+                                  params={'value': value})
+
 class CaseNameForm(forms.Form):
-    current_cases = forms.ChoiceField(choices=get_current_case_names(),
-                                      label='Case name preloads')
-    case_name = forms.CharField(label='Case (sockmaster) name')
-    use_archive = forms.BooleanField(label='Use archive?', required=False)
+    case_name = SelectizeField(label='Case (sockmaster) name',
+                                     choices=get_current_case_names())
+    use_archive = forms.BooleanField(label='Use archive?',
+                                     required=False)
+
 
 class IpRangeForm(forms.Form):
     first_ip = forms.CharField()
