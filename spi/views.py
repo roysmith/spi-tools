@@ -34,6 +34,7 @@ class IndexView(View):
                 url = base_url + '?archive=%d' % int(use_archive)
                 return redirect(url)
             print("Egad, unknown button!")
+        context = {'form': form}
         return render(request, 'spi/index.dtl', context)
 
 
