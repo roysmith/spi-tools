@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+import re
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -68,6 +69,7 @@ TEMPLATES = [
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
+                'django.template.context_processors.static',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'social_django.context_processors.backends',
@@ -137,7 +139,13 @@ USE_L10N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.2/howto/static-files/
+# Static files setup.  For more information, see:
+#   https://wikitech.wikimedia.org/wiki/Portal:Toolforge/Tool_Accounts
+#   https://docs.djangoproject.com/en/2.2/howto/static-files
 
-STATIC_URL = '/static/'
+m = re.match(r'/data/project/(?P<tool_name>[^/]*)/www/python/', BASE_DIR)
+if not m:
+    raise RuntimeError("BASE_DIR doesn't make sense: %s" % BASE_DIR)
+
+TOOL_NAME = m.group('tool_name')
+STATIC_URL = f'//tools-static.wmflabs.org/{TOOL_NAME}/'
