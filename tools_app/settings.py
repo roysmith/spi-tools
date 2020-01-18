@@ -15,6 +15,7 @@ import re
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WWW_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
 
 
 # Quick-start development settings - unsuitable for production
@@ -149,3 +150,5 @@ if not m:
 
 TOOL_NAME = m.group('tool_name')
 STATIC_URL = f'//tools-static.wmflabs.org/{TOOL_NAME}/'
+STATIC_ROOT = f'{WWW_DIR}/static/'
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o711
