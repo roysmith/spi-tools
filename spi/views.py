@@ -66,6 +66,13 @@ class SockInfoView(View):
         return render(request, 'spi/sock-info.dtl', context)
 
 
+class UserInfoView(View):
+    def get(self, request, user_name):
+        "blah"
+        context = {'user_name': user_name}
+        return render(request, 'spi/user-info.dtl', context)
+
+
 def make_user_summary(sock):
     return UserSummary(sock.username,
                        get_registration_time(sock.username))

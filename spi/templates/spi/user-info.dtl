@@ -1,0 +1,5 @@
+{% extends "./base.dtl" %}
+
+{% block content %}
+<h1>User analysis for {{ user_name }}</h1>
+{% endblock %}
