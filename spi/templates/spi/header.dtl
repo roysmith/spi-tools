@@ -1,3 +1,5 @@
+{% load static %}
+
 <!-- Required meta tags -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -18,5 +20,5 @@
 <!-- Consider using https://github.com/papakay/selectize-bootstrap-4-style -->
 <link
    rel="stylesheet"
-   href="{{ STATIC_URL }}spi/selectize.bootstrap4.css">
+   href="{% static "spi/selectize.bootstrap4.css" %}">
 

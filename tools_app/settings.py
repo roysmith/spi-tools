@@ -149,6 +149,10 @@ if not m:
     raise RuntimeError("BASE_DIR doesn't make sense: %s" % BASE_DIR)
 
 TOOL_NAME = m.group('tool_name')
-STATIC_URL = f'//tools-static.wmflabs.org/{TOOL_NAME}/'
-STATIC_ROOT = f'{WWW_DIR}/static/'
-FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o711
+
+if DEBUG:
+    STATIC_URL = f'/{TOOL_NAME}/static/'
+else:
+    STATIC_URL = f'//tools-static.wmflabs.org/{TOOL_NAME}/'
+    STATIC_ROOT = f'{WWW_DIR}/static/'
+    FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o711
