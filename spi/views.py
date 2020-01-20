@@ -68,7 +68,6 @@ class SockInfoView(View):
 
 class UserInfoView(View):
     def get(self, request, user_name):
-        "blah"
         context = {'user_name': user_name}
         return render(request, 'spi/user-info.dtl', context)
 
