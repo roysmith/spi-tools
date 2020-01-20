@@ -41,7 +41,7 @@ class IndexView(View):
 class IpAnalysisView(View):
     def get(self, request, case_name):
         ip_data = defaultdict(list)
-        for i in get_spi_case_ips(case_name):
+        for i in self.get_spi_case_ips(case_name):
             ip_data[i.ip].append(i.date)
         summaries = [IpSummary(ip, sorted(ip_data[ip])) for ip in ip_data]
         summaries.sort()
@@ -50,13 +50,32 @@ class IpAnalysisView(View):
         }
         return render(request, 'spi/ip-analysis.dtl', context)
 
+
+    def get_spi_case_ips(self, master_name):
+        "Returns a iterable over SpiIpInfos"
+        site = Site(SITE_NAME)
+        case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
+        archive_title = '%s/Archive' % case_title
+
+        case_doc = SpiSourceDocument(site.pages[case_title].text(), case_title)
+        docs = [case_doc]
+
+        archive_text = site.pages[archive_title].text()
+        if archive_text:
+            archive_doc = SpiSourceDocument(archive_text, archive_title)
+            docs.append(archive_doc)
+
+        case = SpiCase(*docs)
+        return case.find_all_ips()
+
+
 class SockInfoView(View):
     def get(self, request, case_name):
         socks = []
         use_archive = int(request.GET.get('archive', 1))
-        for sock in get_sock_names(case_name, use_archive):
+        for sock in self.get_sock_names(case_name, use_archive):
             socks.append(sock)
-        summaries = [make_user_summary(sock) for sock in socks]
+        summaries = [self.make_user_summary(sock) for sock in socks]
         # This is a hack to make users with no registration time sort to the
         # beginning of the list.  We need to do something smarter here.
         summaries.sort(key=lambda x: x.registration_time or "")
@@ -66,68 +85,58 @@ class SockInfoView(View):
         return render(request, 'spi/sock-info.dtl', context)
 
 
+    def make_user_summary(self, sock):
+        return UserSummary(sock.username,
+                           self.get_registration_time(sock.username))
+
+
+    def get_registration_time(self, user):
+        '''Return the registration time for a user as a string.
+
+        If the registration time can't be determined, returns None.
+
+        '''
+        site = Site(SITE_NAME)
+        r = site.users(users=[user], prop=['registration'])
+        userinfo = r.next()
+        try:
+            return userinfo['registration']
+        except KeyError:
+            return None
+
+
+    def get_sock_names(self, master_name, use_archive=True):
+        """Returns a iterable over SpiUserInfos.
+
+        If use_archive is true, both the current case and any existing
+        archive is used.  Otherwise, just the current case.
+
+        """
+        site = Site(SITE_NAME)
+        case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
+        archive_title = '%s/Archive' % case_title
+
+        case_doc = SpiSourceDocument(site.pages[case_title].text(), case_title)
+        docs = [case_doc]
+
+        archive_text = use_archive and site.pages[archive_title].text()
+        if archive_text:
+            archive_doc = SpiSourceDocument(archive_text, archive_title)
+            docs.append(archive_doc)
+
+        case = SpiCase(*docs)
+        return case.find_all_users()
+
+
+
 class UserInfoView(View):
     def get(self, request, user_name):
         context = {'user_name': user_name}
         return render(request, 'spi/user-info.dtl', context)
 
 
-def make_user_summary(sock):
-    return UserSummary(sock.username,
-                       get_registration_time(sock.username))
 
 
-def get_registration_time(user):
-    '''Return the registration time for a user as a string.
-
-    If the registration time can't be determined, returns None.
-
-    '''
-    site = Site(SITE_NAME)
-    r = site.users(users=[user], prop=['registration'])
-    userinfo = r.next()
-    try:
-        return userinfo['registration']
-    except KeyError:
-        return None
 
 
-def get_spi_case_ips(master_name):
-    "Returns a iterable over SpiIpInfos"
-    site = Site(SITE_NAME)
-    case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
-    archive_title = '%s/Archive' % case_title
 
-    case_doc = SpiSourceDocument(site.pages[case_title].text(), case_title)
-    docs = [case_doc]
-
-    archive_text = site.pages[archive_title].text()
-    if archive_text:
-        archive_doc = SpiSourceDocument(archive_text, archive_title)
-        docs.append(archive_doc)
-
-    case = SpiCase(*docs)
-    return case.find_all_ips()
-
-
-def get_sock_names(master_name, use_archive=True):
-    """Returns a iterable over SpiUserInfos.
-
-    If use_archive is true, both the current case and any existing
-    archive is used.  Otherwise, just the current case.
-
-    """
-    site = Site(SITE_NAME)
-    case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
-    archive_title = '%s/Archive' % case_title
-
-    case_doc = SpiSourceDocument(site.pages[case_title].text(), case_title)
-    docs = [case_doc]
-
-    archive_text = use_archive and site.pages[archive_title].text()
-    if archive_text:
-        archive_doc = SpiSourceDocument(archive_text, archive_title)
-        docs.append(archive_doc)
-
-    case = SpiCase(*docs)
-    return case.find_all_users()
