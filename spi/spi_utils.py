@@ -109,6 +109,19 @@ class SpiCaseDay:
             username = t.get('1').value
             yield SpiUserInfo(str(username), str(date))
 
+    def find_unique_users(self):
+        '''Iterates over all the unique accounts mentioned in checkuser
+        templates.  Each user is represented as an SpiUserInfo.  Order
+        of iteration is not guaranteed, but unlike find_users(),
+        templates are deduplicated.
+
+        '''
+        seen = set()
+        for user in self.find_users():
+            if user not in seen:
+                seen.add(user)
+                yield user
+
 
     def find_ips(self):
         '''Iterates over all the IPs mentioned in checkuser templates.
