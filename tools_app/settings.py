@@ -144,7 +144,7 @@ USE_TZ = True
 #   https://wikitech.wikimedia.org/wiki/Portal:Toolforge/Tool_Accounts
 #   https://docs.djangoproject.com/en/2.2/howto/static-files
 
-m = re.match(r'/data/project/(?P<tool_name>[^/]*)/www/python/', BASE_DIR)
+m = re.match(r'.*/(?P<tool_name>[^/]*)/www/python/src', BASE_DIR)
 if not m:
     raise RuntimeError("BASE_DIR doesn't make sense: %s" % BASE_DIR)
 
