@@ -46,9 +46,11 @@ INSTALLED_APPS = [
     'spi',
     'pageutils',
     'social_django',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -156,3 +158,7 @@ else:
     STATIC_URL = f'//tools-static.wmflabs.org/{TOOL_NAME}/'
     STATIC_ROOT = f'{WWW_DIR}/static/'
     FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o711
+
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': lambda x: False,
+    }
