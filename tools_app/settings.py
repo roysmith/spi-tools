@@ -16,7 +16,7 @@ import re
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WWW_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
-
+LOG_DIR = os.path.join(os.environ.get('HOME'), 'logs')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
@@ -161,4 +161,31 @@ else:
 
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda x: False,
+    }
+
+if DEBUG:
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'file': {
+                'level': 'DEBUG',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': os.path.join(LOG_DIR, 'django.log'),
+            },
+            # Hack to get real-time logging, as a work-around to T256426 and T256482.
+            'bastion': {
+                'level': 'DEBUG',
+                'class': 'logging.handlers.SocketHandler',
+                'host': 'tools-sgebastion-08.tools.eqiad.wmflabs',
+                'port': 23001,
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['file', 'bastion'],
+                'level': 'DEBUG',
+                'propagate': True,
+            },
+        },
     }
