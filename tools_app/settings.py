@@ -59,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
+    'tools_app.middleware.LoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'tools_app.urls'
@@ -183,6 +184,11 @@ if DEBUG:
         },
         'loggers': {
             'django': {
+                'handlers': ['file', 'bastion'],
+                'level': 'DEBUG',
+                'propagate': True,
+            },
+            'view': {
                 'handlers': ['file', 'bastion'],
                 'level': 'DEBUG',
                 'propagate': True,
