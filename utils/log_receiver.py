@@ -84,7 +84,7 @@ def main():
     args = parser.parse_args()
     
     logging.basicConfig(
-        format='%(relativeCreated)5d %(name)-15s %(levelname)-8s %(message)s')
+        format='%(asctime)s  %(levelname)-8s %(name)-15s %(message)s')
     tcpserver = LogRecordSocketReceiver(args.host, args.port)
     print('About to start TCP server...')
     tcpserver.serve_until_stopped()
