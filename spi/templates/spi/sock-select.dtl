@@ -16,4 +16,13 @@
     {% endfor %}
   </table>
 </form>
+
+<button type="button" class="btn btn-primary" id="check-all" href="javascript:void(0)">Check all</button>
+<button type="button" class="btn btn-primary" id="uncheck-all" href="javascript:void(0)">Uncheck all</button>
+
+{% endblock %}
+
+
+{% block page_scripts %}
+  {% include "./sock-select.js" %}
 {% endblock %}
