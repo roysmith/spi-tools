@@ -4,7 +4,6 @@
 <h1>Sock selection for User:{{ case_name }}</h1>
 <form action="" method="post">
   {% csrf_token %}
-  {# <pre> {% filter force_escape %} {% debug %} {% endfilter %} </pre> #}
   <table id="sock-table">
     {% for field, name, date in form_info %}
     <tr>
