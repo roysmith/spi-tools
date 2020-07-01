@@ -38,6 +38,15 @@ class CaseNameForm(forms.Form):
                                      required=False)
 
 
+class SockSelectForm(forms.Form):
+    @staticmethod
+    def build(sock_names):
+        fields = {'sock%d' % i: forms.BooleanField(label=name, required=False)
+                  for i, name in enumerate(sock_names)}
+        sub_class = type('DynamicSockSelectForm', (SockSelectForm,), fields)
+        return sub_class()
+
+
 class IpRangeForm(forms.Form):
     first_ip = forms.CharField()
     last_ip = forms.CharField()

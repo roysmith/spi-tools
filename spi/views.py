@@ -2,12 +2,16 @@ from collections import namedtuple, defaultdict
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
+from django.forms import BooleanField
 from mwclient import Site
 import mwparserfromhell
 from pprint import pprint
+import logging
 
-from .forms import CaseNameForm, IpRangeForm
+from .forms import CaseNameForm, IpRangeForm, SockSelectForm
 from .spi_utils import SpiCase, SpiIpInfo, SpiSourceDocument
+
+logger = logging.getLogger('view')
 
 
 SITE_NAME = 'en.wikipedia.org'
@@ -136,16 +140,16 @@ class SockSelectView(View):
     def get(self, request, case_name):
         socks = []
         use_archive = int(request.GET.get('archive', 1))
-        for sock in get_sock_names(case_name, use_archive):
-            socks.append(sock)
-        summaries = [make_user_summary(sock) for sock in socks]
-        # This is a hack to make users with no registration time sort to the
-        # beginning of the list.  We need to do something smarter here.
-        summaries.sort(key=lambda x: x.registration_time or "")
+        user_infos = list(get_sock_names(case_name, use_archive))
+
+        names = [sock.username for sock in user_infos]
+        dates = [sock.date for sock in user_infos]
+        form = SockSelectForm.build(names)
+
         context = {'case_name': case_name,
-                   'summaries': summaries,
-        }
-        return render(request, 'spi/sock-info.dtl', context)
+                   'form_info': zip(form, names, dates),
+                   }
+        return render(request, 'spi/sock-select.dtl', context)
 
 
 class UserInfoView(View):
