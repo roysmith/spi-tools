@@ -32,9 +32,11 @@ class SelectizeField(forms.ChoiceField):
                                   params={'value': value})
 
 class CaseNameForm(forms.Form):
-    case_name = SelectizeField(label='Case (sockmaster) name',
-                                     choices=get_current_case_names())
+    names = get_current_case_names();
+    names.sort()
+    case_name = SelectizeField(label='Case (sockmaster) name', choices=names)
     use_archive = forms.BooleanField(label='Use archive?',
+                                     initial=True,
                                      required=False)
 
 
