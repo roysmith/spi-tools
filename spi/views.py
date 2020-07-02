@@ -138,18 +138,21 @@ class SockInfoView(View):
 
 class SockSelectView(View):
     def get(self, request, case_name):
-        socks = []
         use_archive = int(request.GET.get('archive', 1))
         user_infos = list(get_sock_names(case_name, use_archive))
+        return render(request,
+                      'spi/sock-select.dtl',
+                      self.build_context(case_name, user_infos))
 
-        names = [sock.username for sock in user_infos]
-        dates = [sock.date for sock in user_infos]
+    @staticmethod
+    def build_context(case_name, user_infos):
+        users_by_name = {user.username: user for user in user_infos}
+        names = list({user.username for user in user_infos})
+        dates = [users_by_name[name].date for name in names]
         form = SockSelectForm.build(names)
-
-        context = {'case_name': case_name,
-                   'form_info': zip(form, names, dates),
-                   }
-        return render(request, 'spi/sock-select.dtl', context)
+        return {'case_name': case_name,
+                'form_info': zip(form, names, dates),
+        }
 
 
 class UserInfoView(View):
