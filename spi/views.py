@@ -1,12 +1,15 @@
 from collections import namedtuple, defaultdict
+from pprint import pprint
+import logging
+import urllib.request
+import urllib.parse
+
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
 from django.forms import BooleanField
 from mwclient import Site
 import mwparserfromhell
-from pprint import pprint
-import logging
 
 from .forms import CaseNameForm, IpRangeForm, SockSelectForm
 from .spi_utils import SpiCase, SpiIpInfo, SpiSourceDocument
@@ -15,6 +18,7 @@ logger = logging.getLogger('view')
 
 
 SITE_NAME = 'en.wikipedia.org'
+EDITOR_INTERACT_BASE = "https://tools.wmflabs.org/sigma/editorinteract.py"
 
 IpSummary = namedtuple('IpSummary', 'ip, spi_dates')
 UserSummary = namedtuple('UserSummary', 'username, registration_time')
@@ -143,6 +147,25 @@ class SockSelectView(View):
         return render(request,
                       'spi/sock-select.dtl',
                       self.build_context(case_name, user_infos))
+
+    def post(self, request, case_name):
+        form = SockSelectForm(request.POST)
+        if form.is_valid():
+            logger.debug("post: valid")
+            if 'interaction-analyzer-button' in request.POST:
+                selected_fields = [urllib.parse.unquote(f.replace('sock_', '', 1))
+                                   for f in request.POST if f.startswith('sock_')]
+                selected_socks = [f for f in selected_fields]
+                query_items = [('users', sock) for sock in selected_socks]
+                params = urllib.parse.urlencode(query_items)
+                url = "%s?%s" % (EDITOR_INTERACT_BASE, params)
+                logger.debug("Redirecting to: %s" % url)
+                return redirect(url)
+            print("Egad, unknown button!")
+        logger.debug("post: not valid")
+        context = {'case_name': case_name,
+                   'form': form}
+        return render(request, 'spi/sock-select.dtl', context)
 
     @staticmethod
     def build_context(case_name, user_infos):

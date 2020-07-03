@@ -1,3 +1,5 @@
+import urllib.parse
+
 from django import forms
 from django.core.exceptions import ValidationError
 from mwclient import Site
@@ -43,9 +45,11 @@ class CaseNameForm(forms.Form):
 class SockSelectForm(forms.Form):
     @staticmethod
     def build(sock_names):
-        fields = {'sock%d' % i: forms.BooleanField(label=name, required=False)
-                  for i, name in enumerate(sock_names)}
+        fields = {'sock_%s' % urllib.parse.quote(name):
+                  forms.BooleanField(label=name, required=False)
+                  for name in sock_names}
         sub_class = type('DynamicSockSelectForm', (SockSelectForm,), fields)
+
         return sub_class()
 
 
