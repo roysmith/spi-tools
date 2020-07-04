@@ -12,11 +12,13 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 import re
+import tools_app.git
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WWW_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
 LOG_DIR = os.path.join(os.environ.get('HOME'), 'logs')
+VERSION_ID = tools_app.git.get_info()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
@@ -78,6 +80,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'social_django.context_processors.backends',
                 'social_django.context_processors.login_redirect',
+                'tools_app.context_preprocessors.get_from_settings',
             ],
         },
     },

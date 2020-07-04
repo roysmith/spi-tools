@@ -13,6 +13,8 @@
           {% block content %} <!-- main content --> {% endblock %}
         </div>
       </div>
+      <div class="row mt-5  text-muted">
+        SPI Tools: {{ VERSION_ID }}
     </div>
     {% include "./footer.dtl" %}
     <script>
