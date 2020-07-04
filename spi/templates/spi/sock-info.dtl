@@ -6,7 +6,10 @@
 <table>
   <tr><th>Username</th><th>Registration time</th></tr>
   {% for s in summaries %}
-  <tr><th><code>{{ s.username }}</code></th><th><code>{{ s.registration_time }}</code></th></tr>
+  <tr>
+    <th><a href="{% url 'spi-user-info' user_name=s.username %}">{{ s.username }}</a></th>
+    <th>{{ s.registration_time }}</th>
+  </tr>
   {% endfor %}
 </table>
 {% endblock %}

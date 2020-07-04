@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    {% include "./header.dtl" %}
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-2">
+          {% include "./navbar.dtl" %}
+        </div>
+        <div class="col-10">
+          {% block content %} <!-- main content --> {% endblock %}
+        </div>
+      </div>
+    </div>
+    {% include "./footer.dtl" %}
+    <script>
+      {% block page_scripts %} <!-- per-page javascript --> {% endblock %}
+    </script>
+  </body>
+</html>

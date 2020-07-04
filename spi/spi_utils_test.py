@@ -154,8 +154,33 @@ class SpiCaseDayTest(TestCase):
         '''
         day = SpiCaseDay(make_code(text), 'title')
         users = list(day.find_users())
-        self.assertEqual(users, [SpiUserInfo('user1', '21 March 2019'),
-                                 SpiUserInfo('user2', '21 March 2019')])
+        self.assertCountEqual(users, [SpiUserInfo('user1', '21 March 2019'),
+                                      SpiUserInfo('user2', '21 March 2019')])
+
+    def test_find_users_with_duplicates(self):
+        text = '''
+        ===21 March 2019===
+        {{checkuser|user1}}
+        {{checkuser|user1}}
+        {{checkuser|user2}}
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.find_users())
+        self.assertCountEqual(users, [SpiUserInfo('user1', '21 March 2019'),
+                                      SpiUserInfo('user1', '21 March 2019'),
+                                      SpiUserInfo('user2', '21 March 2019')])
+
+    def test_find_unique_users(self):
+        text = '''
+        ===21 March 2019===
+        {{checkuser|user1}}
+        {{checkuser|user1}}
+        {{checkuser|user2}}
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.find_unique_users())
+        self.assertCountEqual(users, [SpiUserInfo('user1', '21 March 2019'),
+                                      SpiUserInfo('user2', '21 March 2019')])
 
 
     def test_find_ips(self):

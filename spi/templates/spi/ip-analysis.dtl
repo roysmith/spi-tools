@@ -19,14 +19,14 @@ Network to block: <span id="network"></span>
 	   onchange="updateBlockRange()">
     <code>{{ summary.ip }}</code>
     {% for d in summary.spi_dates %}
-    <a href="{{ d }}"><i class="material-icons md-18">link</i></a>
+    <a href="{{ d }}">(link)</a>
     {% endfor %}
   </li>
   {% endfor %}
 </ul>
+{% endblock %}
 
-<script>
+{% block page_scripts %}
   {% include "./ip-analysis.js" %}
   $(document).ready(updateBlockRange);
-</script>
 {% endblock %}

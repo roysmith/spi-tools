@@ -1,3 +1,5 @@
+import urllib.parse
+
 from django import forms
 from django.core.exceptions import ValidationError
 from mwclient import Site
@@ -32,10 +34,23 @@ class SelectizeField(forms.ChoiceField):
                                   params={'value': value})
 
 class CaseNameForm(forms.Form):
-    case_name = SelectizeField(label='Case (sockmaster) name',
-                                     choices=get_current_case_names())
+    names = get_current_case_names();
+    names.sort()
+    case_name = SelectizeField(label='Case (sockmaster) name', choices=names)
     use_archive = forms.BooleanField(label='Use archive?',
+                                     initial=True,
                                      required=False)
+
+
+class SockSelectForm(forms.Form):
+    @staticmethod
+    def build(sock_names):
+        fields = {'sock_%s' % urllib.parse.quote(name):
+                  forms.BooleanField(label=name, required=False)
+                  for name in sock_names}
+        sub_class = type('DynamicSockSelectForm', (SockSelectForm,), fields)
+
+        return sub_class()
 
 
 class IpRangeForm(forms.Form):
