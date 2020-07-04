@@ -13,8 +13,12 @@
           {% block content %} <!-- main content --> {% endblock %}
         </div>
       </div>
-      <div class="row mt-5  text-muted">
-        SPI Tools: {{ VERSION_ID }}
+      <div class="row mt-5 text-muted">
+        <pre>
+          SPI Tools
+          {{ VERSION_ID }}
+          <a href="https://github.com/roysmith/spi-tools">github.com/roysmith/spi-tools</a>
+        </pre>
     </div>
     {% include "./footer.dtl" %}
     <script>
