@@ -1,0 +1,12 @@
+{% extends "./base.dtl" %}
+
+{% block content %}
+<h1>Timecard analysis for {{case_name }}</h1>
+
+<canvas id="chart"></canvas>
+{% endblock %}
+
+
+{% block page_scripts %}
+  {% include "./timecard.js" %}
+{% endblock %}

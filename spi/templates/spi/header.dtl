@@ -14,3 +14,8 @@
 <link
    rel="stylesheet"
    href="{% static "spi/selectize.bootstrap4.css" %}">
+
+<!-- Chart.js: https://www.chartjs.org/ -->
+<link
+   rel="stylesheet"
+   href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/Chart.js/2.9.3/Chart.css">

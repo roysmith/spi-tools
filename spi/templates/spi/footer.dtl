@@ -8,3 +8,5 @@
 <!-- Selectize.js: https://github.com/selectize/selectize.js -->
 <script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.js"</script>
 
+<!-- Chart.js: https://www.chartjs.org/ -->
+<script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/Chart.js/2.9.3/Chart.bundle.js"></script>

@@ -161,6 +161,15 @@ class SockSelectView(View):
                 url = "%s?%s" % (EDITOR_INTERACT_BASE, params)
                 logger.debug("Redirecting to: %s" % url)
                 return redirect(url)
+            if 'timecard-button' in request.POST:
+                selected_fields = [urllib.parse.unquote(f.replace('sock_', '', 1))
+                                   for f in request.POST if f.startswith('sock_')]
+                selected_socks = [f for f in selected_fields]
+                query_items = [('users', sock) for sock in selected_socks]
+                params = urllib.parse.urlencode(query_items)
+                url = "%s?%s" % (reverse('spi-timecard', args=[case_name]), params)
+                logger.debug("Redirecting to: %s" % url)
+                return redirect(url)
             print("Egad, unknown button!")
         logger.debug("post: not valid")
         context = {'case_name': case_name,
@@ -182,3 +191,9 @@ class UserInfoView(View):
     def get(self, request, user_name):
         context = {'user_name': user_name}
         return render(request, 'spi/user-info.dtl', context)
+
+
+class TimecardView(View):
+    def get(self, request, case_name):
+        context = {'case_name': case_name}
+        return render(request, 'spi/timecard.dtl', context)
