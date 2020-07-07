@@ -2,8 +2,17 @@
 
 {% block content %}
 <h1>Timecard analysis for {{case_name }}</h1>
+<table>
+  {% for user in users %}
+  <tr>
+    <td>{{ user }}</td>
+  </tr>
+  {% endfor %}
+</table>
 
-<canvas id="chart"></canvas>
+<div class="chart-container" width="300" height="300" style="position: relative; height: 40vh; width: 80vw">
+  <canvas id="chart" width="300" height="150"></canvas>
+</div>
 {% endblock %}
 
 

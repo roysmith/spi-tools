@@ -4,6 +4,8 @@ import logging
 import urllib.request
 import urllib.parse
 
+import requests
+
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
@@ -19,6 +21,7 @@ logger = logging.getLogger('view')
 
 SITE_NAME = 'en.wikipedia.org'
 EDITOR_INTERACT_BASE = "https://tools.wmflabs.org/sigma/editorinteract.py"
+TIMECARD_BASE = 'https://xtools.wmflabs.org/api/user/timecard/en.wikipedia.org'
 
 IpSummary = namedtuple('IpSummary', 'ip, spi_dates')
 UserSummary = namedtuple('UserSummary', 'username, registration_time')
@@ -195,5 +198,17 @@ class UserInfoView(View):
 
 class TimecardView(View):
     def get(self, request, case_name):
-        context = {'case_name': case_name}
+        user_names = request.GET.getlist('users')
+        data = []
+        for name in user_names:
+            r = requests.get('%s/%s' % (TIMECARD_BASE, name))
+            timecard = r.json()['timecard']
+            data = [{'x': t['hour'], 'y': t['day_of_week'], 'r': t['scale']}
+                    for t in timecard
+                    if 'scale' in t
+            ]
+        context = {'case_name': case_name,
+                   'users': user_names,
+                   'data': data,
+        }
         return render(request, 'spi/timecard.dtl', context)
