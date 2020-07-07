@@ -199,14 +199,17 @@ class UserInfoView(View):
 class TimecardView(View):
     def get(self, request, case_name):
         user_names = request.GET.getlist('users')
-        data = []
+        data = {}
         for name in user_names:
             r = requests.get('%s/%s' % (TIMECARD_BASE, name))
-            timecard = r.json()['timecard']
-            data = [{'x': t['hour'], 'y': t['day_of_week'], 'r': t['scale']}
-                    for t in timecard
-                    if 'scale' in t
-            ]
+            if r.status_code == requests.codes.ok:
+                timecard = r.json()['timecard']
+                data[name] = [{'x': t['hour'], 'y': t['day_of_week'], 'r': t['scale']}
+                              for t in timecard
+                              if 'scale' in t]
+            else:
+                data[name] = []
+
         context = {'case_name': case_name,
                    'users': user_names,
                    'data': data,

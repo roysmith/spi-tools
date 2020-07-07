@@ -3,15 +3,16 @@
 {% block content %}
 <h1>Timecard analysis for {{case_name }}</h1>
 <table>
-  {% for user in users %}
+  {% for user in data %}
   <tr>
-    <td>{{ user }}</td>
+    <td>
+      <div class="chart-container">
+        <canvas id="chart-{{ user }}" width="300" height="150"></canvas>
+    </td>
   </tr>
   {% endfor %}
 </table>
 
-<div class="chart-container" width="300" height="300" style="position: relative; height: 40vh; width: 80vw">
-  <canvas id="chart" width="300" height="150"></canvas>
 </div>
 {% endblock %}
 
