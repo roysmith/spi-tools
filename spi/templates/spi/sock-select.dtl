@@ -24,11 +24,6 @@
     {% endfor %}
   </table>
 </form>
-
-
-<canvas id="chart"></canvas>
-
-
 {% endblock %}
 
 
