@@ -17,9 +17,11 @@
         <div class="col-12">
           <div class="card mt-5">
             <div class="card-body text-muted bg-light">
-              <p class="my-0">SPI Tools</p>
+              <p class="my-0">SPI Tools debug info</p>
+              <p class="my-0">{{ REQUEST_TIME }}</p>
               <p class="my-0">{{ VERSION_ID }}</p>
               <p class="my-0"><a href="https://github.com/roysmith/spi-tools">github.com/roysmith/spi-tools</a></p>
+              <p class="my-0"><a href="https://github.com/roysmith/spi-tools/issues/new">file a bug report</a></p>
             </div>
           </div>
         </div>
