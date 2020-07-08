@@ -9,12 +9,6 @@
   rel="stylesheet"
   href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
 
-<!-- Selectize.js: https://github.com/selectize/selectize.js -->
-<!-- Consider using https://github.com/papakay/selectize-bootstrap-4-style -->
-<link
-   rel="stylesheet"
-   href="{% static "spi/selectize.bootstrap4.css" %}">
-
 <!-- Chart.js: https://www.chartjs.org/ -->
 <link
    rel="stylesheet"

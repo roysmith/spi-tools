@@ -17,7 +17,3 @@
   </table>
 </form>
 {% endblock %}
-
-{% block page_scripts %}
-{% include "./index.js" %}
-{% endblock %}
