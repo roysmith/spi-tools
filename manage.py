@@ -2,10 +2,14 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+from config import get_config
 
 
 def main():
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tools_app.settings')
+    config = get_config()
+    os.environ["DJANGO_SETTINGS_MODULE"] = config["django"]["settings_module"]
+    os.environ["DJANGO_SECRET"] = config["django"]["secret"]
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

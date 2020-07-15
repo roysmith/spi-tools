@@ -4,6 +4,8 @@ import logging
 import urllib.request
 import urllib.parse
 
+import requests
+
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
@@ -19,6 +21,7 @@ logger = logging.getLogger('view')
 
 SITE_NAME = 'en.wikipedia.org'
 EDITOR_INTERACT_BASE = "https://tools.wmflabs.org/sigma/editorinteract.py"
+TIMECARD_BASE = 'https://xtools.wmflabs.org/api/user/timecard/en.wikipedia.org'
 
 IpSummary = namedtuple('IpSummary', 'ip, spi_dates')
 UserSummary = namedtuple('UserSummary', 'username, registration_time')
@@ -161,6 +164,15 @@ class SockSelectView(View):
                 url = "%s?%s" % (EDITOR_INTERACT_BASE, params)
                 logger.debug("Redirecting to: %s" % url)
                 return redirect(url)
+            if 'timecard-button' in request.POST:
+                selected_fields = [urllib.parse.unquote(f.replace('sock_', '', 1))
+                                   for f in request.POST if f.startswith('sock_')]
+                selected_socks = [f for f in selected_fields]
+                query_items = [('users', sock) for sock in selected_socks]
+                params = urllib.parse.urlencode(query_items)
+                url = "%s?%s" % (reverse('spi-timecard', args=[case_name]), params)
+                logger.debug("Redirecting to: %s" % url)
+                return redirect(url)
             print("Egad, unknown button!")
         logger.debug("post: not valid")
         context = {'case_name': case_name,
@@ -182,3 +194,24 @@ class UserInfoView(View):
     def get(self, request, user_name):
         context = {'user_name': user_name}
         return render(request, 'spi/user-info.dtl', context)
+
+
+class TimecardView(View):
+    def get(self, request, case_name):
+        user_names = request.GET.getlist('users')
+        data = {}
+        for name in user_names:
+            r = requests.get('%s/%s' % (TIMECARD_BASE, name))
+            if r.status_code == requests.codes.ok:
+                timecard = r.json()['timecard']
+                data[name] = [{'x': t['hour'], 'y': t['day_of_week'], 'r': t['scale']}
+                              for t in timecard
+                              if 'scale' in t]
+            else:
+                data[name] = []
+
+        context = {'case_name': case_name,
+                   'users': user_names,
+                   'data': data,
+        }
+        return render(request, 'spi/timecard.dtl', context)

@@ -1,0 +1,22 @@
+{% extends "./base.dtl" %}
+
+{% block content %}
+<h1>Timecard analysis for {{case_name }}</h1>
+<table>
+  {% for user in data %}
+  <tr>
+    <td>
+      <div class="chart-container">
+        <canvas id="chart-{{ user }}" width="300" height="150"></canvas>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+</div>
+{% endblock %}
+
+
+{% block page_scripts %}
+  {% include "./timecard.js" %}
+{% endblock %}
