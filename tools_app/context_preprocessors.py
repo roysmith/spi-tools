@@ -9,6 +9,7 @@ def debug(request):
     uptime = now - server_start_time
 
     return {'VERSION_ID': settings.VERSION_ID,
+            'DEBUG_ENABLED': settings.DEBUG,
             'REQUEST_START_TIME_UTC': request_start_time.isoformat(timespec="seconds"),
             'REQUEST_DURATION': request_duration,
             'SERVER_START_TIME_UTC': server_start_time.isoformat(timespec="seconds"),
