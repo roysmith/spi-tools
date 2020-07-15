@@ -14,11 +14,20 @@ import os
 import re
 import tools_app.git
 
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WWW_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
 LOG_DIR = os.path.join(os.environ.get('HOME'), 'logs')
 VERSION_ID = tools_app.git.get_info()
+
+
+# Intuit our toolforge tool name from the file system path.
+m = re.match(r'.*/(?P<tool_name>[^/]*)/www/python/src', BASE_DIR)
+if not m:
+    raise RuntimeError("BASE_DIR doesn't make sense: %s" % BASE_DIR)
+TOOL_NAME = m.group('tool_name')
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
@@ -48,6 +57,7 @@ INSTALLED_APPS = [
     'cat_checker',
     'spi',
     'pageutils',
+    'tools_app',
     'social_django',
     'debug_toolbar',
 ]
@@ -95,7 +105,7 @@ AUTHENTICATION_BACKENDS = (
 SOCIAL_AUTH_MEDIAWIKI_KEY = os.environ.get('MEDIAWIKI_KEY')
 SOCIAL_AUTH_MEDIAWIKI_SECRET = os.environ.get('MEDIAWIKI_SECRET')
 SOCIAL_AUTH_MEDIAWIKI_URL = 'https://meta.wikimedia.org/w/index.php'
-SOCIAL_AUTH_MEDIAWIKI_CALLBACK = 'http://127.0.0.1:8080/oauth/complete/mediawiki/'
+SOCIAL_AUTH_MEDIAWIKI_CALLBACK = 'https://%s.toolforge.org/oauth/complete/mediawiki/' % TOOL_NAME
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'profile'
@@ -150,13 +160,6 @@ USE_TZ = True
 # Static files setup.  For more information, see:
 #   https://wikitech.wikimedia.org/wiki/Portal:Toolforge/Tool_Accounts
 #   https://docs.djangoproject.com/en/2.2/howto/static-files
-
-m = re.match(r'.*/(?P<tool_name>[^/]*)/www/python/src', BASE_DIR)
-if not m:
-    raise RuntimeError("BASE_DIR doesn't make sense: %s" % BASE_DIR)
-
-TOOL_NAME = m.group('tool_name')
-
 if DEBUG:
     STATIC_URL = f'/{TOOL_NAME}/static/'
 else:
