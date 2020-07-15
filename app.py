@@ -19,6 +19,7 @@ config = get_config(str(config_dir / "config.ini"))
 os.environ.setdefault("MEDIAWIKI_KEY", config["oauth"]["mediawiki_key"])
 os.environ.setdefault("MEDIAWIKI_SECRET", config["oauth"]["mediawiki_secret"])
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tools_app.settings")
-os.environ.setdefault("DJANGO_SECRET", (config_dir / "secret").read_text().strip())
+os.environ.setdefault("DJANGO_SECRET", config["django"]["django_secret"])
+
 
 app = get_wsgi_application()
