@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 import re
+import datetime
 import tools_app.git
 
 
@@ -20,6 +21,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WWW_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
 LOG_DIR = os.path.join(os.environ.get('HOME'), 'logs')
 VERSION_ID = tools_app.git.get_info()
+SERVER_START_TIME_UTC = datetime.datetime.utcnow()
 
 
 # Intuit our toolforge tool name from the file system path.
@@ -72,6 +74,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
+    'tools_app.middleware.RequestAugmentationMiddleware',
     'tools_app.middleware.LoggingMiddleware',
 ]
 
