@@ -1,5 +1,5 @@
 from unittest import TestCase
-import git
+from tools_app import git
 
 
 class ParseOutputTest(TestCase):
