@@ -1,0 +1,25 @@
+{% extends "./base.dtl" %}
+
+{% block content %}
+<h1>Contributions for User:{{ user_name }}</h1>
+<table class="table table-sm table-hover">
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>Activity Type</th>
+      <th>Page</th>
+      <th>Comment</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for timestamp, activity_type, page, comment in activities %}
+    <tr>
+      <td>{{ timestamp }}</td>
+      <td>{{ activity_type }}</td>
+      <td>{{ page }}</td>
+      <td>{{ comment }}</td>
+    </tr>
+  </tbody>
+  {% endfor %}
+</table>
+{% endblock %}

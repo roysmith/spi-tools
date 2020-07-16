@@ -3,6 +3,8 @@ from pprint import pprint
 import logging
 import urllib.request
 import urllib.parse
+import time
+import datetime
 
 import requests
 
@@ -10,6 +12,8 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
 from django.forms import BooleanField
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 from mwclient import Site
 import mwparserfromhell
 
@@ -194,6 +198,22 @@ class UserInfoView(View):
     def get(self, request, user_name):
         context = {'user_name': user_name}
         return render(request, 'spi/user-info.dtl', context)
+
+
+class UserActivitiesView(LoginRequiredMixin, View):
+    def get(self, request, user_name):
+        site = Site(SITE_NAME)
+        activities = []
+        for uc in site.usercontributions(user_name, limit=10):
+            title = uc['title']
+            timestamp = datetime.datetime.fromtimestamp(time.mktime(uc['timestamp'])).isoformat()
+            comment = uc['comment']
+            activities.append((timestamp, 'edit', title, comment))
+
+        context = {'user_name': user_name,
+                   'activities': activities,
+        }
+        return render(request, 'spi/user-activities.dtl', context)
 
 
 class TimecardView(View):
