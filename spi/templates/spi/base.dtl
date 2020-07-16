@@ -19,8 +19,8 @@
             <div class="card-body text-muted bg-light">
               <p class="my-0 font-weight-bold">SPI Tools debug info</p>
               <p class="my-0">{{ VERSION_ID }} (DEBUG = {{ DEBUG_ENABLED }})</p>
-              <p class="my-0">Up since {{ SERVER_START_TIME_UTC }}Z ({{ SERVER_UP_TIME }})</p>
-              <p class="my-0">Request at {{ REQUEST_START_TIME_UTC }}Z (took {{ REQUEST_DURATION }}s)</p>
+              <p class="my-0">up since {{ SERVER_START_TIME_UTC }}Z ({{ SERVER_UP_TIME }})</p>
+              <p class="my-0">request at {{ REQUEST_START_TIME_UTC }}Z (took {{ REQUEST_DURATION }}s)</p>
               <p class="my-0"><a href="https://github.com/roysmith/spi-tools">github.com/roysmith/spi-tools</a></p>
               <p class="my-0"><a href="https://github.com/roysmith/spi-tools/issues/new">file a bug report</a></p>
             </div>
