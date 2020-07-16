@@ -104,7 +104,7 @@ class SpiCaseDay:
         '''
         date = self.date()
         templates = self.wikicode.filter_templates(
-            matches = lambda n: n.name.matches('checkuser'))
+            matches = lambda n: n.name.matches('checkuser') or n.name.matches('user'))
         for t in templates:
             username = t.get('1').value
             yield SpiUserInfo(str(username), str(date))

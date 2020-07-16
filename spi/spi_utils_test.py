@@ -146,7 +146,7 @@ class SpiCaseDayTest(TestCase):
             day.date()
 
 
-    def test_find_users(self):
+    def test_find_checkuser_instances(self):
         text = '''
         ===21 March 2019===
         {{checkuser|user1}}
@@ -156,6 +156,40 @@ class SpiCaseDayTest(TestCase):
         users = list(day.find_users())
         self.assertCountEqual(users, [SpiUserInfo('user1', '21 March 2019'),
                                       SpiUserInfo('user2', '21 March 2019')])
+
+
+    def test_find_user_instances(self):
+        text = '''
+        ===21 March 2019===
+        {{user|user1}}
+        {{user|user2}}
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.find_users())
+        self.assertCountEqual(users, [SpiUserInfo('user1', '21 March 2019'),
+                                      SpiUserInfo('user2', '21 March 2019')])
+
+    def test_find_user_and_checkuser_instances(self):
+        text = '''
+        ===21 March 2019===
+        {{user|user1}}
+        {{checkuser|user2}}
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.find_users())
+        self.assertCountEqual(users, [SpiUserInfo('user1', '21 March 2019'),
+                                      SpiUserInfo('user2', '21 March 2019')])
+
+
+    def test_find_users_skips_mismatched_prefix(self):
+        text = '''
+        ===21 March 2019===
+        {{userfoo|user1}}
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.find_users())
+        self.assertEqual(users, [])
+
 
     def test_find_users_with_duplicates(self):
         text = '''
