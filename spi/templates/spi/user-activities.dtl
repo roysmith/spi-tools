@@ -1,25 +1,26 @@
 {% extends "./base.dtl" %}
 
 {% block content %}
-<h1>Contributions for User:{{ user_name }}</h1>
-<table class="table table-sm table-hover">
-  <thead>
-    <tr>
-      <th>Time</th>
-      <th>Activity Type</th>
-      <th>Page</th>
-      <th>Comment</th>
+<h1>Consolidated activity for {{ user_name }}</h1>
+<ul class="list-unstyled">
+  <table class="table table-hover table-sm">
+    {% for date_group, timestamp, activity_type, page, comment in daily_activities %}
+    <tr class="table-{{ date_group }}">
+      <td class="align-top">
+        <div class="text-nowrap">{{ timestamp|date:"Y-m-d" }} {{ timestamp|time:"H:i:s" }}</div>
+      </td>
+      <td class="align-top">
+        <div>
+        {% if activity_type == "edit" %}
+        <a href="https://en.wikipedia.org/wiki/{{ page }}">{{ page }}</a>
+        {% elif activity_type == "deleted" %}
+        <a href="https://en.wikipedia.org/wiki/{{ page }}"><del>{{ page }}</del></a>
+        {% endif %}
+        </div>
+        <div class="font-italic">({{ comment }})</div>
     </tr>
-  </thead>
-  <tbody>
-    {% for timestamp, activity_type, page, comment in activities %}
-    <tr>
-      <td>{{ timestamp }}</td>
-      <td>{{ activity_type }}</td>
-      <td>{{ page }}</td>
-      <td>{{ comment }}</td>
+    {% endfor %}
     </tr>
-  </tbody>
-  {% endfor %}
-</table>
+  </table>
+</ul>
 {% endblock %}
