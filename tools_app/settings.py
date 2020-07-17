@@ -195,12 +195,17 @@ if DEBUG:
         'loggers': {
             'django': {
                 'handlers': ['file', 'bastion'],
-                'level': 'DEBUG',
+                'level': 'INFO',
                 'propagate': True,
             },
             'view': {
                 'handlers': ['file', 'bastion'],
-                'level': 'DEBUG',
+                'level': 'INFO',
+                'propagate': True,
+            },
+            'app': {
+                'handlers': ['file', 'bastion'],
+                'level': 'INFO',
                 'propagate': True,
             },
         },
