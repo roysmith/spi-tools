@@ -1,16 +1,29 @@
 import re
-from collections import namedtuple
+from dataclasses import dataclass
+
 from ipaddress import IPv4Address, IPv4Network
 from mwparserfromhell import parse
+from mwparserfromhell.wikicode import Wikicode
+
 
 class ArchiveError(ValueError):
     pass
 
 class InvalidIpV4Error(ValueError):
     pass
-      
-SpiSourceDocument = namedtuple('SpiSourceDocument', 'wikitext, page_title')
-SpiParsedDocument = namedtuple('SpiParsedDocument', 'wikicode, page_title')
+
+
+@dataclass(frozen=True)
+class SpiSourceDocument:
+    wikitext: str
+    page_title: str
+
+
+@dataclass(frozen=True)
+class SpiParsedDocument:
+    wikicode: Wikicode
+    page_title: str
+
 
 class SpiCase:
     def __init__(self, *sources):
