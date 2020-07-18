@@ -28,8 +28,9 @@ class SpiParsedDocument:
 class SpiCase:
     def __init__(self, *sources):
         """A case can be made up of multiple source documents.  In practice,
-        there will usually be two; the currently active page, and the archive
-        page.
+        there will usually be two; the currently active page, and the
+        archive page.  New cases, however, may not have an archive
+        yet, and in exceptional cases, there may be multiple archives.
 
         Each source is SpiSourceDocument.
         """
