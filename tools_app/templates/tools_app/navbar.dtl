@@ -1,0 +1,4 @@
+<h1>Toolcognito
+<ul>
+  <li><a href="{% url 'spi-index' %}">SPI</a></li>
+</ul>
