@@ -110,7 +110,12 @@ SOCIAL_AUTH_MEDIAWIKI_SECRET = os.environ.get('MEDIAWIKI_SECRET')
 SOCIAL_AUTH_MEDIAWIKI_URL = 'https://meta.wikimedia.org/w/index.php'
 SOCIAL_AUTH_MEDIAWIKI_CALLBACK = 'https://%s.toolforge.org/oauth/complete/mediawiki/' % TOOL_NAME
 
-LOGIN_URL = 'login'
+# It would be neater to use django.urls.reverse() here, but that's
+# apparently not available when this is executed.
+LOGIN_URL = '/oauth/login/mediawiki'
+
+# Given that social-auth does ?next= processing, it's not clear this
+# does anything in our setup.
 LOGIN_REDIRECT_URL = 'home'
 
 WSGI_APPLICATION = 'tools_app.wsgi.application'
