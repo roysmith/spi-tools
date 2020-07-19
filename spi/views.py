@@ -3,6 +3,9 @@ from pprint import pprint
 import logging
 import urllib.request
 import urllib.parse
+import time
+import datetime
+import itertools
 
 import requests
 
@@ -10,11 +13,16 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
 from django.forms import BooleanField
+import django.contrib.auth
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 from mwclient import Site
+import mwclient.listing
 import mwparserfromhell
 
 from .forms import CaseNameForm, IpRangeForm, SockSelectForm
 from .spi_utils import SpiCase, SpiIpInfo, SpiSourceDocument
+from tools_app import settings
 
 logger = logging.getLogger('view')
 
@@ -194,6 +202,70 @@ class UserInfoView(View):
     def get(self, request, user_name):
         context = {'user_name': user_name}
         return render(request, 'spi/user-info.dtl', context)
+
+
+class UserActivitiesView(LoginRequiredMixin, View):
+    def get(self, request, user_name):
+        access_token = (django.contrib.auth.get_user(request)
+                        .social_auth
+                        .get(provider='mediawiki')
+                        .extra_data['access_token'])
+        site = Site(SITE_NAME,
+                    consumer_token=settings.SOCIAL_AUTH_MEDIAWIKI_KEY,
+                    consumer_secret=settings.SOCIAL_AUTH_MEDIAWIKI_SECRET,
+                    access_token=access_token['oauth_token'],
+                    access_secret=access_token['oauth_token_secret'],
+                    clients_useragent=f'{settings.TOOL_NAME} (toolforge)')
+
+        activities = []
+
+        logger.debug("user_name = %s" % user_name)
+        for uc in itertools.islice(site.usercontributions(user_name), 10):
+            logger.debug("uc = %s" % uc)
+            timestamp = datetime.datetime.fromtimestamp(time.mktime(uc['timestamp']), tz=datetime.timezone.utc)
+            title = uc['title']
+            comment = uc['comment']
+            activities.append((timestamp, 'edit', title, comment))
+
+        kwargs = dict(mwclient.listing.List.generate_kwargs('adr',
+                                                            user=user_name))
+        logger.debug("kwargs = %s" % kwargs)
+        listing = mwclient.listing.List(site,
+                                        'alldeletedrevisions',
+                                        'adr',
+                                        limit=20,
+                                        uselang=None,
+                                        **kwargs)
+
+        for page in itertools.islice(listing, 10):
+            title = page['title']
+            for revision in page['revisions']:
+                ts = revision['timestamp']
+                if ts.endswith('Z'):
+                    timestamp = datetime.datetime.fromisoformat(ts[:-1] + '+00:00')
+                else:
+                    raise ValueError("Unparsable timestamp: %s" % ts)
+                title = page['title']
+                comment = revision['comment']
+                activities.append((timestamp, 'deleted', title, comment))
+
+        activities.sort(reverse=True)
+        previous_date = None
+        date_groups = ['primary', 'secondary']   # https://getbootstrap.com/docs/4.0/content/tables/#contextual-classes
+        daily_activities = []
+        for a in activities:
+            timestamp, activity_type, title, comment = a
+            this_date = timestamp.date()
+            if this_date != previous_date:
+                date_groups.reverse()
+                previous_date = this_date
+            daily_activities.append((date_groups[0], timestamp, 'deleted', title, comment))
+
+
+        context = {'user_name': user_name,
+                   'daily_activities': daily_activities,
+        }
+        return render(request, 'spi/user-activities.dtl', context)
 
 
 class TimecardView(View):

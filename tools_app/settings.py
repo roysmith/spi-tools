@@ -60,7 +60,7 @@ INSTALLED_APPS = [
     'cat_checker',
     'spi',
     'pageutils',
-    'tools_app',
+    'tools_app.apps.ToolsAppConfig',
     'social_django',
     'debug_toolbar',
 ]
@@ -111,8 +111,13 @@ SOCIAL_AUTH_MEDIAWIKI_SECRET = os.environ.get('MEDIAWIKI_SECRET')
 SOCIAL_AUTH_MEDIAWIKI_URL = 'https://meta.wikimedia.org/w/index.php'
 SOCIAL_AUTH_MEDIAWIKI_CALLBACK = 'https://%s.toolforge.org/oauth/complete/mediawiki/' % TOOL_NAME
 
-LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'profile'
+# It would be neater to use django.urls.reverse() here, but that's
+# apparently not available when this is executed.
+LOGIN_URL = '/oauth/login/mediawiki'
+
+# Given that social-auth does ?next= processing, it's not clear this
+# does anything in our setup.
+LOGIN_REDIRECT_URL = 'home'
 
 WSGI_APPLICATION = 'tools_app.wsgi.application'
 
@@ -196,12 +201,17 @@ if DEBUG:
         'loggers': {
             'django': {
                 'handlers': ['file', 'bastion'],
-                'level': 'DEBUG',
+                'level': 'INFO',
                 'propagate': True,
             },
             'view': {
                 'handlers': ['file', 'bastion'],
-                'level': 'DEBUG',
+                'level': 'INFO',
+                'propagate': True,
+            },
+            'app': {
+                'handlers': ['file', 'bastion'],
+                'level': 'INFO',
                 'propagate': True,
             },
         },

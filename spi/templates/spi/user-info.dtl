@@ -1,5 +1,6 @@
-{% extends "./base.dtl" %}
+{% extends "tools_app/base.dtl" %}
 
 {% block content %}
 <h1>User analysis for {{ user_name }}</h1>
+<a href="{% url 'spi-user-activities' user_name=user_name %}">User Activities</a>
 {% endblock %}

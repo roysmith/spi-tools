@@ -1,4 +1,4 @@
-{% extends "./base.dtl" %}
+{% extends "tools_app/base.dtl" %}
 
 {% block content %}
 <h1>SPI Tools</h1>
@@ -11,7 +11,7 @@
       <td>
         <input type="submit" name="ip-info-button" value="IP Info">
         <input type="submit" name="sock-info-button" value="Sock Info">
-        <input type="submit" name="sock-select-button" value="Sock select">
+        <input type="submit" name="sock-select-button" value="Interactions">
       </td>
     </tr>
   </table>

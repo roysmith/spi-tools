@@ -1,29 +1,51 @@
 import re
-from collections import namedtuple
+from dataclasses import dataclass
+
 from ipaddress import IPv4Address, IPv4Network
 from mwparserfromhell import parse
+from mwparserfromhell.wikicode import Wikicode
+
 
 class ArchiveError(ValueError):
     pass
 
 class InvalidIpV4Error(ValueError):
     pass
-      
-SpiSourceDocument = namedtuple('SpiSourceDocument', 'wikitext, page_title')
-SpiParsedDocument = namedtuple('SpiParsedDocument', 'wikicode, page_title')
+
+
+class SpiDocumentBase:
+    def master_name(self):
+        parts = self.page_title.split('/')
+        if parts[-1] == 'Archive':
+            parts.pop()
+        return parts[-1]
+
+
+@dataclass(frozen=True)
+class SpiSourceDocument(SpiDocumentBase):
+    wikitext: str
+    page_title: str
+
+
+@dataclass(frozen=True)
+class SpiParsedDocument(SpiDocumentBase):
+    wikicode: Wikicode
+    page_title: str
+
 
 class SpiCase:
     def __init__(self, *sources):
         """A case can be made up of multiple source documents.  In practice,
-        there will usually be two; the currently active page, and the archive
-        page.
+        there will usually be two; the currently active page, and the
+        archive page.  New cases, however, may not have an archive
+        yet, and in exceptional cases, there may be multiple archives.
 
         Each source is SpiSourceDocument.
         """
         self.parsed_docs = [SpiParsedDocument(parse(s.wikitext), s.page_title)
                             for s in sources]
 
-        master_names = set(str(self.find_master_name(doc.wikicode)) for doc in self.parsed_docs)
+        master_names = set(doc.master_name() for doc in self.parsed_docs)
         if len(master_names) == 0:
             raise ArchiveError("No sockmaster name found")
         if len(master_names) > 1:
@@ -33,22 +55,6 @@ class SpiCase:
 
     def master_name(self):
         return self._master_name
-
-
-    @staticmethod
-    def find_master_name(wikicode):
-        """Return the name of the sockmaster, parsed from a
-        {{SPIarchive notice}} template.  Raises ArchiveError if the
-        template is not found, or if multiple such templates are
-        found.
-
-        """
-        templates = wikicode.filter_templates(
-            matches = lambda n: n.name.matches('SPIarchive notice'))
-        n = len(templates)
-        if n == 1:
-            return templates[0].get('1').value
-        raise ArchiveError("Expected exactly 1 {{SPIarchive notice}}, found %d" % n)
 
 
     def days(self):
@@ -104,7 +110,9 @@ class SpiCaseDay:
         '''
         date = self.date()
         templates = self.wikicode.filter_templates(
-            matches = lambda n: n.name.matches('checkuser'))
+            matches = lambda n: n.name.matches(['checkuser',
+                                                'user',
+                                                 'SPIarchive notice']))
         for t in templates:
             username = t.get('1').value
             yield SpiUserInfo(str(username), str(date))
@@ -180,6 +188,9 @@ class SpiIpInfo:
 
     def __hash__(self):
         return hash((self.ip, self.date, self.page_title))
+
+    def __repr__(self):
+        return f'SpiIpInfo("{self.ip}", "{self.date}", "{self.page_title}")'
 
     @staticmethod
     def find_common_network(infos):

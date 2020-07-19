@@ -1,3 +1,0 @@
-<ul>
-  <li><a href="{% url 'spi-index' %}">Index</a></li>
-</ul>
