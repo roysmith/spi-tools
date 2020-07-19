@@ -2,8 +2,12 @@
 
 {% block content %}
 <h1>Consolidated activity for {{ user_name }}</h1>
+<pre>
+Deleted edits are in <del>strikeout</del> style
+Groups of similarly colored rows are individual days
+</pre>
 <ul class="list-unstyled">
-  <table class="table table-hover table-sm">
+  <table class="table table-hover table-sm small">
     {% for date_group, timestamp, activity_type, page, comment in daily_activities %}
     <tr class="table-{{ date_group }}">
       <td class="align-top">
