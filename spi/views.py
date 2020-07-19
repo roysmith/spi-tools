@@ -240,6 +240,7 @@ class UserActivitiesView(LoginRequiredMixin, View):
         for page in itertools.islice(listing, 10):
             title = page['title']
             for revision in page['revisions']:
+                logger.debug("deleted = %s" % revision)
                 ts = revision['timestamp']
                 if ts.endswith('Z'):
                     timestamp = datetime.datetime.fromisoformat(ts[:-1] + '+00:00')
@@ -259,7 +260,7 @@ class UserActivitiesView(LoginRequiredMixin, View):
             if this_date != previous_date:
                 date_groups.reverse()
                 previous_date = this_date
-            daily_activities.append((date_groups[0], timestamp, 'deleted', title, comment))
+            daily_activities.append((date_groups[0], timestamp, activity_type, title, comment))
 
 
         context = {'user_name': user_name,
