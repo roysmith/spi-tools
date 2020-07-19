@@ -10,48 +10,17 @@ from spi_utils import SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUser
 def make_code(text):
     return mwparserfromhell.parse(textwrap.dedent(text))
 
-def make_source(text):
-    return SpiSourceDocument(textwrap.dedent(text), 'text')
+def make_source(text, case_name='whatever'):
+    return SpiSourceDocument(textwrap.dedent(text), case_name)
 
 
 class SpiCaseTest(TestCase):
-    def test_multiple_wikitexts_with_different_master_names_raises_archive_error(self):
-        text1 = '''
-        {{SPIarchive notice|1=user1}}
-        foo
-        '''
-        text2 = '''
-        {{SPIarchive notice|1=user2}}
-        bar
-        '''
-        with self.assertRaises(ArchiveError) as cm:
-            case = SpiCase(make_source(text1), make_source(text2))
-        self.assertRegex(str(cm.exception), r'(?i)multiple')
-
-        
     def test_master_name_returns_correct_value(self):
         text = '''
         {{SPIarchive notice|1=KaranSharma0445}}
         '''
-        case = SpiCase(make_source(text))
-        self.assertEqual(case.master_name(), 'KaranSharma0445')
-
-
-    def test_construct_with_no_archive_notice_raises_archive_error(self):
-        text = '''
-        * {{checkuser|1=DipikaKakar346 }}
-        '''
-        with self.assertRaises(ArchiveError):
-            SpiCase(make_source(text))
-
-
-    def test_construct_with_multiple_archive_notices_raises_archive_error(self):
-        text = '''
-        {{SPIarchive notice|1=Foo}}
-        {{SPIarchive notice|1=Bar}}
-        '''
-        with self.assertRaises(ArchiveError):
-            SpiCase(make_source(text))
+        case = SpiCase(make_source(text, 'CaseName'))
+        self.assertEqual(case.master_name(), 'CaseName')
 
 
     def test_days_returns_iterable_of_case_days(self):
@@ -99,14 +68,15 @@ class SpiCaseTest(TestCase):
         {{checkip|1.2.3.5}}
         '''
 
-        case = SpiCase(make_source(text1), (make_source(text2)))
+        case = SpiCase(make_source(text1, 'CaseName'),
+                       make_source(text2, 'CaseName'))
         ips = set(case.find_all_ips())
         self.assertEqual(ips, set([
-            SpiIpInfo('1.2.3.4', '1 January 2018', 'text'),
-            SpiIpInfo('1.2.3.5', '1 January 2018', 'text'),
-            SpiIpInfo('1.2.3.6', '21 March 2019', 'text'),
-            SpiIpInfo('1.2.3.7', '22 May 2019', 'text'),
-            SpiIpInfo('1.2.3.8', '13 July 2019', 'text')]))
+            SpiIpInfo('1.2.3.4', '1 January 2018', 'CaseName'),
+            SpiIpInfo('1.2.3.5', '1 January 2018', 'CaseName'),
+            SpiIpInfo('1.2.3.6', '21 March 2019', 'CaseName'),
+            SpiIpInfo('1.2.3.7', '22 May 2019', 'CaseName'),
+            SpiIpInfo('1.2.3.8', '13 July 2019', 'CaseName')]))
 
 
 class SpiCaseDayTest(TestCase):
@@ -168,6 +138,17 @@ class SpiCaseDayTest(TestCase):
         users = list(day.find_users())
         self.assertCountEqual(users, [SpiUserInfo('user1', '21 March 2019'),
                                       SpiUserInfo('user2', '21 March 2019')])
+
+
+    def test_find_spi_archive_notice_instances(self):
+        text = '''
+        ===21 March 2019===
+        {{SPIarchive notice|user1}}
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.find_users())
+        self.assertCountEqual(users, [SpiUserInfo('user1', '21 March 2019')])
+
 
     def test_find_user_and_checkuser_instances(self):
         text = '''

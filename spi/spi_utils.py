@@ -13,14 +13,22 @@ class InvalidIpV4Error(ValueError):
     pass
 
 
+class SpiDocumentBase:
+    def master_name(self):
+        parts = self.page_title.split('/')
+        if parts[-1] == 'Archive':
+            parts.pop()
+        return parts[-1]
+
+
 @dataclass(frozen=True)
-class SpiSourceDocument:
+class SpiSourceDocument(SpiDocumentBase):
     wikitext: str
     page_title: str
 
 
 @dataclass(frozen=True)
-class SpiParsedDocument:
+class SpiParsedDocument(SpiDocumentBase):
     wikicode: Wikicode
     page_title: str
 
@@ -37,7 +45,7 @@ class SpiCase:
         self.parsed_docs = [SpiParsedDocument(parse(s.wikitext), s.page_title)
                             for s in sources]
 
-        master_names = set(str(self.find_master_name(doc.wikicode)) for doc in self.parsed_docs)
+        master_names = set(doc.master_name() for doc in self.parsed_docs)
         if len(master_names) == 0:
             raise ArchiveError("No sockmaster name found")
         if len(master_names) > 1:
@@ -47,22 +55,6 @@ class SpiCase:
 
     def master_name(self):
         return self._master_name
-
-
-    @staticmethod
-    def find_master_name(wikicode):
-        """Return the name of the sockmaster, parsed from a
-        {{SPIarchive notice}} template.  Raises ArchiveError if the
-        template is not found, or if multiple such templates are
-        found.
-
-        """
-        templates = wikicode.filter_templates(
-            matches = lambda n: n.name.matches('SPIarchive notice'))
-        n = len(templates)
-        if n == 1:
-            return templates[0].get('1').value
-        raise ArchiveError("Expected exactly 1 {{SPIarchive notice}}, found %d" % n)
 
 
     def days(self):
@@ -118,7 +110,9 @@ class SpiCaseDay:
         '''
         date = self.date()
         templates = self.wikicode.filter_templates(
-            matches = lambda n: n.name.matches('checkuser') or n.name.matches('user'))
+            matches = lambda n: n.name.matches(['checkuser',
+                                                'user',
+                                                 'SPIarchive notice']))
         for t in templates:
             username = t.get('1').value
             yield SpiUserInfo(str(username), str(date))
@@ -194,6 +188,9 @@ class SpiIpInfo:
 
     def __hash__(self):
         return hash((self.ip, self.date, self.page_title))
+
+    def __repr__(self):
+        return f'SpiIpInfo("{self.ip}", "{self.date}", "{self.page_title}")'
 
     @staticmethod
     def find_common_network(infos):
