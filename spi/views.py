@@ -141,7 +141,7 @@ class SockInfoView(View):
         use_archive = int(request.GET.get('archive', 1))
         for sock in get_sock_names(case_name, use_archive):
             socks.append(sock)
-        summaries = [make_user_summary(sock) for sock in socks]
+        summaries = list({make_user_summary(sock) for sock in socks})
         # This is a hack to make users with no registration time sort to the
         # beginning of the list.  We need to do something smarter here.
         summaries.sort(key=lambda x: x.registration_time or "")
