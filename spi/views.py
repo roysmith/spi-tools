@@ -224,6 +224,10 @@ class UserInfoView(View):
             url = f'{base_url}?count={count}&main={main}&draft={draft}&other={other}'
             logger.debug("Redirecting to: %s" % url)
             return redirect(url)
+        logger.debug("post: not valid")
+        context = {'user_name': user_name,
+                   'form': form}
+        return render(request, 'spi/user-info.dtl', context)
 
 
 class UserActivitiesView(LoginRequiredMixin, View):

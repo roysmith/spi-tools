@@ -63,6 +63,14 @@ class UserInfoForm(forms.Form):
     draft = forms.BooleanField(required=False)
     other = forms.BooleanField(required=False)
 
+    def clean(self):
+        super().clean()
+        data = self.cleaned_data
+        if not (data.get("main") or data.get("draft") or data.get("other")):
+            raise ValidationError(
+                'At least one of "main", "draft", or "other" must be selected',
+                code='no_ns')
+
 
 class IpRangeForm(forms.Form):
     first_ip = forms.CharField()

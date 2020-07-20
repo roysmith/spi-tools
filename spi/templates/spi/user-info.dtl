@@ -8,6 +8,13 @@ Show a consolidated history of <a href="https://en.wikipedia.org/wiki/User:{{ us
 <a href="https://en.wikipedia.org/wiki/Special:DeletedContributions/{{ user_name }}">deleted user contributions</a>,
 and various logs.
 
+{% for e in form.non_field_errors %}
+<div class="alert alert-danger" role="alert">
+  {{ e }}
+</div>
+{% endfor %}
+
+
 <form action="" method="post">
   {% csrf_token %}
   <div class="mt-3">
