@@ -6,6 +6,8 @@ import urllib.parse
 import time
 import datetime
 import itertools
+import functools
+import heapq
 
 import requests
 
@@ -20,9 +22,10 @@ from mwclient import Site
 import mwclient.listing
 import mwparserfromhell
 
-from .forms import CaseNameForm, IpRangeForm, SockSelectForm
+from .forms import CaseNameForm, IpRangeForm, SockSelectForm, UserInfoForm
 from .spi_utils import SpiCase, SpiIpInfo, SpiSourceDocument
 from tools_app import settings
+
 
 logger = logging.getLogger('view')
 
@@ -141,7 +144,7 @@ class SockInfoView(View):
         use_archive = int(request.GET.get('archive', 1))
         for sock in get_sock_names(case_name, use_archive):
             socks.append(sock)
-        summaries = [make_user_summary(sock) for sock in socks]
+        summaries = list({make_user_summary(sock) for sock in socks})
         # This is a hack to make users with no registration time sort to the
         # beginning of the list.  We need to do something smarter here.
         summaries.sort(key=lambda x: x.registration_time or "")
@@ -200,12 +203,36 @@ class SockSelectView(View):
 
 class UserInfoView(View):
     def get(self, request, user_name):
-        context = {'user_name': user_name}
+        form = UserInfoForm(initial={'count': 100,
+                                     'main': True,
+                                     'draft': True,
+                                     })
+        context = {'user_name': user_name,
+                   'form': form,
+        }
+        return render(request, 'spi/user-info.dtl', context)
+
+    def post(self, request, user_name):
+        form = UserInfoForm(request.POST)
+        if form.is_valid():
+            count = form.cleaned_data['count']
+            main = int(form.cleaned_data['main'])
+            draft = int(form.cleaned_data['draft'])
+            other = int(form.cleaned_data['other'])
+
+            base_url = reverse('spi-user-activities', args=[user_name])
+            url = f'{base_url}?count={count}&main={main}&draft={draft}&other={other}'
+            logger.debug("Redirecting to: %s" % url)
+            return redirect(url)
+        logger.debug("post: not valid")
+        context = {'user_name': user_name,
+                   'form': form}
         return render(request, 'spi/user-info.dtl', context)
 
 
 class UserActivitiesView(LoginRequiredMixin, View):
     def get(self, request, user_name):
+        logger.debug("user_name = %s" % user_name)
         access_token = (django.contrib.auth.get_user(request)
                         .social_auth
                         .get(provider='mediawiki')
@@ -216,20 +243,49 @@ class UserActivitiesView(LoginRequiredMixin, View):
                     access_token=access_token['oauth_token'],
                     access_secret=access_token['oauth_token_secret'],
                     clients_useragent=f'{settings.TOOL_NAME} (toolforge)')
+        count = int(request.GET.get('count', '1'))
+        namespace_filter = functools.partial(self.check_namespaces,
+                                             bool(int(request.GET.get('main', 0))),
+                                             bool(int(request.GET.get('draft', 0))),
+                                             bool(int(request.GET.get('other', 0))))
 
-        activities = []
+        active = self.contribution_activities(site, user_name)
+        deleted = self.deleted_contribution_activities(site, user_name)
+        merged = heapq.merge(active, deleted, reverse=True)
+        filtered = itertools.filterfalse(namespace_filter, merged)
+        counted = itertools.islice(filtered, count)
+        daily_activities = self.group_by_day(counted)
 
-        logger.debug("user_name = %s" % user_name)
-        for uc in itertools.islice(site.usercontributions(user_name), 10):
+        context = {'user_name': user_name,
+                   'daily_activities': daily_activities,
+        }
+        return render(request, 'spi/user-activities.dtl', context)
+
+
+    # https://github.com/roysmith/spi-tools/issues/50
+    @staticmethod
+    def check_namespaces(main, draft, other, activity):
+        _, _, title, _ = activity
+        if not ':' in title:
+            return not main
+        ns, _ = title.split(':', 1)
+        ns = ns.lower().strip()
+        if ns == 'draft':
+            return not draft
+        return not other
+
+
+    def contribution_activities(self, site, user_name):
+        for uc in site.usercontributions(user_name):
             logger.debug("uc = %s" % uc)
             timestamp = datetime.datetime.fromtimestamp(time.mktime(uc['timestamp']), tz=datetime.timezone.utc)
             title = uc['title']
             comment = uc['comment']
-            activities.append((timestamp, 'edit', title, comment))
+            yield timestamp, 'edit', title, comment
 
-        kwargs = dict(mwclient.listing.List.generate_kwargs('adr',
-                                                            user=user_name))
-        logger.debug("kwargs = %s" % kwargs)
+
+    def deleted_contribution_activities(self, site, user_name):
+        kwargs = dict(mwclient.listing.List.generate_kwargs('adr', user=user_name))
         listing = mwclient.listing.List(site,
                                         'alldeletedrevisions',
                                         'adr',
@@ -237,9 +293,10 @@ class UserActivitiesView(LoginRequiredMixin, View):
                                         uselang=None,
                                         **kwargs)
 
-        for page in itertools.islice(listing, 10):
+        for page in listing:
             title = page['title']
             for revision in page['revisions']:
+                logger.debug("deleted revision = %s" % revision)
                 ts = revision['timestamp']
                 if ts.endswith('Z'):
                     timestamp = datetime.datetime.fromisoformat(ts[:-1] + '+00:00')
@@ -247,25 +304,24 @@ class UserActivitiesView(LoginRequiredMixin, View):
                     raise ValueError("Unparsable timestamp: %s" % ts)
                 title = page['title']
                 comment = revision['comment']
-                activities.append((timestamp, 'deleted', title, comment))
+                yield timestamp, 'deleted', title, comment
 
-        activities.sort(reverse=True)
+
+    def group_by_day(self, activities):
+        """Group activities into daily chunks.  Assumes that activities is
+        sorted in chronological order.
+
+        """
         previous_date = None
         date_groups = ['primary', 'secondary']   # https://getbootstrap.com/docs/4.0/content/tables/#contextual-classes
         daily_activities = []
-        for a in activities:
-            timestamp, activity_type, title, comment = a
+        for timestamp, activity_type, title, comment in activities:
             this_date = timestamp.date()
             if this_date != previous_date:
                 date_groups.reverse()
                 previous_date = this_date
-            daily_activities.append((date_groups[0], timestamp, 'deleted', title, comment))
-
-
-        context = {'user_name': user_name,
-                   'daily_activities': daily_activities,
-        }
-        return render(request, 'spi/user-activities.dtl', context)
+            daily_activities.append((date_groups[0], timestamp, activity_type, title, comment))
+        return daily_activities
 
 
 class TimecardView(View):

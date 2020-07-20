@@ -158,6 +158,9 @@ class SpiUserInfo:
     def __hash__(self):
         return hash((self.username, self.date))
 
+    def __repr__(self):
+        return f'SpiUserInfo("{self.username}", "{self.date}")'
+
 
 class SpiIpInfo:
     v4pattern = re.compile(r'^\d+\.\d+\.\d+\.\d+$')

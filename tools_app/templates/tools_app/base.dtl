@@ -25,7 +25,6 @@
         <div class="col-10">
           <div class="card mt-5">
             <div class="card-body text-muted bg-light">
-              <p class="my-0 font-weight-bold">Debug info</p>
               <p class="my-0">{{ VERSION_ID }} (DEBUG = {{ DEBUG_ENABLED }})</p>
               <p class="my-0">up since {{ SERVER_START_TIME_UTC }}Z ({{ SERVER_UP_TIME }})</p>
               <p class="my-0">request at {{ REQUEST_START_TIME_UTC }}Z (took {{ REQUEST_DURATION }}s)</p>
