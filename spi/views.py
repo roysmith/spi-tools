@@ -6,6 +6,8 @@ import urllib.parse
 import time
 import datetime
 import itertools
+import functools
+import heapq
 
 import requests
 
@@ -226,6 +228,7 @@ class UserInfoView(View):
 
 class UserActivitiesView(LoginRequiredMixin, View):
     def get(self, request, user_name):
+        logger.debug("user_name = %s" % user_name)
         access_token = (django.contrib.auth.get_user(request)
                         .social_auth
                         .get(provider='mediawiki')
@@ -236,17 +239,18 @@ class UserActivitiesView(LoginRequiredMixin, View):
                     access_token=access_token['oauth_token'],
                     access_secret=access_token['oauth_token_secret'],
                     clients_useragent=f'{settings.TOOL_NAME} (toolforge)')
+        count = int(request.GET.get('count', '1'))
+        namespace_filter = functools.partial(self.check_namespaces,
+                                             bool(int(request.GET.get('main', 0))),
+                                             bool(int(request.GET.get('draft', 0))),
+                                             bool(int(request.GET.get('other', 0))))
 
-        logger.debug("user_name = %s" % user_name)
-
-        activities = []
-        for item in self.contribution_activities(site, user_name):
-            activities.append(item)
-        for item in self.deleted_contribution_activities(site, user_name):
-            activities.append(item)
-
-        activities.sort(reverse=True)
-        daily_activities = self.group_by_day(activities)
+        active = self.contribution_activities(site, user_name)
+        deleted = self.deleted_contribution_activities(site, user_name)
+        merged = heapq.merge(active, deleted, reverse=True)
+        filtered = itertools.filterfalse(namespace_filter, merged)
+        counted = itertools.islice(filtered, count)
+        daily_activities = self.group_by_day(counted)
 
         context = {'user_name': user_name,
                    'daily_activities': daily_activities,
@@ -254,13 +258,26 @@ class UserActivitiesView(LoginRequiredMixin, View):
         return render(request, 'spi/user-activities.dtl', context)
 
 
+    # https://github.com/roysmith/spi-tools/issues/50
+    @staticmethod
+    def check_namespaces(main, draft, other, activity):
+        _, _, title, _ = activity
+        if not ':' in title:
+            return not main
+        ns, _ = title.split(':', 1)
+        ns = ns.lower().strip()
+        if ns == 'draft':
+            return not draft
+        return not other
+
+
     def contribution_activities(self, site, user_name):
-        for uc in itertools.islice(site.usercontributions(user_name), 10):
+        for uc in site.usercontributions(user_name):
             logger.debug("uc = %s" % uc)
             timestamp = datetime.datetime.fromtimestamp(time.mktime(uc['timestamp']), tz=datetime.timezone.utc)
             title = uc['title']
             comment = uc['comment']
-            yield (timestamp, 'edit', title, comment)
+            yield timestamp, 'edit', title, comment
 
 
     def deleted_contribution_activities(self, site, user_name):
@@ -272,7 +289,7 @@ class UserActivitiesView(LoginRequiredMixin, View):
                                         uselang=None,
                                         **kwargs)
 
-        for page in itertools.islice(listing, 10):
+        for page in listing:
             title = page['title']
             for revision in page['revisions']:
                 logger.debug("deleted revision = %s" % revision)
@@ -283,7 +300,7 @@ class UserActivitiesView(LoginRequiredMixin, View):
                     raise ValueError("Unparsable timestamp: %s" % ts)
                 title = page['title']
                 comment = revision['comment']
-                yield (timestamp, 'deleted', title, comment)
+                yield timestamp, 'deleted', title, comment
 
 
     def group_by_day(self, activities):
