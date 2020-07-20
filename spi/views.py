@@ -20,9 +20,10 @@ from mwclient import Site
 import mwclient.listing
 import mwparserfromhell
 
-from .forms import CaseNameForm, IpRangeForm, SockSelectForm
+from .forms import CaseNameForm, IpRangeForm, SockSelectForm, UserInfoForm
 from .spi_utils import SpiCase, SpiIpInfo, SpiSourceDocument
 from tools_app import settings
+
 
 logger = logging.getLogger('view')
 
@@ -200,8 +201,27 @@ class SockSelectView(View):
 
 class UserInfoView(View):
     def get(self, request, user_name):
-        context = {'user_name': user_name}
+        form = UserInfoForm(initial={'count': 100,
+                                     'main': True,
+                                     'draft': True,
+                                     })
+        context = {'user_name': user_name,
+                   'form': form,
+        }
         return render(request, 'spi/user-info.dtl', context)
+
+    def post(self, request, user_name):
+        form = UserInfoForm(request.POST)
+        if form.is_valid():
+            count = form.cleaned_data['count']
+            main = int(form.cleaned_data['main'])
+            draft = int(form.cleaned_data['draft'])
+            other = int(form.cleaned_data['other'])
+
+            base_url = reverse('spi-user-activities', args=[user_name])
+            url = f'{base_url}?count={count}&main={main}&draft={draft}&other={other}'
+            logger.debug("Redirecting to: %s" % url)
+            return redirect(url)
 
 
 class UserActivitiesView(LoginRequiredMixin, View):

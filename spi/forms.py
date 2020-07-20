@@ -53,6 +53,17 @@ class SockSelectForm(forms.Form):
         return sub_class()
 
 
+class UserInfoForm(forms.Form):
+    count = forms.ChoiceField(choices=[(20, "20"),
+                                       (50, "50"),
+                                       (100, "100"),
+                                       (250, "250"),
+                                       (500, "500")])
+    main = forms.BooleanField(required=False)
+    draft = forms.BooleanField(required=False)
+    other = forms.BooleanField(required=False)
+
+
 class IpRangeForm(forms.Form):
     first_ip = forms.CharField()
     last_ip = forms.CharField()
