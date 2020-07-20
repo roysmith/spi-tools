@@ -180,39 +180,38 @@ DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda x: False,
     }
 
-if DEBUG:
-    LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'handlers': {
-            'file': {
-                'level': 'DEBUG',
-                'class': 'logging.handlers.RotatingFileHandler',
-                'filename': os.path.join(LOG_DIR, 'django.log'),
-            },
-            # Hack to get real-time logging, as a work-around to T256426 and T256482.
-            'bastion': {
-                'level': 'DEBUG',
-                'class': 'logging.handlers.SocketHandler',
-                'host': 'tools-sgebastion-08.tools.eqiad.wmflabs',
-                'port': 23001,
-            },
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'django.log'),
         },
-        'loggers': {
-            'django': {
-                'handlers': ['file', 'bastion'],
-                'level': 'INFO',
-                'propagate': True,
-            },
-            'view': {
-                'handlers': ['file', 'bastion'],
-                'level': 'INFO',
-                'propagate': True,
-            },
-            'app': {
-                'handlers': ['file', 'bastion'],
-                'level': 'INFO',
-                'propagate': True,
-            },
+        # Hack to get real-time logging, as a work-around to T256426 and T256482.
+        'bastion': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.SocketHandler',
+            'host': 'tools-sgebastion-08.tools.eqiad.wmflabs',
+            'port': 23001,
         },
-    }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'bastion'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'view': {
+            'handlers': ['file', 'bastion'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'app': {
+            'handlers': ['file', 'bastion'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
