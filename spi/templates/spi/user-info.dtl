@@ -1,7 +1,7 @@
 {% extends "tools_app/base.dtl" %}
 
 {% block content %}
-<h2>User analysis for {{ user_name }}</h2>
+<h1><small>User analysis for {{ user_name }}</small></h1>
 
 Show a consolidated history of <a href="https://en.wikipedia.org/wiki/User:{{ user_name }}">{{ user_name }}</a>'s activity.  This merges items from their
 <a href="https://en.wikipedia.org/wiki/Special:Contributions/{{ user_name }}">user contributions</a>,

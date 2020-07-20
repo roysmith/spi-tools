@@ -1,7 +1,7 @@
 {% extends "tools_app/base.dtl" %}
 
 {% block content %}
-<h1>SPI Tools</h1>
+<h1><small>SPI Tools</small></h1>
 <form action="" method="post">
   {% csrf_token %}
   <table>
