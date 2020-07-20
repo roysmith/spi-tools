@@ -237,19 +237,34 @@ class UserActivitiesView(LoginRequiredMixin, View):
                     access_secret=access_token['oauth_token_secret'],
                     clients_useragent=f'{settings.TOOL_NAME} (toolforge)')
 
-        activities = []
-
         logger.debug("user_name = %s" % user_name)
+
+        activities = []
+        for item in self.contribution_activities(site, user_name):
+            activities.append(item)
+        for item in self.deleted_contribution_activities(site, user_name):
+            activities.append(item)
+
+        activities.sort(reverse=True)
+        daily_activities = self.group_by_day(activities)
+
+        context = {'user_name': user_name,
+                   'daily_activities': daily_activities,
+        }
+        return render(request, 'spi/user-activities.dtl', context)
+
+
+    def contribution_activities(self, site, user_name):
         for uc in itertools.islice(site.usercontributions(user_name), 10):
             logger.debug("uc = %s" % uc)
             timestamp = datetime.datetime.fromtimestamp(time.mktime(uc['timestamp']), tz=datetime.timezone.utc)
             title = uc['title']
             comment = uc['comment']
-            activities.append((timestamp, 'edit', title, comment))
+            yield (timestamp, 'edit', title, comment)
 
-        kwargs = dict(mwclient.listing.List.generate_kwargs('adr',
-                                                            user=user_name))
-        logger.debug("kwargs = %s" % kwargs)
+
+    def deleted_contribution_activities(self, site, user_name):
+        kwargs = dict(mwclient.listing.List.generate_kwargs('adr', user=user_name))
         listing = mwclient.listing.List(site,
                                         'alldeletedrevisions',
                                         'adr',
@@ -260,7 +275,7 @@ class UserActivitiesView(LoginRequiredMixin, View):
         for page in itertools.islice(listing, 10):
             title = page['title']
             for revision in page['revisions']:
-                logger.debug("deleted = %s" % revision)
+                logger.debug("deleted revision = %s" % revision)
                 ts = revision['timestamp']
                 if ts.endswith('Z'):
                     timestamp = datetime.datetime.fromisoformat(ts[:-1] + '+00:00')
@@ -268,25 +283,24 @@ class UserActivitiesView(LoginRequiredMixin, View):
                     raise ValueError("Unparsable timestamp: %s" % ts)
                 title = page['title']
                 comment = revision['comment']
-                activities.append((timestamp, 'deleted', title, comment))
+                yield (timestamp, 'deleted', title, comment)
 
-        activities.sort(reverse=True)
+
+    def group_by_day(self, activities):
+        """Group activities into daily chunks.  Assumes that activities is
+        sorted in chronological order.
+
+        """
         previous_date = None
         date_groups = ['primary', 'secondary']   # https://getbootstrap.com/docs/4.0/content/tables/#contextual-classes
         daily_activities = []
-        for a in activities:
-            timestamp, activity_type, title, comment = a
+        for timestamp, activity_type, title, comment in activities:
             this_date = timestamp.date()
             if this_date != previous_date:
                 date_groups.reverse()
                 previous_date = this_date
             daily_activities.append((date_groups[0], timestamp, activity_type, title, comment))
-
-
-        context = {'user_name': user_name,
-                   'daily_activities': daily_activities,
-        }
-        return render(request, 'spi/user-activities.dtl', context)
+        return daily_activities
 
 
 class TimecardView(View):
