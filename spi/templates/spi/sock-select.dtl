@@ -1,7 +1,7 @@
 {% extends "tools_app/base.dtl" %}
 
 {% block content %}
-<h1>Sock interactions for {{ case_name }}</h1>
+<h1><small>Sock interactions for {{ case_name }}</small></h1>
 <form action="" method="post">
   {% csrf_token %}
   <p>

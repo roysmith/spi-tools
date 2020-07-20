@@ -1,7 +1,7 @@
 {% extends "tools_app/base.dtl" %}
 
 {% block content %}
-<h1>Timecard analysis for {{case_name }}</h1>
+<h1><small>Timecard analysis for {{case_name }}</small></h1>
 <table>
   {% for user in data %}
   <tr>

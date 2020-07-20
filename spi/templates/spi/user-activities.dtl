@@ -1,7 +1,7 @@
 {% extends "tools_app/base.dtl" %}
 
 {% block content %}
-<h1>Consolidated activity for {{ user_name }}</h1>
+<h1><small>Consolidated activity for {{ user_name }}</small></h1>
 <pre>
 Deleted edits are in <del>strikeout</del> style
 Groups of similarly colored rows are individual days

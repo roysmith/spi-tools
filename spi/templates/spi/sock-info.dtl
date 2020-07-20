@@ -1,8 +1,7 @@
 {% extends "tools_app/base.dtl" %}
 
 {% block content %}
-<h1>Sock analysis for User:{{ case_name }}</h1>
-<h2>Users</h2>
+<h1><small>Sock analysis for User:{{ case_name }}</small></h1>
 <table>
   <tr><th>Username</th><th>Registration time</th></tr>
   {% for s in summaries %}

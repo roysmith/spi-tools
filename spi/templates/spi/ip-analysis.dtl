@@ -1,9 +1,8 @@
 {% extends "tools_app/base.dtl" %}
 
 {% block content %}
-<h1>IP analysis for User:{{ case_name }}</h1>
+<h1><small>IP analysis for User:{{ case_name }}</small></h1>
 Network to block: <span id="network"></span>
-<h2>IPs</h2>
 <ul>
   {% for summary in ip_summaries %}
   <li>

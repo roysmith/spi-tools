@@ -18,7 +18,7 @@
           <div class="card mt-5">
             <div class="card-body text-muted bg-light">
               <p class="my-0"><a href="https://github.com/roysmith/spi-tools">source code</a></p>
-              <p class="my-0"><a href="https://github.com/roysmith/spi-tools/issues/new">file a bug report</a></p>
+              <p class="my-0"><a href="https://github.com/roysmith/spi-tools/issues/new">report a bug</a></p>
             </div>
           </div>
         </div>
