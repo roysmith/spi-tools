@@ -168,12 +168,11 @@ USE_TZ = True
 # Static files setup.  For more information, see:
 #   https://wikitech.wikimedia.org/wiki/Portal:Toolforge/Tool_Accounts
 #   https://docs.djangoproject.com/en/2.2/howto/static-files
-if DEBUG:
-    STATIC_URL = f'/{TOOL_NAME}/static/'
-else:
-    STATIC_URL = f'//tools-static.wmflabs.org/{TOOL_NAME}/'
-    STATIC_ROOT = f'{WWW_DIR}/static/'
-    FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o711
+STATIC_URL = f'//tools-static.wmflabs.org/{TOOL_NAME}/'
+STATIC_ROOT = f'{WWW_DIR}/static/'
+
+# Unused?
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o711
 
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda x: False,
