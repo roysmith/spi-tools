@@ -46,7 +46,7 @@ you're not the intended audience for this tool.
 
 ### Interactions
 
-![sock-select page screenshot](spi-tools-sock-select.jpg]
+![sock-select page screenshot](spi-tools-sock-select.jpg)
 
 
 This section lets you look at groups of socks, in aggregate.  The main
