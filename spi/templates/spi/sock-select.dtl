@@ -28,5 +28,7 @@
 
 
 {% block page_scripts %}
+<script>
   {% include "./sock-select.js" %}
+</script>
 {% endblock %}

@@ -26,6 +26,8 @@ Network to block: <span id="network"></span>
 {% endblock %}
 
 {% block page_scripts %}
+<script>
   {% include "./ip-analysis.js" %}
   $(document).ready(updateBlockRange);
+</script>
 {% endblock %}
