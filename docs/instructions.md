@@ -22,6 +22,8 @@ uncheck "Use archive?" if you want.
 
 ### IP Info
 
+![ip-info page screenshot](spi-tools-ip-info.jpg)
+
 This shows you all the IPs that have been mentioned in {{checkip}}
 templates.  There's also a (rather clumsy) way to select a subset of
 them and see what CIDR range would cover them.
