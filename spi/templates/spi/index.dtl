@@ -9,20 +9,30 @@
 
 
 {% block content %}
+
+{% for e in form.non_field_errors %}
+<div class="alert alert-danger" role="alert">
+  {{ e }}
+</div>
+{% endfor %}
+
 <h1><small>SPI Tools</small></h1>
 <form action="" method="post">
   {% csrf_token %}
-  <table>
-    {{ form }}
-    <tr>
-      <th></th>
-      <td>
-        <input type="submit" name="ip-info-button" value="IP Info">
-        <input type="submit" name="sock-info-button" value="Sock Info">
-        <input type="submit" name="sock-select-button" value="Interactions">
-      </td>
-    </tr>
-  </table>
+  <div class="mt-3">
+    {% for e in form.errors.case_name %}
+    <div class="alert alert-danger" role="alert">
+      {{ e }}
+    </div>
+    {% endfor %}
+    <p class="mb-2">{{ form.case_name }}</p>
+    <p class="mb-2">{{ form.use_archive }} Use archive?</p>
+    <p class="mb-0">
+      <input type="submit" name="ip-info-button" value="IP Info">
+      <input type="submit" name="sock-info-button" value="Sock Info">
+      <input type="submit" name="sock-select-button" value="Interactions">
+    </p>
+  </div>
 </form>
 {% endblock %}
 
