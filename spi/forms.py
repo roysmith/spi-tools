@@ -17,7 +17,7 @@ def get_current_case_names():
     return choices
 
 
-class SelectizeField(forms.ChoiceField):
+class CaseNameChoiceField(forms.ChoiceField):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -34,9 +34,10 @@ class SelectizeField(forms.ChoiceField):
                                   params={'value': value})
 
 class CaseNameForm(forms.Form):
-    names = get_current_case_names();
+    # Leading empty element needed by select2.js placeholder.
+    names = [('', '')] + get_current_case_names();
     names.sort()
-    case_name = SelectizeField(label='Case (sockmaster) name', choices=names)
+    case_name = CaseNameChoiceField(label='Case (sockmaster) name', choices=names)
     use_archive = forms.BooleanField(label='Use archive?',
                                      initial=True,
                                      required=False)
@@ -75,4 +76,3 @@ class UserInfoForm(forms.Form):
 class IpRangeForm(forms.Form):
     first_ip = forms.CharField()
     last_ip = forms.CharField()
-

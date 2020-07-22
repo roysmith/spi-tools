@@ -1,5 +1,13 @@
 {% extends "tools_app/base.dtl" %}
 
+{% load static %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{% static "spi/select2.min.css" %}">
+<link rel="stylesheet" href="{% static "spi//select2-bootstrap4.min.css" %}">
+{% endblock %}
+
+
 {% block content %}
 <h1><small>SPI Tools</small></h1>
 <form action="" method="post">
@@ -16,4 +24,12 @@
     </tr>
   </table>
 </form>
+{% endblock %}
+
+{% block page_scripts %}
+<script src="{% static "spi/select2.min.js" %}"></script>
+<script>
+  {% include "./index.js" %}
+</script>
+
 {% endblock %}
