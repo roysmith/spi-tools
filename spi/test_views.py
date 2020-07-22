@@ -1,5 +1,5 @@
 from unittest import TestCase
-from spi.views import SockSelectView
+from spi.views import SockSelectView, UserSummary
 from spi.spi_utils import SpiUserInfo
 
 class SockSelectViewTest(TestCase):
@@ -32,4 +32,16 @@ class SockSelectViewTest(TestCase):
         items = {(field.label, name, date)
                  for field, name, date in context['form_info']}
         self.assertEqual(items, expected_items)
+
+
+class UserSummaryTest(TestCase):
+    def test_urlencoded_username(self):
+        summary = UserSummary('foo', '20 July 2020')
+        self.assertEqual(summary.username, 'foo')
+        self.assertEqual(summary.urlencoded_username(), 'foo')
+
+    def test_urlencoded_username_with_slash(self):
+        summary = UserSummary('foo/bar', '20 July 2020')
+        self.assertEqual(summary.username, 'foo/bar')
+        self.assertEqual(summary.urlencoded_username(), 'foo%2Fbar')
 

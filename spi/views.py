@@ -48,6 +48,9 @@ class UserSummary:
     username: str
     registration_time: str
 
+    def urlencoded_username(self):
+        return urllib.parse.quote_plus(self.username)
+
 
 class IndexView(View):
     def get(self, request):
@@ -228,7 +231,7 @@ class UserInfoView(View):
                                      'main': True,
                                      'draft': True,
                                      })
-        context = {'user_name': user_name,
+        context = {'user_name': urllib.parse.unquote_plus(user_name),
                    'form': form,
         }
         return render(request, 'spi/user-info.dtl', context)
