@@ -1,4 +1,6 @@
-from collections import namedtuple, defaultdict
+from collections import defaultdict
+from dataclasses import dataclass
+from typing import List
 from pprint import pprint
 import logging
 import urllib.request
@@ -34,8 +36,17 @@ SITE_NAME = 'en.wikipedia.org'
 EDITOR_INTERACT_BASE = "https://tools.wmflabs.org/sigma/editorinteract.py"
 TIMECARD_BASE = 'https://xtools.wmflabs.org/api/user/timecard/en.wikipedia.org'
 
-IpSummary = namedtuple('IpSummary', 'ip, spi_dates')
-UserSummary = namedtuple('UserSummary', 'username, registration_time')
+
+@dataclass(frozen=True)
+class IpSummary:
+    ip: str
+    spi_dates: List[SpiIpInfo]
+
+
+@dataclass(frozen=True)
+class UserSummary:
+    username: str
+    registration_time: str
 
 
 class IndexView(View):
