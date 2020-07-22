@@ -167,28 +167,38 @@ class SockSelectView(View):
         if form.is_valid():
             logger.debug("post: valid")
             if 'interaction-analyzer-button' in request.POST:
-                selected_fields = [urllib.parse.unquote(f.replace('sock_', '', 1))
-                                   for f in request.POST if f.startswith('sock_')]
-                selected_socks = [f for f in selected_fields]
-                query_items = [('users', sock) for sock in selected_socks]
-                params = urllib.parse.urlencode(query_items)
-                url = "%s?%s" % (EDITOR_INTERACT_BASE, params)
-                logger.debug("Redirecting to: %s" % url)
-                return redirect(url)
+                return(build_redirect(request,
+                                      EDITOR_INTERACT_BASE))
             if 'timecard-button' in request.POST:
-                selected_fields = [urllib.parse.unquote(f.replace('sock_', '', 1))
-                                   for f in request.POST if f.startswith('sock_')]
-                selected_socks = [f for f in selected_fields]
-                query_items = [('users', sock) for sock in selected_socks]
-                params = urllib.parse.urlencode(query_items)
-                url = "%s?%s" % (reverse('spi-timecard', args=[case_name]), params)
-                logger.debug("Redirecting to: %s" % url)
-                return redirect(url)
+                return(build_redirect(request,
+                                      reverse('spi-timecard', args=[case_name])))
             print("Egad, unknown button!")
         logger.debug("post: not valid")
         context = {'case_name': case_name,
                    'form': form}
         return render(request, 'spi/sock-select.dtl', context)
+
+    @staticmethod
+    def build_redirect(request, base_url):
+        url = "%s?%s" % (base_url, self.get_encoded_users(request))
+        logger.debug("Redirect URL = %s" % url)
+        return redirect(url)
+
+
+    @staticmethod
+    def get_encoded_users(request):
+        """Get all the socks which have been selected from the SockSelectForm.
+
+        A string of the form "users=sock_1&users=sock_2....users=sock_n" is returned.
+
+        """
+        selected_fields = [urllib.parse.unquote(f.replace('sock_', '', 1))
+                           for f in request.POST if f.startswith('sock_')]
+        selected_socks = [f for f in selected_fields]
+        query_items = [('users', sock) for sock in selected_socks]
+        params = urllib.parse.urlencode(query_items)
+        return params
+
 
     @staticmethod
     def build_context(case_name, user_infos):
