@@ -380,12 +380,17 @@ class TimecardView(View):
 
 
 @dataclass(frozen=True)
-class PageCreationSummary:
+class G5Summary:
     title: str
     user: str
-    comment: str
     timestamp: datetime.datetime
+    score: str
 
+
+@dataclass(frozen=True)
+class G5Score:
+    rating: str
+    reason: str = ''
 
 
 class G5View(View):
@@ -404,10 +409,29 @@ class G5View(View):
         for c in site.usercontributions('|'.join(sock_names), show="new"):
             timestamp = datetime_from_struct(c['timestamp'])
             if block_map.is_blocked_at(timestamp):
-                page_creations.append(PageCreationSummary(c['title'], c['user'], c['comment'], timestamp))
+                summary = self.build_summary(c['title'], c['user'], timestamp)
+                if summary:
+                    page_creations.append(summary)
 
         context = {'case_name': case_name,
                    'block_map': block_map,
                    'page_creations': page_creations,
                    }
         return render(request, 'spi/g5.dtl', context)
+
+
+    def build_summary(self, title, user, timestamp):
+        site = Site(SITE_NAME)
+        page = site.pages[title]
+        if page.exists:
+            return G5Summary(title, user, timestamp, self.g5_score(page))
+
+
+    def g5_score(self, page):
+        revisions = list(itertools.islice(page.revisions(), 50))
+        if len(revisions) >= 50:
+            return G5Score("unlikely", "50 or more revisions")
+        editors = {r['user'] for r in revisions}
+        if len(editors) == 1:
+            return G5Score("likely", "only one editor")
+        return G5Score("unknown")
