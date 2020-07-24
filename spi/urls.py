@@ -1,5 +1,5 @@
 from django.urls import path, include
-from spi.views import IndexView, IpAnalysisView, SockInfoView, SockSelectView, UserInfoView, TimecardView, UserActivitiesView
+from spi.views import IndexView, IpAnalysisView, SockInfoView, SockSelectView, UserInfoView, TimecardView, UserActivitiesView, G5View
 
 urlpatterns = [
     path('', IndexView.as_view(), name="spi-index"),
@@ -9,4 +9,5 @@ urlpatterns = [
     path('spi-user-info/<user_name>/', UserInfoView.as_view(), name="spi-user-info"),
     path('spi-user-activities/<user_name>', UserActivitiesView.as_view(), name="spi-user-activities"),
     path('spi-timecard/<case_name>', TimecardView.as_view(), name="spi-timecard"),
+    path('spi-g5/<case_name>', G5View.as_view(), name="spi-g5"),
 ]

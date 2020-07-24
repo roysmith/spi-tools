@@ -27,6 +27,7 @@ import mwparserfromhell
 from .forms import CaseNameForm, IpRangeForm, SockSelectForm, UserInfoForm
 from .spi_utils import SpiCase, SpiIpInfo, SpiSourceDocument
 from tools_app import settings
+from .block_utils import BlockMap
 
 
 logger = logging.getLogger('view')
@@ -35,6 +36,10 @@ logger = logging.getLogger('view')
 SITE_NAME = 'en.wikipedia.org'
 EDITOR_INTERACT_BASE = "https://tools.wmflabs.org/sigma/editorinteract.py"
 TIMECARD_BASE = 'https://xtools.wmflabs.org/api/user/timecard/en.wikipedia.org'
+
+
+def datetime_from_struct(time_struct):
+    return datetime.datetime.fromtimestamp(time.mktime(time_struct), tz=datetime.timezone.utc)
 
 
 @dataclass(frozen=True)
@@ -71,6 +76,10 @@ class IndexView(View):
                 return redirect(url)
             if 'sock-select-button' in request.POST:
                 base_url = reverse('spi-sock-select', args=[case_name])
+                url = base_url + '?archive=%d' % int(use_archive)
+                return redirect(url)
+            if 'g5-button' in request.POST:
+                base_url = reverse('spi-g5', args=[case_name])
                 url = base_url + '?archive=%d' % int(use_archive)
                 return redirect(url)
             print("Egad, unknown button!")
@@ -302,7 +311,7 @@ class UserActivitiesView(LoginRequiredMixin, View):
     def contribution_activities(self, site, user_name):
         for uc in site.usercontributions(user_name):
             logger.debug("uc = %s" % uc)
-            timestamp = datetime.datetime.fromtimestamp(time.mktime(uc['timestamp']), tz=datetime.timezone.utc)
+            timestamp = datetime_from_struct(uc['timestamp'])
             title = uc['title']
             comment = uc['comment']
             yield timestamp, 'edit', title, comment
@@ -367,3 +376,37 @@ class TimecardView(View):
                    'data': data,
         }
         return render(request, 'spi/timecard.dtl', context)
+
+
+@dataclass(frozen=True)
+class PageCreationSummary:
+    title: str
+    user: str
+    comment: str
+    timestamp: datetime.datetime
+
+
+
+class G5View(View):
+    def get(self, request, case_name):
+        use_archive = int(request.GET.get('archive', 1))
+        socks = get_sock_names(case_name, use_archive)
+        sock_names = [s.username for s in socks]
+        for s in sock_names:
+            if '|' in s:
+                raise RuntimeError(f'"{s}" has a "|" in it')
+
+        site = Site(SITE_NAME)
+        block_map = BlockMap(site.blocks(users=[case_name]))
+
+        page_creations = []
+        for c in site.usercontributions('|'.join(sock_names), show="new"):
+            timestamp = datetime_from_struct(c['timestamp'])
+            if block_map.is_blocked_at(timestamp):
+                page_creations.append(PageCreationSummary(c['title'], c['user'], c['comment'], timestamp))
+
+        context = {'case_name': case_name,
+                   'block_map': block_map,
+                   'page_creations': page_creations,
+                   }
+        return render(request, 'spi/g5.dtl', context)

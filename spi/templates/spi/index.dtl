@@ -31,6 +31,7 @@
       <input type="submit" name="ip-info-button" value="IP Info">
       <input type="submit" name="sock-info-button" value="Sock Info">
       <input type="submit" name="sock-select-button" value="Interactions">
+      <input type="submit" name="g5-button" value="G5">
     </p>
   </div>
 </form>
