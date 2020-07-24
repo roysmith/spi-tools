@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'spi',
     'pageutils',
     'tools_app.apps.ToolsAppConfig',
+    'tools_app.templatetags.tools_tags',
     'social_django',
     'debug_toolbar',
 ]

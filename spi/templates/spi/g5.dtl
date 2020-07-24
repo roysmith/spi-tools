@@ -1,5 +1,7 @@
 {% extends "tools_app/base.dtl" %}
 
+{% load tools_tags %}
+
 {% block content %}
 <h1><small>G5 analysis for User:{{ case_name }}</small></h1>
 <p>The following edits are possible G5 candidates.  They are page
@@ -15,7 +17,7 @@
     </td>
     <td class="align-top">
       <div>
-        <a href="https://en.wikipedia.org/wiki/User:{{ c.user }}"><span class="font-weight-bold">User:{{ c.user }}</span></a> <a href="https://en.wikipedia.org/wiki/{{ c.title }}">{{ c.title }}</a>
+        <span class="font-weight-bold">{{ c.user|user_link }}</span> {{ c.title|page_link }}
       </div>
       <div class="font-italic">
         ({{ comment }})

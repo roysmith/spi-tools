@@ -1,12 +1,12 @@
 {% extends "tools_app/base.dtl" %}
 
+{% load tools_tags %}
+
 {% block content %}
 <h1><small>User analysis for {{ user_name }}</small></h1>
 
-Show a consolidated history of <a href="https://en.wikipedia.org/wiki/User:{{ user_name }}">{{ user_name }}</a>'s activity.  This merges items from their
-<a href="https://en.wikipedia.org/wiki/Special:Contributions/{{ user_name }}">user contributions</a>,
-<a href="https://en.wikipedia.org/wiki/Special:DeletedContributions/{{ user_name }}">deleted user contributions</a>,
-and various logs.
+Show a consolidated history of {{ user_name|user_link }}'s activity.  This merges items from
+their {{ user_name|contributions }}, {{ user_name|deleted_contributions }}, and various logs.
 
 {% for e in form.non_field_errors %}
 <div class="alert alert-danger" role="alert">

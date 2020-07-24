@@ -1,5 +1,7 @@
 {% extends "tools_app/base.dtl" %}
 
+{% load tools_tags %}
+
 {% block content %}
 <h1><small>Consolidated activity for {{ user_name }}</small></h1>
 <pre>
@@ -15,9 +17,9 @@ Groups of similarly colored rows are individual days
     <td class="align-top">
       <div>
         {% if activity_type == "edit" %}
-        <a href="https://en.wikipedia.org/wiki/{{ page }}">{{ page }}</a>
+        {{ page|page_link }}
         {% elif activity_type == "deleted" %}
-        <a href="https://en.wikipedia.org/wiki/{{ page }}"><del>{{ page }}</del></a>
+        <del>{{ page|page_link }}<</del>
         {% endif %}
       </div>
       <div class="font-italic">({{ comment }})</div>
