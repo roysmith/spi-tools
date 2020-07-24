@@ -6,25 +6,23 @@
 Deleted edits are in <del>strikeout</del> style
 Groups of similarly colored rows are individual days
 </pre>
-<ul class="list-unstyled">
-  <table class="table table-hover table-sm small">
-    {% for date_group, timestamp, activity_type, page, comment in daily_activities %}
-    <tr class="table-{{ date_group }}">
-      <td class="align-top">
-        <div class="text-nowrap">{{ timestamp|date:"Y-m-d" }} {{ timestamp|time:"H:i:s" }}</div>
-      </td>
-      <td class="align-top">
-        <div>
+<table class="table table-hover table-sm small">
+  {% for date_group, timestamp, activity_type, page, comment in daily_activities %}
+  <tr class="table-{{ date_group }}">
+    <td class="align-top">
+      <div class="text-nowrap">{{ timestamp|date:"Y-m-d" }} {{ timestamp|time:"H:i:s" }}</div>
+    </td>
+    <td class="align-top">
+      <div>
         {% if activity_type == "edit" %}
         <a href="https://en.wikipedia.org/wiki/{{ page }}">{{ page }}</a>
         {% elif activity_type == "deleted" %}
         <a href="https://en.wikipedia.org/wiki/{{ page }}"><del>{{ page }}</del></a>
         {% endif %}
-        </div>
-        <div class="font-italic">({{ comment }})</div>
-    </tr>
-    {% endfor %}
-    </tr>
-  </table>
-</ul>
+      </div>
+      <div class="font-italic">({{ comment }})</div>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
 {% endblock %}
