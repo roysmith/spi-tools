@@ -265,6 +265,7 @@ class UserInfoView(View):
 
 class UserActivitiesView(LoginRequiredMixin, View):
     def get(self, request, user_name):
+        user_name = urllib.parse.unquote_plus(user_name)
         logger.debug("user_name = %s" % user_name)
         access_token = (django.contrib.auth.get_user(request)
                         .social_auth
