@@ -204,7 +204,7 @@ LOGGING = {
         },
         'view': {
             'handlers': ['file', 'bastion'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': True,
         },
         'app': {
