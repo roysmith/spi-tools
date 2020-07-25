@@ -278,7 +278,7 @@ class UserInfoView(View):
 
             base_url = reverse('spi-user-activities', args=[user_name])
             url = f'{base_url}?count={count}&main={main}&draft={draft}&other={other}'
-            logger.debug("Redirecting to: %s" % url)
+            logger.debug("Redirecting to: %s", url)
             return redirect(url)
         logger.debug("post: not valid")
         context = {'user_name': user_name,
@@ -290,7 +290,7 @@ class UserActivitiesView(LoginRequiredMixin, View):
     def get(self, request, user_name):
         site = get_site(request)
         user_name = urllib.parse.unquote_plus(user_name)
-        logger.debug("user_name = %s" % user_name)
+        logger.debug("user_name = %s", user_name)
         count = int(request.GET.get('count', '1'))
         namespace_filter = functools.partial(self.check_namespaces,
                                              bool(int(request.GET.get('main', 0))),
@@ -324,7 +324,7 @@ class UserActivitiesView(LoginRequiredMixin, View):
 
     def contribution_activities(self, site, user_name):
         for uc in site.usercontributions(user_name):
-            logger.debug("uc = %s" % uc)
+            logger.debug("uc = %s", uc)
             timestamp = datetime_from_struct(uc['timestamp'])
             title = uc['title']
             comment = uc['comment']
@@ -343,7 +343,7 @@ class UserActivitiesView(LoginRequiredMixin, View):
         for page in listing:
             title = page['title']
             for revision in page['revisions']:
-                logger.debug("deleted revision = %s" % revision)
+                logger.debug("deleted revision = %s", revision)
                 ts = revision['timestamp']
                 if ts.endswith('Z'):
                     timestamp = datetime.datetime.fromisoformat(ts[:-1] + '+00:00')
