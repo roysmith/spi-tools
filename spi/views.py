@@ -1,7 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import List
-from pprint import pprint
 import logging
 import urllib.request
 import urllib.parse
@@ -16,15 +15,13 @@ import requests
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
-from django.forms import BooleanField
 import django.contrib.auth
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from mwclient import Site
 import mwclient.listing
-import mwparserfromhell
 
-from .forms import CaseNameForm, IpRangeForm, SockSelectForm, UserInfoForm
+from .forms import CaseNameForm, SockSelectForm, UserInfoForm
 from .spi_utils import SpiCase, SpiIpInfo, SpiSourceDocument
 from tools_app import settings
 from .block_utils import BlockMap

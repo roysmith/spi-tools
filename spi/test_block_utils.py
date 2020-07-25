@@ -1,4 +1,3 @@
-from time import struct_time
 from unittest import TestCase
 from .block_utils import Block, BlockMap
 from datetime import datetime, timezone
