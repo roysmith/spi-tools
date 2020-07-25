@@ -111,6 +111,10 @@ SOCIAL_AUTH_MEDIAWIKI_SECRET = os.environ.get('MEDIAWIKI_SECRET')
 SOCIAL_AUTH_MEDIAWIKI_URL = 'https://meta.wikimedia.org/w/index.php'
 SOCIAL_AUTH_MEDIAWIKI_CALLBACK = 'https://%s.toolforge.org/oauth/complete/mediawiki/' % TOOL_NAME
 
+# For use with mwclient library
+MEDIAWIKI_SITE_NAME = 'en.wikipedia.org'
+MEDIAWIKI_USER_AGENT = f'{TOOL_NAME} (toolforge)'
+
 # It would be neater to use django.urls.reverse() here, but that's
 # apparently not available when this is executed.
 LOGIN_URL = '/oauth/login/mediawiki'

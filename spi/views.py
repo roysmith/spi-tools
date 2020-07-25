@@ -33,13 +33,44 @@ from .block_utils import BlockMap
 logger = logging.getLogger('view')
 
 
-SITE_NAME = 'en.wikipedia.org'
+
 EDITOR_INTERACT_BASE = "https://tools.wmflabs.org/sigma/editorinteract.py"
 TIMECARD_BASE = 'https://xtools.wmflabs.org/api/user/timecard/en.wikipedia.org'
 
 
 def datetime_from_struct(time_struct):
     return datetime.datetime.fromtimestamp(time.mktime(time_struct), tz=datetime.timezone.utc)
+
+
+def get_site(request):
+    """Return a mwclient.Site object.
+
+    If the user is logged in, this will include OAUTH consumer and access
+    credentials.  Otherwise, it will be an anonymous connection.
+
+    """
+    user = django.contrib.auth.get_user(request)
+
+    # It's not clear if we need to bother checking to see if the user
+    # is authenticated.  Maybe with an AnonymousUser, everything just
+    # works?  If so, these two code paths could be merged.
+    if user.is_anonymous:
+        auth_info = {}
+    else:
+        access_token = (user
+                        .social_auth
+                        .get(provider='mediawiki')
+                        .extra_data['access_token'])
+        auth_info = {
+            'consumer_token': settings.SOCIAL_AUTH_MEDIAWIKI_KEY,
+            'consumer_secret': settings.SOCIAL_AUTH_MEDIAWIKI_SECRET,
+            'access_token': access_token['oauth_token'],
+            'access_secret': access_token['oauth_token_secret']
+        }
+
+    return Site(settings.MEDIAWIKI_SITE_NAME,
+                clients_useragent=settings.MEDIAWIKI_USER_AGENT,
+                **auth_info)
 
 
 @dataclass(frozen=True)
@@ -89,8 +120,9 @@ class IndexView(View):
 
 class IpAnalysisView(View):
     def get(self, request, case_name):
+        site = get_site(request)
         ip_data = defaultdict(list)
-        for i in self.get_spi_case_ips(case_name):
+        for i in self.get_spi_case_ips(site, case_name):
             ip_data[i.ip].append(i.date)
         summaries = [IpSummary(ip, sorted(ip_data[ip])) for ip in ip_data]
         summaries.sort()
@@ -100,9 +132,8 @@ class IpAnalysisView(View):
         return render(request, 'spi/ip-analysis.dtl', context)
 
 
-    def get_spi_case_ips(self, master_name):
+    def get_spi_case_ips(self, site, master_name):
         "Returns a iterable over SpiIpInfos"
-        site = Site(SITE_NAME)
         case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
         archive_title = '%s/Archive' % case_title
 
@@ -118,13 +149,12 @@ class IpAnalysisView(View):
         return case.find_all_ips()
 
 
-def get_registration_time(user):
+def get_registration_time(site, user):
     '''Return the registration time for a user as a string.
 
     If the registration time can't be determined, returns None.
 
     '''
-    site = Site(SITE_NAME)
     r = site.users(users=[user], prop=['registration'])
     userinfo = r.next()
     try:
@@ -133,14 +163,13 @@ def get_registration_time(user):
         return None
 
 
-def get_sock_names(master_name, use_archive=True):
+def get_sock_names(site, master_name, use_archive=True):
     """Returns a iterable over SpiUserInfos.
 
     If use_archive is true, both the current case and any existing
     archive is used.  Otherwise, just the current case.
 
     """
-    site = Site(SITE_NAME)
     case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
     archive_title = '%s/Archive' % case_title
 
@@ -156,18 +185,19 @@ def get_sock_names(master_name, use_archive=True):
     return case.find_all_users()
 
 
-def make_user_summary(sock):
+def make_user_summary(site, sock):
     return UserSummary(sock.username,
-                       get_registration_time(sock.username))
+                       get_registration_time(site, sock.username))
 
 
 class SockInfoView(View):
     def get(self, request, case_name):
+        site = get_site(request)
         socks = []
         use_archive = int(request.GET.get('archive', 1))
-        for sock in get_sock_names(case_name, use_archive):
+        for sock in get_sock_names(site, case_name, use_archive):
             socks.append(sock)
-        summaries = list({make_user_summary(sock) for sock in socks})
+        summaries = list({make_user_summary(site, sock) for sock in socks})
         # This is a hack to make users with no registration time sort to the
         # beginning of the list.  We need to do something smarter here.
         summaries.sort(key=lambda x: x.registration_time or "")
@@ -179,8 +209,9 @@ class SockInfoView(View):
 
 class SockSelectView(View):
     def get(self, request, case_name):
+        site = get_site(request)
         use_archive = int(request.GET.get('archive', 1))
-        user_infos = list(get_sock_names(case_name, use_archive))
+        user_infos = list(get_sock_names(site, case_name, use_archive))
         return render(request,
                       'spi/sock-select.dtl',
                       self.build_context(case_name, user_infos))
@@ -265,18 +296,9 @@ class UserInfoView(View):
 
 class UserActivitiesView(LoginRequiredMixin, View):
     def get(self, request, user_name):
+        site = get_site(request)
         user_name = urllib.parse.unquote_plus(user_name)
         logger.debug("user_name = %s" % user_name)
-        access_token = (django.contrib.auth.get_user(request)
-                        .social_auth
-                        .get(provider='mediawiki')
-                        .extra_data['access_token'])
-        site = Site(SITE_NAME,
-                    consumer_token=settings.SOCIAL_AUTH_MEDIAWIKI_KEY,
-                    consumer_secret=settings.SOCIAL_AUTH_MEDIAWIKI_SECRET,
-                    access_token=access_token['oauth_token'],
-                    access_secret=access_token['oauth_token_secret'],
-                    clients_useragent=f'{settings.TOOL_NAME} (toolforge)')
         count = int(request.GET.get('count', '1'))
         namespace_filter = functools.partial(self.check_namespaces,
                                              bool(int(request.GET.get('main', 0))),
@@ -395,21 +417,21 @@ class G5Score:
 
 class G5View(View):
     def get(self, request, case_name):
+        site = get_site(request)
         use_archive = int(request.GET.get('archive', 1))
-        socks = get_sock_names(case_name, use_archive)
+        socks = get_sock_names(site, case_name, use_archive)
         sock_names = [s.username for s in socks]
         for s in sock_names:
             if '|' in s:
                 raise RuntimeError(f'"{s}" has a "|" in it')
 
-        site = Site(SITE_NAME)
         block_map = BlockMap(site.blocks(users=case_name))
 
         page_creations = []
         for c in site.usercontributions('|'.join(sock_names), show="new"):
             timestamp = datetime_from_struct(c['timestamp'])
             if block_map.is_blocked_at(timestamp):
-                summary = self.build_summary(c['title'], c['user'], timestamp)
+                summary = self.build_summary(site, c['title'], c['user'], timestamp)
                 if summary:
                     page_creations.append(summary)
 
@@ -420,8 +442,7 @@ class G5View(View):
         return render(request, 'spi/g5.dtl', context)
 
 
-    def build_summary(self, title, user, timestamp):
-        site = Site(SITE_NAME)
+    def build_summary(self, site, title, user, timestamp):
         page = site.pages[title]
         if page.exists:
             return G5Summary(title, user, timestamp, self.g5_score(page))
