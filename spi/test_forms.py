@@ -17,5 +17,3 @@ class SockSelectFormTest(TestCase):
         form = SockSelectForm.build([name])
         self.assertIsInstance(form, SockSelectForm)
         self.assertIsInstance(form.fields['sock_' + quoted_name], BooleanField)
-
-    
