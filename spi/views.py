@@ -60,7 +60,7 @@ class UserSummary:
 class IndexView(View):
     def get(self, request):
         form = CaseNameForm()
-        context = {'form': form} 
+        context = {'form': form}
         return render(request, 'spi/index.dtl', context)
 
     def post(self, request):
