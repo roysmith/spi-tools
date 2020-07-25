@@ -220,23 +220,21 @@ class SockSelectView(View):
         form = SockSelectForm(request.POST)
         if form.is_valid():
             logger.debug("post: valid")
+
             if 'interaction-analyzer-button' in request.POST:
-                return(build_redirect(request,
-                                      EDITOR_INTERACT_BASE))
+                url = f'{EDITOR_INTERACT_BASE}?{self.get_encoded_users(request)}'
+                return(redirect(url))
+
             if 'timecard-button' in request.POST:
-                return(build_redirect(request,
-                                      reverse('spi-timecard', args=[case_name])))
-            print("Egad, unknown button!")
+                url = f'{reverse("spi-timecard", args=[case_name])}?{self.get_encoded_users(request)}'
+                return(redirect(url))
+
+            logger.error("Unknown button!")
+
         logger.debug("post: not valid")
         context = {'case_name': case_name,
                    'form': form}
         return render(request, 'spi/sock-select.dtl', context)
-
-    @staticmethod
-    def build_redirect(request, base_url):
-        url = "%s?%s" % (base_url, self.get_encoded_users(request))
-        logger.debug("Redirect URL = %s" % url)
-        return redirect(url)
 
 
     @staticmethod
