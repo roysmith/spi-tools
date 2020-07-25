@@ -124,8 +124,7 @@ class IpAnalysisView(View):
         summaries = [IpSummary(ip, sorted(ip_data[ip])) for ip in ip_data]
         summaries.sort()
         context = {'case_name': case_name,
-                   'ip_summaries': summaries,
-        }
+                   'ip_summaries': summaries}
         return render(request, 'spi/ip-analysis.dtl', context)
 
 
@@ -199,8 +198,7 @@ class SockInfoView(View):
         # beginning of the list.  We need to do something smarter here.
         summaries.sort(key=lambda x: x.registration_time or "")
         context = {'case_name': case_name,
-                   'summaries': summaries,
-        }
+                   'summaries': summaries}
         return render(request, 'spi/sock-info.dtl', context)
 
 
@@ -223,7 +221,8 @@ class SockSelectView(View):
                 return redirect(url)
 
             if 'timecard-button' in request.POST:
-                url = f'{reverse("spi-timecard", args=[case_name])}?{self.get_encoded_users(request)}'
+                url = '%s?%s' % (reverse("spi-timecard", args=[case_name]),
+                                  self.get_encoded_users(request))
                 return redirect(url)
 
             logger.error("Unknown button!")
@@ -256,8 +255,7 @@ class SockSelectView(View):
         dates = [users_by_name[name].date for name in names]
         form = SockSelectForm.build(names)
         return {'case_name': case_name,
-                'form_info': zip(form, names, dates),
-        }
+                'form_info': zip(form, names, dates)}
 
 
 class UserInfoView(View):
@@ -267,8 +265,7 @@ class UserInfoView(View):
                                      'draft': True,
                                      })
         context = {'user_name': urllib.parse.unquote_plus(user_name),
-                   'form': form,
-        }
+                   'form': form}
         return render(request, 'spi/user-info.dtl', context)
 
     def post(self, request, user_name):
@@ -308,8 +305,7 @@ class UserActivitiesView(LoginRequiredMixin, View):
         daily_activities = self.group_by_day(counted)
 
         context = {'user_name': user_name,
-                   'daily_activities': daily_activities,
-        }
+                   'daily_activities': daily_activities}
         return render(request, 'spi/user-activities.dtl', context)
 
 
@@ -364,7 +360,10 @@ class UserActivitiesView(LoginRequiredMixin, View):
 
         """
         previous_date = None
-        date_groups = ['primary', 'secondary']   # https://getbootstrap.com/docs/4.0/content/tables/#contextual-classes
+
+        # https://getbootstrap.com/docs/4.0/content/tables/#contextual-classes
+        date_groups = ['primary', 'secondary']
+
         daily_activities = []
         for timestamp, activity_type, title, comment in activities:
             this_date = timestamp.date()
@@ -391,8 +390,7 @@ class TimecardView(View):
 
         context = {'case_name': case_name,
                    'users': user_names,
-                   'data': data,
-        }
+                   'data': data}
         return render(request, 'spi/timecard.dtl', context)
 
 
@@ -441,6 +439,8 @@ class G5View(View):
         page = site.pages[title]
         if page.exists:
             return G5Summary(title, user, timestamp, self.g5_score(page))
+        else:
+            return None
 
 
     def g5_score(self, page):
