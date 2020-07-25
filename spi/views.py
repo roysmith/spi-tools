@@ -220,11 +220,11 @@ class SockSelectView(View):
 
             if 'interaction-analyzer-button' in request.POST:
                 url = f'{EDITOR_INTERACT_BASE}?{self.get_encoded_users(request)}'
-                return(redirect(url))
+                return redirect(url)
 
             if 'timecard-button' in request.POST:
                 url = f'{reverse("spi-timecard", args=[case_name])}?{self.get_encoded_users(request)}'
-                return(redirect(url))
+                return redirect(url)
 
             logger.error("Unknown button!")
 
