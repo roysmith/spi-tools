@@ -439,8 +439,7 @@ class G5View(View):
         page = site.pages[title]
         if page.exists:
             return G5Summary(title, user, timestamp, self.g5_score(page))
-        else:
-            return None
+        return None
 
 
     def g5_score(self, page):

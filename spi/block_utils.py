@@ -12,7 +12,7 @@ class Block:
         keys, as returned by mwclient's site.blocks() method.
 
         """
-        self.start =  datetime.fromtimestamp(mktime(timestamp), tz=timezone.utc)
+        self.start = datetime.fromtimestamp(mktime(timestamp), tz=timezone.utc)
         if expiry == 'infinity':
             self.end = datetime.replace(datetime.max, tzinfo=timezone.utc)
         else:

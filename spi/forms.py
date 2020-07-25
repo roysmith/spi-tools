@@ -12,7 +12,7 @@ def get_current_case_names():
     overview = site.pages['Wikipedia:Sockpuppet investigations/Cases/Overview'].text()
     wikicode = mwparserfromhell.parse(overview)
     templates = wikicode.filter_templates(
-        matches = lambda n: n.name.matches('SPIstatusentry'))
+        matches=lambda n: n.name.matches('SPIstatusentry'))
     choices = [(str(t.get(1)), str(t.get(1))) for t in templates]
     return choices
 
@@ -35,7 +35,7 @@ class CaseNameChoiceField(forms.ChoiceField):
 
 class CaseNameForm(forms.Form):
     # Leading empty element needed by select2.js placeholder.
-    names = [('', '')] + get_current_case_names();
+    names = [('', '')] + get_current_case_names()
     names.sort()
     case_name = CaseNameChoiceField(label='Case (sockmaster) name', choices=names)
     use_archive = forms.BooleanField(label='Use archive?',

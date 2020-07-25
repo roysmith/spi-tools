@@ -38,8 +38,7 @@ class BlockMapTest(TestCase):
 
     def test_construct_with_one_block(self):
         api_block = {'timestamp': st(2020, 2, 7),
-                     'expiry': st(2020, 4, 1),
-        }
+                     'expiry': st(2020, 4, 1)}
         map = BlockMap([api_block])
         self.assertEqual(len(map.blocks), 1)
         self.assertEqual(map.blocks[0].start, dt(2020, 2, 7))

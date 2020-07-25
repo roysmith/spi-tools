@@ -44,4 +44,3 @@ class UserSummaryTest(TestCase):
         summary = UserSummary('foo/bar', '20 July 2020')
         self.assertEqual(summary.username, 'foo/bar')
         self.assertEqual(summary.urlencoded_username(), 'foo%2Fbar')
-

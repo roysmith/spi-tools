@@ -95,7 +95,7 @@ class SpiCaseDay:
 
 
     def date(self):
-        headings = self.wikicode.filter_headings(matches = lambda h: h.level == 3)
+        headings = self.wikicode.filter_headings(matches=lambda h: h.level == 3)
         n = len(headings)
         if n == 1:
             return headings[0].title
@@ -110,9 +110,9 @@ class SpiCaseDay:
         '''
         date = self.date()
         templates = self.wikicode.filter_templates(
-            matches = lambda n: n.name.matches(['checkuser',
-                                                'user',
-                                                 'SPIarchive notice']))
+            matches=lambda n: n.name.matches(['checkuser',
+                                              'user',
+                                              'SPIarchive notice']))
         for t in templates:
             username = t.get('1').value
             yield SpiUserInfo(str(username), str(date))
@@ -138,7 +138,7 @@ class SpiCaseDay:
         '''
         date = self.date()
         templates = self.wikicode.filter_templates(
-            matches = lambda n: n.name.matches('checkip'))
+            matches=lambda n: n.name.matches('checkip'))
         for t in templates:
             ip = t.get('1').value
             try:
