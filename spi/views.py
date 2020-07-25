@@ -403,7 +403,7 @@ class G5View(View):
                 raise RuntimeError(f'"{s}" has a "|" in it')
 
         site = Site(SITE_NAME)
-        block_map = BlockMap(site.blocks(users=[case_name]))
+        block_map = BlockMap(site.blocks(users=case_name))
 
         page_creations = []
         for c in site.usercontributions('|'.join(sock_names), show="new"):
