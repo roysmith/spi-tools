@@ -1,5 +1,5 @@
 from unittest import TestCase
-from spi.forms import SockSelectForm
+from .forms import SockSelectForm
 from django.forms import BooleanField
 from pprint import pprint
 import urllib.parse

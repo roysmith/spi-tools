@@ -4,7 +4,7 @@ import os.path
 import mwparserfromhell
 from ipaddress import IPv4Address, IPv4Network
 
-from spi_utils import SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo, ArchiveError
+from .spi_utils import SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo, ArchiveError
 
 
 def make_code(text):

@@ -1,5 +1,5 @@
 from django.urls import path, include
-from spi.views import IndexView, IpAnalysisView, SockInfoView, SockSelectView, UserInfoView, TimecardView, UserActivitiesView, G5View
+from .views import IndexView, IpAnalysisView, SockInfoView, SockSelectView, UserInfoView, TimecardView, UserActivitiesView, G5View
 
 urlpatterns = [
     path('', IndexView.as_view(), name="spi-index"),

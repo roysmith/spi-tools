@@ -1,6 +1,6 @@
 from unittest import TestCase
-from spi.views import SockSelectView, UserSummary
-from spi.spi_utils import SpiUserInfo
+from .views import SockSelectView, UserSummary
+from .spi_utils import SpiUserInfo
 
 class SockSelectViewTest(TestCase):
     def test_build_context(self):
