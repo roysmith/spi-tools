@@ -222,7 +222,7 @@ class SockSelectView(View):
 
             if 'timecard-button' in request.POST:
                 url = '%s?%s' % (reverse("spi-timecard", args=[case_name]),
-                                  self.get_encoded_users(request))
+                                 self.get_encoded_users(request))
                 return redirect(url)
 
             logger.error("Unknown button!")
