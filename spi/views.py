@@ -383,7 +383,7 @@ class TimecardView(View):
         data = {}
         for name in user_names:
             response = requests.get('%s/%s' % (TIMECARD_BASE, name))
-            if response.status_code == requests.codes.ok:
+            if response.status_code == requests.codes.ok: # pylint: disable=no-member
                 timecard = response.json()['timecard']
                 data[name] = [{'x': t['hour'], 'y': t['day_of_week'], 'r': t['scale']}
                               for t in timecard
