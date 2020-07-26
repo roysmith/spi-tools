@@ -1,7 +1,7 @@
 from unittest import TestCase
 import textwrap
-import mwparserfromhell
 from ipaddress import IPv4Network
+import mwparserfromhell
 
 from .spi_utils import SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo, ArchiveError
 

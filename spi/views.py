@@ -11,6 +11,8 @@ import functools
 import heapq
 
 import requests
+from mwclient import Site
+import mwclient.listing
 
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -18,8 +20,6 @@ from django.views import View
 import django.contrib.auth
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from mwclient import Site
-import mwclient.listing
 
 from .forms import CaseNameForm, SockSelectForm, UserInfoForm
 from .spi_utils import SpiCase, SpiIpInfo, SpiSourceDocument

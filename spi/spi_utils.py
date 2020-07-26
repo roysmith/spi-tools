@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
-
 from ipaddress import IPv4Address, IPv4Network
+
 from mwparserfromhell import parse
 from mwparserfromhell.wikicode import Wikicode
 

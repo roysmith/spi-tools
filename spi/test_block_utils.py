@@ -1,6 +1,7 @@
 from unittest import TestCase
-from .block_utils import Block, BlockMap
 from datetime import datetime, timezone
+
+from .block_utils import Block, BlockMap
 
 
 # Note: In all of these tests, it is assumed that the last three

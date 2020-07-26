@@ -2,6 +2,7 @@ import urllib.parse
 
 from django import forms
 from django.core.exceptions import ValidationError
+
 from mwclient import Site
 import mwparserfromhell
 

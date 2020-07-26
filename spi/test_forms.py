@@ -1,7 +1,9 @@
 from unittest import TestCase
-from .forms import SockSelectForm
-from django.forms import BooleanField
 import urllib.parse
+
+from django.forms import BooleanField
+
+from .forms import SockSelectForm
 
 class SockSelectFormTest(TestCase):
     def test_build_with_simple_names(self):
