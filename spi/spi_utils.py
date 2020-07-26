@@ -12,7 +12,10 @@ class InvalidIpV4Error(ValueError):
     pass
 
 
+@dataclass(frozen=True)
 class SpiDocumentBase:
+    page_title: str
+
     def master_name(self):
         parts = self.page_title.split('/')
         if parts[-1] == 'Archive':
@@ -23,13 +26,12 @@ class SpiDocumentBase:
 @dataclass(frozen=True)
 class SpiSourceDocument(SpiDocumentBase):
     wikitext: str
-    page_title: str
 
 
 @dataclass(frozen=True)
 class SpiParsedDocument(SpiDocumentBase):
-    wikicode: Wikicode
     page_title: str
+    wikicode: Wikicode
 
 
 class SpiCase:
@@ -41,7 +43,7 @@ class SpiCase:
 
         Each source is SpiSourceDocument.
         """
-        self.parsed_docs = [SpiParsedDocument(parse(s.wikitext), s.page_title)
+        self.parsed_docs = [SpiParsedDocument(s.page_title, parse(s.wikitext))
                             for s in sources]
 
         master_names = set(doc.master_name() for doc in self.parsed_docs)

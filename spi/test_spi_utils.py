@@ -10,7 +10,7 @@ def make_code(text):
     return mwparserfromhell.parse(textwrap.dedent(text))
 
 def make_source(text, case_name='whatever'):
-    return SpiSourceDocument(textwrap.dedent(text), case_name)
+    return SpiSourceDocument(case_name, textwrap.dedent(text))
 
 
 class SpiCaseTest(TestCase):

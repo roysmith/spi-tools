@@ -134,12 +134,12 @@ class IpAnalysisView(View):
         case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
         archive_title = '%s/Archive' % case_title
 
-        case_doc = SpiSourceDocument(site.pages[case_title].text(), case_title)
+        case_doc = SpiSourceDocument(case_title, site.pages[case_title].text())
         docs = [case_doc]
 
         archive_text = site.pages[archive_title].text()
         if archive_text:
-            archive_doc = SpiSourceDocument(archive_text, archive_title)
+            archive_doc = SpiSourceDocument(archive_title, archive_text)
             docs.append(archive_doc)
 
         case = SpiCase(*docs)
@@ -170,12 +170,12 @@ def get_sock_names(site, master_name, use_archive=True):
     case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
     archive_title = '%s/Archive' % case_title
 
-    case_doc = SpiSourceDocument(site.pages[case_title].text(), case_title)
+    case_doc = SpiSourceDocument(case_title, site.pages[case_title].text())
     docs = [case_doc]
 
     archive_text = use_archive and site.pages[archive_title].text()
     if archive_text:
-        archive_doc = SpiSourceDocument(archive_text, archive_title)
+        archive_doc = SpiSourceDocument(archive_title, archive_text)
         docs.append(archive_doc)
 
     case = SpiCase(*docs)
