@@ -163,8 +163,6 @@ class SpiUserInfo:
 
 
 class SpiIpInfo:
-    v4pattern = re.compile(r'^\d+\.\d+\.\d+\.\d+$')
-
     def __init__(self, ip, date, page_title):
         try:
             self.ip = IPv4Address(ip)
