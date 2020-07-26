@@ -128,7 +128,8 @@ class IpAnalysisView(View):
         return render(request, 'spi/ip-analysis.dtl', context)
 
 
-    def get_spi_case_ips(self, site, master_name):
+    @staticmethod
+    def get_spi_case_ips(site, master_name):
         "Returns a iterable over SpiIpInfos"
         case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
         archive_title = '%s/Archive' % case_title
@@ -322,7 +323,8 @@ class UserActivitiesView(LoginRequiredMixin, View):
         return not other
 
 
-    def contribution_activities(self, site, user_name):
+    @staticmethod
+    def contribution_activities(site, user_name):
         for contrib in site.usercontributions(user_name):
             logger.debug("contrib = %s", contrib)
             timestamp = datetime_from_struct(contrib['timestamp'])
@@ -331,7 +333,8 @@ class UserActivitiesView(LoginRequiredMixin, View):
             yield timestamp, 'edit', title, comment
 
 
-    def deleted_contribution_activities(self, site, user_name):
+    @staticmethod
+    def deleted_contribution_activities(site, user_name):
         kwargs = dict(mwclient.listing.List.generate_kwargs('adr', user=user_name))
         listing = mwclient.listing.List(site,
                                         'alldeletedrevisions',
@@ -354,7 +357,8 @@ class UserActivitiesView(LoginRequiredMixin, View):
                 yield timestamp, 'deleted', title, comment
 
 
-    def group_by_day(self, activities):
+    @staticmethod
+    def group_by_day(activities):
         """Group activities into daily chunks.  Assumes that activities is
         sorted in chronological order.
 
@@ -445,7 +449,8 @@ class G5View(View):
         return None
 
 
-    def g5_score(self, page):
+    @staticmethod
+    def g5_score(page):
         revisions = list(itertools.islice(page.revisions(), 50))
         if len(revisions) >= 50:
             return G5Score("unlikely", "50 or more revisions")
