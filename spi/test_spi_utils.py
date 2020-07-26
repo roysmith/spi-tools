@@ -228,7 +228,8 @@ class SpiUserInfoTest(TestCase):
         self.assertEqual(info1, info2)
 
 
-    def test_hashable(self):
+    @staticmethod
+    def test_hashable():
         info = SpiUserInfo('user', '1 January 2019')
         hash(info)
 
@@ -257,7 +258,8 @@ class SpiIpInfoTest(TestCase):
         self.assertLess(info1, info2)
 
 
-    def test_hashable(self):
+    @staticmethod
+    def test_hashable():
         info = SpiIpInfo('1.2.3.4', '1 January 2019', 'title')
         hash(info)
 
