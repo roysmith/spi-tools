@@ -32,26 +32,26 @@ class BlockTest(TestCase):
 
 class BlockMapTest(TestCase):
     def test_construct_empty(self):
-        map = BlockMap([])
-        self.assertEqual(len(map.blocks), 0)
+        block_map = BlockMap([])
+        self.assertEqual(len(block_map.blocks), 0)
 
 
     def test_construct_with_one_block(self):
         api_block = {'timestamp': st(2020, 2, 7),
                      'expiry': st(2020, 4, 1)}
-        map = BlockMap([api_block])
-        self.assertEqual(len(map.blocks), 1)
-        self.assertEqual(map.blocks[0].start, dt(2020, 2, 7))
-        self.assertEqual(map.blocks[0].end, dt(2020, 4, 1))
+        block_map = BlockMap([api_block])
+        self.assertEqual(len(block_map.blocks), 1)
+        self.assertEqual(block_map.blocks[0].start, dt(2020, 2, 7))
+        self.assertEqual(block_map.blocks[0].end, dt(2020, 4, 1))
 
 
     def test_is_blocked_at_time(self):
         api_blocks = [{'timestamp': st(2020, 2, 7), 'expiry': st(2020, 4, 1)},
                       {'timestamp': st(2020, 6, 1), 'expiry': 'infinity'},
                       ]
-        map = BlockMap(api_blocks)
-        self.assertFalse(map.is_blocked_at(dt(2020, 2, 6)))
-        self.assertTrue(map.is_blocked_at(dt(2020, 2, 8)))
-        self.assertFalse(map.is_blocked_at(dt(2020, 4, 2)))
-        self.assertTrue(map.is_blocked_at(dt(2020, 6, 2)))
-        self.assertTrue(map.is_blocked_at(dt(3000, 1, 1)))
+        block_map = BlockMap(api_blocks)
+        self.assertFalse(block_map.is_blocked_at(dt(2020, 2, 6)))
+        self.assertTrue(block_map.is_blocked_at(dt(2020, 2, 8)))
+        self.assertFalse(block_map.is_blocked_at(dt(2020, 4, 2)))
+        self.assertTrue(block_map.is_blocked_at(dt(2020, 6, 2)))
+        self.assertTrue(block_map.is_blocked_at(dt(3000, 1, 1)))
