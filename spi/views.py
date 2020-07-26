@@ -72,7 +72,7 @@ def get_site(request):
 
 @dataclass(frozen=True, order=True)
 class IpSummary:
-    ip: str
+    ip_address: str
     spi_dates: List[SpiIpInfo]
 
 
