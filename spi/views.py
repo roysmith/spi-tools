@@ -70,7 +70,7 @@ def get_site(request):
                 **auth_info)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class IpSummary:
     ip: str
     spi_dates: List[SpiIpInfo]
