@@ -19,11 +19,11 @@ from django.urls import reverse
 from django.views import View
 import django.contrib.auth
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.conf import settings
 
 
 from .forms import CaseNameForm, SockSelectForm, UserInfoForm
 from .spi_utils import SpiCase, SpiIpInfo, SpiSourceDocument
-from tools_app import settings
 from .block_utils import BlockMap
 
 
