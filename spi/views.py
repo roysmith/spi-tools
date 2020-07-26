@@ -11,7 +11,7 @@ import functools
 import heapq
 
 import requests
-from mwclient import Site
+from mwclient import Site, APIError
 import mwclient.listing
 
 from django.shortcuts import render, redirect
@@ -296,14 +296,22 @@ class UserActivitiesView(LoginRequiredMixin, View):
                                              bool(int(request.GET.get('main', 0))),
                                              bool(int(request.GET.get('draft', 0))),
                                              bool(int(request.GET.get('other', 0))))
-
         active = self.contribution_activities(site, user_name)
-        deleted = self.deleted_contribution_activities(site, user_name)
-        merged = heapq.merge(active, deleted, reverse=True)
-        filtered = itertools.filterfalse(namespace_filter, merged)
-        counted = itertools.islice(filtered, count)
-        daily_activities = self.group_by_day(counted)
 
+        try:
+            deleted = self.deleted_contribution_activities(site, user_name)
+            merged = heapq.merge(active, deleted, reverse=True)
+            filtered = itertools.filterfalse(namespace_filter, merged)
+            counted = list(itertools.islice(filtered, count))
+        except APIError as ex:
+            if ex.args[0] == 'permissiondenied':
+                context = {'user_name': user_name,
+                           'error_code': ex.args[0],
+                           'error_message': ex.args[1]}
+                return render(request, 'spi/user-activities.dtl', context)
+            raise
+
+        daily_activities = self.group_by_day(counted)
         context = {'user_name': user_name,
                    'daily_activities': daily_activities}
         return render(request, 'spi/user-activities.dtl', context)
