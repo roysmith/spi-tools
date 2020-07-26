@@ -323,11 +323,11 @@ class UserActivitiesView(LoginRequiredMixin, View):
 
 
     def contribution_activities(self, site, user_name):
-        for uc in site.usercontributions(user_name):
-            logger.debug("uc = %s", uc)
-            timestamp = datetime_from_struct(uc['timestamp'])
-            title = uc['title']
-            comment = uc['comment']
+        for contrib in site.usercontributions(user_name):
+            logger.debug("contrib = %s", contrib)
+            timestamp = datetime_from_struct(contrib['timestamp'])
+            title = contrib['title']
+            comment = contrib['comment']
             yield timestamp, 'edit', title, comment
 
 
