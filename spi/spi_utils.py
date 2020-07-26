@@ -147,51 +147,26 @@ class SpiCaseDay:
                 pass
 
 
+@dataclass(order=True, unsafe_hash=True)
 class SpiUserInfo:
-    def __init__(self, username, date):
-        self.username = username
-        self.date = date
-
-    def __eq__(self, other):
-        return self.username == other.username and self.date == other.date
-
-    def __hash__(self):
-        return hash((self.username, self.date))
-
-    def __repr__(self):
-        return f'SpiUserInfo("{self.username}", "{self.date}")'
+    username: str
+    date: str
 
 
+@dataclass(order=True, unsafe_hash=True)
 class SpiIpInfo:
-    def __init__(self, ip, date, page_title):
+    ip: str
+    date: str
+    page_title: str
+
+    def __init__(self, ip_str, date, page_title):
         try:
-            self.ip = IPv4Address(ip)
+            self.ip = IPv4Address(ip_str)
         except ValueError as error:
             raise InvalidIpV4Error(str(error))
         self.date = date
         self.page_title = page_title
 
-    def __eq__(self, other):
-        return (self.ip == other.ip and
-                self.date == other.date and
-                self.page_title == other.page_title)
-
-    def __lt__(self, other):
-        if self.ip < other.ip:
-            return True
-        if self.ip > other.ip:
-            return False
-        if self.date < other.date:
-            return True
-        if self.date > other.date:
-            return False
-        return self.page_title < other.page_title
-
-    def __hash__(self):
-        return hash((self.ip, self.date, self.page_title))
-
-    def __repr__(self):
-        return f'SpiIpInfo("{self.ip}", "{self.date}", "{self.page_title}")'
 
     @staticmethod
     def find_common_network(infos):
