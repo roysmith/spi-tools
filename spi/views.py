@@ -120,7 +120,7 @@ class IpAnalysisView(View):
         site = get_site(request)
         ip_data = defaultdict(list)
         for i in self.get_spi_case_ips(site, case_name):
-            ip_data[i.ip].append(i.date)
+            ip_data[i.ip_address].append(i.date)
         summaries = [IpSummary(ip, sorted(ip_data[ip])) for ip in ip_data]
         summaries.sort()
         context = {'case_name': case_name,

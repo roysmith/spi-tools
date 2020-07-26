@@ -139,9 +139,9 @@ class SpiCaseDay:
         templates = self.wikicode.filter_templates(
             matches=lambda n: n.name.matches('checkip'))
         for template in templates:
-            ip_address = template.get('1').value
+            ip_str = template.get('1').value
             try:
-                yield SpiIpInfo(str(ip_address), str(date), self.page_title)
+                yield SpiIpInfo(str(ip_str), str(date), self.page_title)
             except InvalidIpV4Error:
                 pass
 
@@ -154,13 +154,13 @@ class SpiUserInfo:
 
 @dataclass(order=True, unsafe_hash=True)
 class SpiIpInfo:
-    ip: str
+    ip_address: IPv4Address
     date: str
     page_title: str
 
     def __init__(self, ip_str, date, page_title):
         try:
-            self.ip = IPv4Address(ip_str)
+            self.ip_address = IPv4Address(ip_str)
         except ValueError as error:
             raise InvalidIpV4Error(str(error))
         self.date = date
@@ -169,7 +169,7 @@ class SpiIpInfo:
 
     @staticmethod
     def find_common_network(infos):
-        ips = [int(i.ip) for i in infos]
+        ips = [int(i.ip_address) for i in infos]
         bits = [list(map(int, format(i, '032b'))) for i in ips]
         slices = zip(*bits)
         bit_sets = [set(s) for s in slices]
