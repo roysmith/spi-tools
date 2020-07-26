@@ -1,7 +1,9 @@
 from django.urls import path
-from .views import IndexView, IpAnalysisView, SockInfoView, SockSelectView, UserInfoView, TimecardView, UserActivitiesView, G5View
+from .views import (IndexView, IpAnalysisView, SockInfoView, SockSelectView,
+                    UserInfoView, TimecardView, UserActivitiesView, G5View)
 
 urlpatterns = [
+    # pylint: disable=line-too-long
     path('', IndexView.as_view(), name="spi-index"),
     path('ip-analysis/<case_name>/', IpAnalysisView.as_view(), name="spi-ip-analysis"),
     path('spi-sock-info/<case_name>/', SockInfoView.as_view(), name="spi-sock-info"),
