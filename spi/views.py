@@ -309,7 +309,7 @@ class UserActivitiesView(LoginRequiredMixin, View):
         return render(request, 'spi/user-activities.dtl', context)
 
 
-    # https://github.com/roysmith/spi-tools/issues/50
+    # https://github.com/roysmith/spi-tools/issues/51
     @staticmethod
     def check_namespaces(main, draft, other, activity):
         _, _, title, _ = activity
