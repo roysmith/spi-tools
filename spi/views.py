@@ -241,9 +241,8 @@ class SockSelectView(View):
         A string of the form "users=sock_1&users=sock_2....users=sock_n" is returned.
 
         """
-        selected_fields = [urllib.parse.unquote(f.replace('sock_', '', 1))
-                           for f in request.POST if f.startswith('sock_')]
-        selected_socks = [f for f in selected_fields]
+        selected_socks = [urllib.parse.unquote(f.replace('sock_', '', 1))
+                          for f in request.POST if f.startswith('sock_')]
         query_items = [('users', sock) for sock in selected_socks]
         params = urllib.parse.urlencode(query_items)
         return params
