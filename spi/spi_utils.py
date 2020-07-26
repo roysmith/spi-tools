@@ -70,8 +70,8 @@ class SpiCase:
         is not guaranteed, and templates are not deduplicated.
         '''
         for day in self.days():
-            for ip in day.find_ips():
-                yield ip
+            for ip_address in day.find_ips():
+                yield ip_address
 
 
     def find_all_users(self):
@@ -96,10 +96,10 @@ class SpiCaseDay:
 
     def date(self):
         headings = self.wikicode.filter_headings(matches=lambda h: h.level == 3)
-        n = len(headings)
-        if n == 1:
+        h3_count = len(headings)
+        if h3_count == 1:
             return headings[0].title
-        raise ArchiveError("Expected exactly 1 level-3 heading, found %d" % n)
+        raise ArchiveError("Expected exactly 1 level-3 heading, found %d" % h3_count)
 
 
     def find_users(self):
@@ -113,8 +113,8 @@ class SpiCaseDay:
             matches=lambda n: n.name.matches(['checkuser',
                                               'user',
                                               'SPIarchive notice']))
-        for t in templates:
-            username = t.get('1').value
+        for template in templates:
+            username = template.get('1').value
             yield SpiUserInfo(str(username), str(date))
 
     def find_unique_users(self):
@@ -139,10 +139,10 @@ class SpiCaseDay:
         date = self.date()
         templates = self.wikicode.filter_templates(
             matches=lambda n: n.name.matches('checkip'))
-        for t in templates:
-            ip = t.get('1').value
+        for template in templates:
+            ip_address = template.get('1').value
             try:
-                yield SpiIpInfo(str(ip), str(date), self.page_title)
+                yield SpiIpInfo(str(ip_address), str(date), self.page_title)
             except InvalidIpV4Error:
                 pass
 
@@ -204,13 +204,13 @@ class SpiIpInfo:
         prefix = 0
         prefix_length = 0
         done = False
-        for bs in bit_sets:
+        for bit_set in bit_sets:
             prefix <<= 1
             if done:
                 continue
-            if len(bs) > 1:
+            if len(bit_set) > 1:
                 done = True
                 continue
             prefix_length += 1
-            prefix |= bs.pop()
+            prefix |= bit_set.pop()
         return IPv4Network((prefix, prefix_length))

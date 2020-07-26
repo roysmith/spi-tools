@@ -1,7 +1,6 @@
 from unittest import TestCase
 from .forms import SockSelectForm
 from django.forms import BooleanField
-from pprint import pprint
 import urllib.parse
 
 class SockSelectFormTest(TestCase):

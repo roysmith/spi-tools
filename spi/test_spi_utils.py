@@ -35,8 +35,8 @@ class SpiCaseTest(TestCase):
         ====Suspected sockpuppets====
         '''
         case = SpiCase(make_source(text))
-        for d in case.days():
-            self.assertIsInstance(d, SpiCaseDay)
+        for day in case.days():
+            self.assertIsInstance(day, SpiCaseDay)
 
 
     def test_find_all_ips(self):

@@ -151,8 +151,8 @@ def get_registration_time(site, user):
     If the registration time can't be determined, returns None.
 
     '''
-    r = site.users(users=[user], prop=['registration'])
-    userinfo = r.next()
+    registrations = site.users(users=[user], prop=['registration'])
+    userinfo = registrations.next()
     try:
         return userinfo['registration']
     except KeyError:
@@ -315,9 +315,9 @@ class UserActivitiesView(LoginRequiredMixin, View):
         _, _, title, _ = activity
         if not ':' in title:
             return not main
-        ns, _ = title.split(':', 1)
-        ns = ns.lower().strip()
-        if ns == 'draft':
+        name_space, _ = title.split(':', 1)
+        name_space = name_space.lower().strip()
+        if name_space == 'draft':
             return not draft
         return not other
 
@@ -344,11 +344,11 @@ class UserActivitiesView(LoginRequiredMixin, View):
             title = page['title']
             for revision in page['revisions']:
                 logger.debug("deleted revision = %s", revision)
-                ts = revision['timestamp']
-                if ts.endswith('Z'):
-                    timestamp = datetime.datetime.fromisoformat(ts[:-1] + '+00:00')
+                rev_ts = revision['timestamp']
+                if rev_ts.endswith('Z'):
+                    timestamp = datetime.datetime.fromisoformat(rev_ts[:-1] + '+00:00')
                 else:
-                    raise ValueError("Unparsable timestamp: %s" % ts)
+                    raise ValueError("Unparsable timestamp: %s" % rev_ts)
                 title = page['title']
                 comment = revision['comment']
                 yield timestamp, 'deleted', title, comment
@@ -379,9 +379,9 @@ class TimecardView(View):
         user_names = request.GET.getlist('users')
         data = {}
         for name in user_names:
-            r = requests.get('%s/%s' % (TIMECARD_BASE, name))
-            if r.status_code == requests.codes.ok:
-                timecard = r.json()['timecard']
+            response = requests.get('%s/%s' % (TIMECARD_BASE, name))
+            if response.status_code == requests.codes.ok:
+                timecard = response.json()['timecard']
                 data[name] = [{'x': t['hour'], 'y': t['day_of_week'], 'r': t['scale']}
                               for t in timecard
                               if 'scale' in t]
@@ -414,17 +414,20 @@ class G5View(View):
         use_archive = int(request.GET.get('archive', 1))
         socks = get_sock_names(site, case_name, use_archive)
         sock_names = [s.username for s in socks]
-        for s in sock_names:
-            if '|' in s:
-                raise RuntimeError(f'"{s}" has a "|" in it')
+        for sock_name in sock_names:
+            if '|' in sock_name:
+                raise RuntimeError(f'"{sock_name}" has a "|" in it')
 
         block_map = BlockMap(site.blocks(users=case_name))
 
         page_creations = []
-        for c in site.usercontributions('|'.join(sock_names), show="new"):
-            timestamp = datetime_from_struct(c['timestamp'])
+        for contrib in site.usercontributions('|'.join(sock_names), show="new"):
+            timestamp = datetime_from_struct(contrib['timestamp'])
             if block_map.is_blocked_at(timestamp):
-                summary = self.build_summary(site, c['title'], c['user'], timestamp)
+                summary = self.build_summary(site,
+                                             contrib['title'],
+                                             contrib['user'],
+                                             timestamp)
                 if summary:
                     page_creations.append(summary)
 

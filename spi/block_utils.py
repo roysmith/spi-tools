@@ -24,9 +24,9 @@ class BlockMap:
     def __init__(self, api_blocks):
         self.blocks = [Block(b['timestamp'], b['expiry']) for b in api_blocks]
 
-    def is_blocked_at(self, t):
-        "T is a datetime"
+    def is_blocked_at(self, timestamp):
+        "Timestamp is a datetime"
         for block in self.blocks:
-            if block.start <= t <= block.end:
+            if block.start <= timestamp <= block.end:
                 return True
         return False
