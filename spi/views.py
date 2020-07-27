@@ -435,25 +435,19 @@ class G5View(View):
         for contrib in site.usercontributions('|'.join(sock_names), show="new"):
             timestamp = datetime_from_struct(contrib['timestamp'])
             if block_map.is_blocked_at(timestamp):
-                summary = self.build_summary(site,
-                                             contrib['title'],
-                                             contrib['user'],
-                                             timestamp)
-                if summary:
-                    page_creations.append(summary)
+                title = contrib['title']
+                page = site.pages[title]
+                if page.exists:
+                    page_creations.append(G5Summary(title,
+                                                    contrib['user'],
+                                                    timestamp,
+                                                    self.g5_score(page)))
 
         context = {'case_name': case_name,
                    'block_map': block_map,
                    'page_creations': page_creations,
                    }
         return render(request, 'spi/g5.dtl', context)
-
-
-    def build_summary(self, site, title, user, timestamp):
-        page = site.pages[title]
-        if page.exists:
-            return G5Summary(title, user, timestamp, self.g5_score(page))
-        return None
 
 
     @staticmethod
