@@ -39,37 +39,6 @@ def datetime_from_struct(time_struct):
     return datetime.datetime.fromtimestamp(time.mktime(time_struct), tz=datetime.timezone.utc)
 
 
-def get_site(request):
-    """Return a mwclient.Site object.
-
-    If the user is logged in, this will include OAUTH consumer and access
-    credentials.  Otherwise, it will be an anonymous connection.
-
-    """
-    user = django.contrib.auth.get_user(request)
-
-    # It's not clear if we need to bother checking to see if the user
-    # is authenticated.  Maybe with an AnonymousUser, everything just
-    # works?  If so, these two code paths could be merged.
-    if user.is_anonymous:
-        auth_info = {}
-    else:
-        access_token = (user
-                        .social_auth
-                        .get(provider='mediawiki')
-                        .extra_data['access_token'])
-        auth_info = {
-            'consumer_token': settings.SOCIAL_AUTH_MEDIAWIKI_KEY,
-            'consumer_secret': settings.SOCIAL_AUTH_MEDIAWIKI_SECRET,
-            'access_token': access_token['oauth_token'],
-            'access_secret': access_token['oauth_token_secret']
-        }
-
-    return Site(settings.MEDIAWIKI_SITE_NAME,
-                clients_useragent=settings.MEDIAWIKI_USER_AGENT,
-                **auth_info)
-
-
 @dataclass(frozen=True, order=True)
 class IpSummary:
     ip_address: str
@@ -85,7 +54,47 @@ class UserSummary:
         return urllib.parse.quote_plus(self.username)
 
 
-class IndexView(View):
+class MediaWikiView(View):
+    """A view which can talk to the MediaWiki API.
+
+    """
+    @staticmethod
+    def get_mw_site(request):
+        """Return a mwclient.Site object.
+
+        If the user is logged in, this will include OAUTH consumer and
+        access credentials.  Otherwise, it will be an anonymous
+        connection.
+
+        Having this as a method (as opposed to a module-level
+        function) is mostly for unittest.mock's convenience.
+
+        """
+        user = django.contrib.auth.get_user(request)
+
+        # It's not clear if we need to bother checking to see if the user
+        # is authenticated.  Maybe with an AnonymousUser, everything just
+        # works?  If so, these two code paths could be merged.
+        if user.is_anonymous:
+            auth_info = {}
+        else:
+            access_token = (user
+                            .social_auth
+                            .get(provider='mediawiki')
+                            .extra_data['access_token'])
+            auth_info = {
+                'consumer_token': settings.SOCIAL_AUTH_MEDIAWIKI_KEY,
+                'consumer_secret': settings.SOCIAL_AUTH_MEDIAWIKI_SECRET,
+                'access_token': access_token['oauth_token'],
+                'access_secret': access_token['oauth_token_secret']
+            }
+
+            return Site(settings.MEDIAWIKI_SITE_NAME,
+                        clients_useragent=settings.MEDIAWIKI_USER_AGENT,
+                        **auth_info)
+
+
+class IndexView(MediaWikiView):
     def get(self, request):
         form = CaseNameForm()
         context = {'form': form}
@@ -115,9 +124,9 @@ class IndexView(View):
         return render(request, 'spi/index.dtl', context)
 
 
-class IpAnalysisView(View):
+class IpAnalysisView(MediaWikiView):
     def get(self, request, case_name):
-        site = get_site(request)
+        site = self.get_mw_site(request)
         ip_data = defaultdict(list)
         for i in self.get_spi_case_ips(site, case_name):
             ip_data[i.ip_address].append(i.date)
@@ -187,9 +196,9 @@ def make_user_summary(site, sock):
                        get_registration_time(site, sock.username))
 
 
-class SockInfoView(View):
+class SockInfoView(MediaWikiView):
     def get(self, request, case_name):
-        site = get_site(request)
+        site = self.get_mw_site(request)
         socks = []
         use_archive = int(request.GET.get('archive', 1))
         for sock in get_sock_names(site, case_name, use_archive):
@@ -203,9 +212,9 @@ class SockInfoView(View):
         return render(request, 'spi/sock-info.dtl', context)
 
 
-class SockSelectView(View):
+class SockSelectView(MediaWikiView):
     def get(self, request, case_name):
-        site = get_site(request)
+        site = self.get_mw_site(request)
         use_archive = int(request.GET.get('archive', 1))
         user_infos = list(get_sock_names(site, case_name, use_archive))
         return render(request,
@@ -258,7 +267,7 @@ class SockSelectView(View):
                 'form_info': zip(form, names, dates)}
 
 
-class UserInfoView(View):
+class UserInfoView(MediaWikiView):
     def get(self, request, user_name):
         form = UserInfoForm(initial={'count': 100,
                                      'main': True,
@@ -286,9 +295,9 @@ class UserInfoView(View):
         return render(request, 'spi/user-info.dtl', context)
 
 
-class UserActivitiesView(LoginRequiredMixin, View):
+class UserActivitiesView(LoginRequiredMixin, MediaWikiView):
     def get(self, request, user_name):
-        site = get_site(request)
+        site = self.get_mw_site(request)
         user_name = urllib.parse.unquote_plus(user_name)
         logger.debug("user_name = %s", user_name)
         count = int(request.GET.get('count', '1'))
@@ -385,7 +394,7 @@ class UserActivitiesView(LoginRequiredMixin, View):
         return daily_activities
 
 
-class TimecardView(View):
+class TimecardView(MediaWikiView):
     def get(self, request, case_name):
         user_names = request.GET.getlist('users')
         data = {}
@@ -419,9 +428,9 @@ class G5Score:
     reason: str = ''
 
 
-class G5View(View):
+class G5View(MediaWikiView):
     def get(self, request, case_name):
-        site = get_site(request)
+        site = self.get_mw_site(request)
         use_archive = int(request.GET.get('archive', 1))
         socks = get_sock_names(site, case_name, use_archive)
         sock_names = [s.username for s in socks]
