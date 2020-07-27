@@ -2,6 +2,7 @@ import urllib.parse
 
 from django import forms
 from django.core.exceptions import ValidationError
+
 from mwclient import Site
 import mwparserfromhell
 
@@ -12,12 +13,12 @@ def get_current_case_names():
     overview = site.pages['Wikipedia:Sockpuppet investigations/Cases/Overview'].text()
     wikicode = mwparserfromhell.parse(overview)
     templates = wikicode.filter_templates(
-        matches = lambda n: n.name.matches('SPIstatusentry'))
+        matches=lambda n: n.name.matches('SPIstatusentry'))
     choices = [(str(t.get(1)), str(t.get(1))) for t in templates]
     return choices
 
 
-class SelectizeField(forms.ChoiceField):
+class CaseNameChoiceField(forms.ChoiceField):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -34,9 +35,10 @@ class SelectizeField(forms.ChoiceField):
                                   params={'value': value})
 
 class CaseNameForm(forms.Form):
-    names = get_current_case_names();
+    # Leading empty element needed by select2.js placeholder.
+    names = [('', '')] + get_current_case_names()
     names.sort()
-    case_name = SelectizeField(label='Case (sockmaster) name', choices=names)
+    case_name = CaseNameChoiceField(label='Case (sockmaster) name', choices=names)
     use_archive = forms.BooleanField(label='Use archive?',
                                      initial=True,
                                      required=False)
@@ -75,4 +77,3 @@ class UserInfoForm(forms.Form):
 class IpRangeForm(forms.Form):
     first_ip = forms.CharField()
     last_ip = forms.CharField()
-

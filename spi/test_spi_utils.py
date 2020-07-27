@@ -1,17 +1,16 @@
 from unittest import TestCase
 import textwrap
-import os.path
+from ipaddress import IPv4Network
 import mwparserfromhell
-from ipaddress import IPv4Address, IPv4Network
 
-from spi_utils import SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo, ArchiveError
+from .spi_utils import SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo, ArchiveError
 
 
 def make_code(text):
     return mwparserfromhell.parse(textwrap.dedent(text))
 
 def make_source(text, case_name='whatever'):
-    return SpiSourceDocument(textwrap.dedent(text), case_name)
+    return SpiSourceDocument(case_name, textwrap.dedent(text))
 
 
 class SpiCaseTest(TestCase):
@@ -36,8 +35,8 @@ class SpiCaseTest(TestCase):
         ====Suspected sockpuppets====
         '''
         case = SpiCase(make_source(text))
-        for d in case.days():
-            self.assertIsInstance(d, SpiCaseDay)
+        for day in case.days():
+            self.assertIsInstance(day, SpiCaseDay)
 
 
     def test_find_all_ips(self):
@@ -229,7 +228,8 @@ class SpiUserInfoTest(TestCase):
         self.assertEqual(info1, info2)
 
 
-    def test_hashable(self):
+    @staticmethod
+    def test_hashable():
         info = SpiUserInfo('user', '1 January 2019')
         hash(info)
 
@@ -258,7 +258,8 @@ class SpiIpInfoTest(TestCase):
         self.assertLess(info1, info2)
 
 
-    def test_hashable(self):
+    @staticmethod
+    def test_hashable():
         info = SpiIpInfo('1.2.3.4', '1 January 2019', 'title')
         hash(info)
 

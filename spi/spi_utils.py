@@ -1,7 +1,6 @@
-import re
 from dataclasses import dataclass
-
 from ipaddress import IPv4Address, IPv4Network
+
 from mwparserfromhell import parse
 from mwparserfromhell.wikicode import Wikicode
 
@@ -13,7 +12,10 @@ class InvalidIpV4Error(ValueError):
     pass
 
 
+@dataclass(frozen=True)
 class SpiDocumentBase:
+    page_title: str
+
     def master_name(self):
         parts = self.page_title.split('/')
         if parts[-1] == 'Archive':
@@ -24,13 +26,12 @@ class SpiDocumentBase:
 @dataclass(frozen=True)
 class SpiSourceDocument(SpiDocumentBase):
     wikitext: str
-    page_title: str
 
 
 @dataclass(frozen=True)
 class SpiParsedDocument(SpiDocumentBase):
-    wikicode: Wikicode
     page_title: str
+    wikicode: Wikicode
 
 
 class SpiCase:
@@ -42,7 +43,7 @@ class SpiCase:
 
         Each source is SpiSourceDocument.
         """
-        self.parsed_docs = [SpiParsedDocument(parse(s.wikitext), s.page_title)
+        self.parsed_docs = [SpiParsedDocument(s.page_title, parse(s.wikitext))
                             for s in sources]
 
         master_names = set(doc.master_name() for doc in self.parsed_docs)
@@ -70,8 +71,8 @@ class SpiCase:
         is not guaranteed, and templates are not deduplicated.
         '''
         for day in self.days():
-            for ip in day.find_ips():
-                yield ip
+            for ip_address in day.find_ips():
+                yield ip_address
 
 
     def find_all_users(self):
@@ -95,11 +96,11 @@ class SpiCaseDay:
 
 
     def date(self):
-        headings = self.wikicode.filter_headings(matches = lambda h: h.level == 3)
-        n = len(headings)
-        if n == 1:
+        headings = self.wikicode.filter_headings(matches=lambda h: h.level == 3)
+        h3_count = len(headings)
+        if h3_count == 1:
             return headings[0].title
-        raise ArchiveError("Expected exactly 1 level-3 heading, found %d" % n)
+        raise ArchiveError("Expected exactly 1 level-3 heading, found %d" % h3_count)
 
 
     def find_users(self):
@@ -110,11 +111,11 @@ class SpiCaseDay:
         '''
         date = self.date()
         templates = self.wikicode.filter_templates(
-            matches = lambda n: n.name.matches(['checkuser',
-                                                'user',
-                                                 'SPIarchive notice']))
-        for t in templates:
-            username = t.get('1').value
+            matches=lambda n: n.name.matches(['checkuser',
+                                              'user',
+                                              'SPIarchive notice']))
+        for template in templates:
+            username = template.get('1').value
             yield SpiUserInfo(str(username), str(date))
 
     def find_unique_users(self):
@@ -138,79 +139,52 @@ class SpiCaseDay:
         '''
         date = self.date()
         templates = self.wikicode.filter_templates(
-            matches = lambda n: n.name.matches('checkip'))
-        for t in templates:
-            ip = t.get('1').value
+            matches=lambda n: n.name.matches('checkip'))
+        for template in templates:
+            ip_str = template.get('1').value
             try:
-                yield SpiIpInfo(str(ip), str(date), self.page_title)
+                yield SpiIpInfo(str(ip_str), str(date), self.page_title)
             except InvalidIpV4Error:
                 pass
 
 
+@dataclass(order=True, unsafe_hash=True)
 class SpiUserInfo:
-    def __init__(self, username, date):
-        self.username = username
-        self.date = date
-
-    def __eq__(self, other):
-        return self.username == other.username and self.date == other.date
-
-    def __hash__(self):
-        return hash((self.username, self.date))
-
-    def __repr__(self):
-        return f'SpiUserInfo("{self.username}", "{self.date}")'
+    username: str
+    date: str
 
 
+@dataclass(order=True, unsafe_hash=True)
 class SpiIpInfo:
-    v4pattern = re.compile(r'^\d+\.\d+\.\d+\.\d+$')
+    ip_address: IPv4Address
+    date: str
+    page_title: str
 
-    def __init__(self, ip, date, page_title):
+    def __init__(self, ip_str, date, page_title):
         try:
-            self.ip = IPv4Address(ip)
+            self.ip_address = IPv4Address(ip_str)
         except ValueError as error:
             raise InvalidIpV4Error(str(error))
         self.date = date
         self.page_title = page_title
 
-    def __eq__(self, other):
-        return (self.ip == other.ip and
-                self.date == other.date and
-                self.page_title == other.page_title)
-
-    def __lt__(self, other):
-        if self.ip < other.ip:
-            return True
-        if self.ip > other.ip:
-            return False
-        if self.date < other.date:
-            return True
-        if self.date > other.date:
-            return False
-        return self.page_title < other.page_title
-
-    def __hash__(self):
-        return hash((self.ip, self.date, self.page_title))
-
-    def __repr__(self):
-        return f'SpiIpInfo("{self.ip}", "{self.date}", "{self.page_title}")'
 
     @staticmethod
     def find_common_network(infos):
-        ips = [int(i.ip) for i in infos]
+        ips = [int(i.ip_address) for i in infos]
         bits = [list(map(int, format(i, '032b'))) for i in ips]
         slices = zip(*bits)
         bit_sets = [set(s) for s in slices]
         prefix = 0
         prefix_length = 0
         done = False
-        for bs in bit_sets:
+        for bit_set in bit_sets:
             prefix <<= 1
             if done:
                 continue
-            if len(bs) > 1:
+            if len(bit_set) > 1:
                 done = True
                 continue
             prefix_length += 1
-            prefix |= bs.pop()
+            prefix |= bit_set.pop()
         return IPv4Network((prefix, prefix_length))

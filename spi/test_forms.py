@@ -1,8 +1,9 @@
 from unittest import TestCase
-from spi.forms import SockSelectForm
-from django.forms import BooleanField
-from pprint import pprint
 import urllib.parse
+
+from django.forms import BooleanField
+
+from .forms import SockSelectForm
 
 class SockSelectFormTest(TestCase):
     def test_build_with_simple_names(self):
@@ -17,5 +18,3 @@ class SockSelectFormTest(TestCase):
         form = SockSelectForm.build([name])
         self.assertIsInstance(form, SockSelectForm)
         self.assertIsInstance(form.fields['sock_' + quoted_name], BooleanField)
-
-    
