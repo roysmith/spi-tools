@@ -89,9 +89,9 @@ class MediaWikiView(View):
                 'access_secret': access_token['oauth_token_secret']
             }
 
-            return Site(settings.MEDIAWIKI_SITE_NAME,
-                        clients_useragent=settings.MEDIAWIKI_USER_AGENT,
-                        **auth_info)
+        return Site(settings.MEDIAWIKI_SITE_NAME,
+                    clients_useragent=settings.MEDIAWIKI_USER_AGENT,
+                    **auth_info)
 
 
 class IndexView(MediaWikiView):
