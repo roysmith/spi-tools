@@ -8,8 +8,9 @@ class Block:
     end: datetime
 
     def __init__(self, timestamp, expiry):
-        """Api_block is a dict containing at least 'timestamp' and 'expiry'
-        keys, as returned by mwclient's site.blocks() method.
+        """Timestamp is when the block started, expressed as a struct_time.
+        Expiry is when the block ends, either as a struct_time, or the
+        string "infinity".
 
         """
         self.start = datetime.fromtimestamp(mktime(timestamp), tz=timezone.utc)
