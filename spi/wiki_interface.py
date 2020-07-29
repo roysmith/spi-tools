@@ -24,18 +24,18 @@ class Wiki:
     instance of this for every request.
 
     """
-    def __init__(self, request):
+    def __init__(self, request=None):
         self.site = self.get_mw_site(request)
 
 
     @staticmethod
     def get_mw_site(request):
-        user = django.contrib.auth.get_user(request)
+        user = request and django.contrib.auth.get_user(request)
 
         # It's not clear if we need to bother checking to see if the user
         # is authenticated.  Maybe with an AnonymousUser, everything just
         # works?  If so, these two code paths could be merged.
-        if user.is_anonymous:
+        if user is None or user.is_anonymous:
             auth_info = {}
         else:
             access_token = (user
