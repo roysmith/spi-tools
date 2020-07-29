@@ -51,6 +51,8 @@ class UserSummaryTest(TestCase):
 
 
 class SockInfoViewTest(TestCase):
+    # pylint: disable=invalid-name
+
     @patch('mwclient.Site', new_callable=MagicMock, spec=['pages', 'users'])
     def test_get_with_empty_mw_queries_renders_one_summary(self, mock_Site):
         mock_site = mock_Site()
