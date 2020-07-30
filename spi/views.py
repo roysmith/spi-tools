@@ -85,33 +85,15 @@ class IndexView(View):
 
 class IpAnalysisView(View):
     def get(self, request, case_name):
-        site = Wiki.get_mw_site(request)
+        wiki = Wiki()
         ip_data = defaultdict(list)
-        for i in self.get_spi_case_ips(site, case_name):
+        for i in wiki.get_case_ips(case_name):
             ip_data[i.ip_address].append(i.date)
         summaries = [IpSummary(ip, sorted(ip_data[ip])) for ip in ip_data]
         summaries.sort()
         context = {'case_name': case_name,
                    'ip_summaries': summaries}
         return render(request, 'spi/ip-analysis.dtl', context)
-
-
-    @staticmethod
-    def get_spi_case_ips(site, master_name):
-        "Returns a iterable over SpiIpInfos"
-        case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
-        archive_title = '%s/Archive' % case_title
-
-        case_doc = SpiSourceDocument(case_title, site.pages[case_title].text())
-        docs = [case_doc]
-
-        archive_text = site.pages[archive_title].text()
-        if archive_text:
-            archive_doc = SpiSourceDocument(archive_title, archive_text)
-            docs.append(archive_doc)
-
-        case = SpiCase(*docs)
-        return case.find_all_ips()
 
 
 def get_registration_time(site, user):

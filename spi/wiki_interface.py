@@ -16,6 +16,8 @@ from django.conf import settings
 from mwclient import Site
 import mwparserfromhell
 
+from .spi_utils import SpiSourceDocument, SpiCase
+
 logger = logging.getLogger('wiki_interface')
 
 class Wiki:
@@ -69,3 +71,25 @@ class Wiki:
         """Return True if the page exists, False otherwise."""
 
         return self.site.pages[title].exists
+
+
+    def get_case_ips(self, case_name):
+        """Get all the IP addresses which have been mentioned
+        in a SPI case.
+
+        Returns a iterable over SpiIpInfos
+
+        """
+        case_title = 'Wikipedia:Sockpuppet investigations/%s' % case_name
+        archive_title = '%s/Archive' % case_title
+
+        case_doc = SpiSourceDocument(case_title, self.site.pages[case_title].text())
+        docs = [case_doc]
+
+        archive_text = self.site.pages[archive_title].text()
+        if archive_text:
+            archive_doc = SpiSourceDocument(archive_title, archive_text)
+            docs.append(archive_doc)
+
+        case = SpiCase(*docs)
+        return case.find_all_ips()
