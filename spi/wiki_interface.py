@@ -14,6 +14,7 @@ import logging
 import django.contrib.auth
 from django.conf import settings
 from mwclient import Site
+import mwparserfromhell
 
 logger = logging.getLogger('wiki_interface')
 
@@ -52,3 +53,19 @@ class Wiki:
         return Site(settings.MEDIAWIKI_SITE_NAME,
                     clients_useragent=settings.MEDIAWIKI_USER_AGENT,
                     **auth_info)
+
+
+    def get_current_case_names(self):
+        """Return an list of the currently active SPI case names as strings.
+
+        """
+        overview = self.site.pages['Wikipedia:Sockpuppet investigations/Cases/Overview'].text()
+        wikicode = mwparserfromhell.parse(overview)
+        templates = wikicode.filter_templates(matches=lambda n: n.name.matches('SPIstatusentry'))
+        return [str(t.get(1)) for t in templates]
+
+
+    def page_exists(self, title):
+        """Return True if the page exists, False otherwise."""
+
+        return self.site.pages[title].exists
