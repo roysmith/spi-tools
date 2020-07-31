@@ -12,7 +12,6 @@ import heapq
 
 import requests
 from mwclient import APIError
-import mwclient.listing
 
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -214,7 +213,7 @@ class UserInfoView(View):
 
 class UserActivitiesView(LoginRequiredMixin, View):
     def get(self, request, user_name):
-        site = Wiki.get_mw_site(request)
+        wiki = Wiki(request)
         user_name = urllib.parse.unquote_plus(user_name)
         logger.debug("user_name = %s", user_name)
         count = int(request.GET.get('count', '1'))
@@ -222,10 +221,10 @@ class UserActivitiesView(LoginRequiredMixin, View):
                                              bool(int(request.GET.get('main', 0))),
                                              bool(int(request.GET.get('draft', 0))),
                                              bool(int(request.GET.get('other', 0))))
-        active = self.contribution_activities(site, user_name)
+        active = wiki.user_contributions(user_name)
 
         try:
-            deleted = self.deleted_contribution_activities(site, user_name)
+            deleted = wiki.deleted_user_contributions(user_name)
             merged = heapq.merge(active, deleted, reverse=True)
             filtered = itertools.filterfalse(namespace_filter, merged)
             counted = list(itertools.islice(filtered, count))
@@ -245,8 +244,8 @@ class UserActivitiesView(LoginRequiredMixin, View):
 
     # https://github.com/roysmith/spi-tools/issues/51
     @staticmethod
-    def check_namespaces(main, draft, other, activity):
-        _, _, title, _ = activity
+    def check_namespaces(main, draft, other, contrib):
+        title = contrib.title
         if not ':' in title:
             return not main
         name_space, _ = title.split(':', 1)
@@ -254,40 +253,6 @@ class UserActivitiesView(LoginRequiredMixin, View):
         if name_space == 'draft':
             return not draft
         return not other
-
-
-    @staticmethod
-    def contribution_activities(site, user_name):
-        for contrib in site.usercontributions(user_name):
-            logger.debug("contrib = %s", contrib)
-            timestamp = datetime_from_struct(contrib['timestamp'])
-            title = contrib['title']
-            comment = contrib['comment']
-            yield timestamp, 'edit', title, comment
-
-
-    @staticmethod
-    def deleted_contribution_activities(site, user_name):
-        kwargs = dict(mwclient.listing.List.generate_kwargs('adr', user=user_name))
-        listing = mwclient.listing.List(site,
-                                        'alldeletedrevisions',
-                                        'adr',
-                                        limit=20,
-                                        uselang=None,
-                                        **kwargs)
-
-        for page in listing:
-            title = page['title']
-            for revision in page['revisions']:
-                logger.debug("deleted revision = %s", revision)
-                rev_ts = revision['timestamp']
-                if rev_ts.endswith('Z'):
-                    timestamp = datetime.datetime.fromisoformat(rev_ts[:-1] + '+00:00')
-                else:
-                    raise ValueError("Unparsable timestamp: %s" % rev_ts)
-                title = page['title']
-                comment = revision['comment']
-                yield timestamp, 'deleted', title, comment
 
 
     @staticmethod
@@ -302,12 +267,16 @@ class UserActivitiesView(LoginRequiredMixin, View):
         date_groups = ['primary', 'secondary']
 
         daily_activities = []
-        for timestamp, activity_type, title, comment in activities:
-            this_date = timestamp.date()
+        for activity in activities:
+            this_date = activity.timestamp.date()
             if this_date != previous_date:
                 date_groups.reverse()
                 previous_date = this_date
-            daily_activities.append((date_groups[0], timestamp, activity_type, title, comment))
+            daily_activities.append((date_groups[0],
+                                     activity.timestamp,
+                                     'edit' if activity.is_live else 'deleted',
+                                     activity.title,
+                                     activity.comment))
         return daily_activities
 
 

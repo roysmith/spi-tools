@@ -1,11 +1,12 @@
 import textwrap
+from datetime import datetime, timezone
 from unittest import TestCase
 from unittest.mock import patch, Mock
 
 from django.conf import settings
 from django.http import HttpRequest
 
-from .wiki_interface import Wiki
+from .wiki_interface import Wiki, WikiContrib
 from .spi_utils import SpiIpInfo, SpiCase
 
 
@@ -168,3 +169,87 @@ class GetCaseTest(TestCase):
 
         self.assertIsInstance(case, SpiCase)
         self.assertEqual(case.master_name(), 'page name')
+
+
+class WikiContribTest(TestCase):
+    def test_construct_default(self):
+        contrib = WikiContrib(datetime(2020, 7, 30), 'my title', 'my comment')
+        self.assertEqual(contrib.timestamp, datetime(2020, 7, 30))
+        self.assertEqual(contrib.title, 'my title')
+        self.assertEqual(contrib.comment, 'my comment')
+        self.assertTrue(contrib.is_live)
+
+
+    def test_construct_live_true(self):
+        contrib = WikiContrib(datetime(2020, 7, 30), 'my title', 'my comment', is_live=True)
+        self.assertEqual(contrib.timestamp, datetime(2020, 7, 30))
+        self.assertEqual(contrib.title, 'my title')
+        self.assertEqual(contrib.comment, 'my comment')
+        self.assertTrue(contrib.is_live)
+
+
+    def test_construct_live_false(self):
+        contrib = WikiContrib(datetime(2020, 7, 30), 'my title', 'my comment', is_live=False)
+        self.assertEqual(contrib.timestamp, datetime(2020, 7, 30))
+        self.assertEqual(contrib.title, 'my title')
+        self.assertEqual(contrib.comment, 'my comment')
+        self.assertFalse(contrib.is_live)
+
+
+class UserContributioneTest(TestCase):
+    # pylint: disable=invalid-name
+
+    @patch('spi.wiki_interface.Site')
+    def test_user_contributions(self, mock_Site):
+        mock_Site().usercontributions.return_value = [
+            {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0), 'title': 'p1', 'comment': 'c1'},
+            {'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0), 'title': 'p2', 'comment': 'c2'}]
+        wiki = Wiki()
+
+        contributions = wiki.user_contributions('fred')
+
+        items = list(contributions)
+        self.assertIsInstance(items[0], WikiContrib)
+        self.assertEqual(items, [
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'p1', 'c1'),
+            WikiContrib(datetime(2020, 7, 29, tzinfo=timezone.utc), 'p2', 'c2')])
+
+
+class DeletedUserContributioneTest(TestCase):
+    # pylint: disable=invalid-name
+
+    @patch('spi.wiki_interface.List')
+    def test_deleted_user_contributions(self, mock_List):
+        # See https://www.mediawiki.org/wiki/API:Alldeletedrevisions#Response
+        example_response = {
+            "query": {
+                "alldeletedrevisions": [
+                    {
+                        "pageid": 0,
+                        "revisions": [
+                            {
+                                "timestamp": "2015-11-25T00:00:00Z",
+                                "comment": "c1",
+                            },
+                            {
+                                "timestamp": "2015-11-24T00:00:00Z",
+                                "comment": "c2",
+                            }
+
+                        ],
+                        "ns": 0,
+                        "title": "p1"
+                    }
+                ]
+            }
+        }
+        pages = example_response['query']['alldeletedrevisions']
+        mock_List().__iter__ = Mock(return_value=iter(pages))
+        wiki = Wiki()
+
+        deleted_contributions = wiki.deleted_user_contributions('fred')
+        items = list(deleted_contributions)
+        self.assertIsInstance(items[0], WikiContrib)
+        self.assertEqual(items, [
+            WikiContrib(datetime(2015, 11, 25, tzinfo=timezone.utc), 'p1', 'c1', is_live=False),
+            WikiContrib(datetime(2015, 11, 24, tzinfo=timezone.utc), 'p1', 'c2', is_live=False)])

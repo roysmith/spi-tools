@@ -10,15 +10,29 @@ mwclient.Site directly.
 
 """
 import logging
+import time
+import datetime
+from dataclasses import dataclass
 
 import django.contrib.auth
 from django.conf import settings
 from mwclient import Site
+from mwclient.listing import List
+
 import mwparserfromhell
 
 from .spi_utils import SpiSourceDocument, SpiCase
 
 logger = logging.getLogger('wiki_interface')
+
+
+@dataclass(frozen=True, order=True)
+class WikiContrib:
+    timestamp: datetime.datetime
+    title: str
+    comment: str
+    is_live: bool = True
+
 
 class Wiki:
     """High-level wiki interface.
@@ -129,3 +143,53 @@ class Wiki:
             docs.append(archive_doc)
 
         return SpiCase(*docs)
+
+
+    @staticmethod
+    def _datetime_from_struct(time_struct):
+        return datetime.datetime.fromtimestamp(time.mktime(time_struct),
+                                               tz=datetime.timezone.utc)
+
+
+    def user_contributions(self, user_name):
+        """Get a user's live (i.e. non-deleted) edits.
+
+        Returns an iterable over WikiContributions.
+
+        """
+        for contrib in self.site.usercontributions(user_name):
+            yield WikiContrib(self._datetime_from_struct(contrib['timestamp']),
+                              contrib['title'],
+                              contrib['comment'])
+
+
+    def deleted_user_contributions(self, user_name):
+        """Get a user's deleted edits.
+
+        Returns an interable over WikiContributions.
+
+        This requires that the mwclient connection be authenticated to a
+        user with admin rights.  Raises PermissionError otherwise.
+
+        """
+        kwargs = dict(List.generate_kwargs('adr', user=user_name))
+        listing = List(self.site,
+                       'alldeletedrevisions',
+                       'adr',
+                       uselang=None,  # unclear why this is needed
+                       **kwargs)
+
+        # See https://www.mediawiki.org/wiki/API:Alldeletedrevisions#Response; this is
+        # iterating over response['query']['alldeletedrevisions'].
+        for page in listing:
+            title = page['title']
+            for revision in page['revisions']:
+                logger.debug("deleted revision = %s", revision)
+                rev_ts = revision['timestamp']
+                if rev_ts.endswith('Z'):
+                    timestamp = datetime.datetime.fromisoformat(rev_ts[:-1] + '+00:00')
+                else:
+                    raise ValueError("Unparsable timestamp: %s" % rev_ts)
+                title = page['title']
+                comment = revision['comment']
+                yield WikiContrib(timestamp, title, comment, is_live=False)
