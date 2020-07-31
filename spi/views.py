@@ -21,7 +21,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 from .forms import CaseNameForm, SockSelectForm, UserInfoForm
-from .spi_utils import SpiCase, SpiIpInfo, SpiSourceDocument
+from .spi_utils import SpiIpInfo
 from .block_utils import BlockMap
 from .wiki_interface import Wiki
 
@@ -96,35 +96,23 @@ class IpAnalysisView(View):
         return render(request, 'spi/ip-analysis.dtl', context)
 
 
-def get_sock_names(site, master_name, use_archive=True):
+def get_sock_names(wiki, master_name, use_archive=True):
     """Returns a iterable over SpiUserInfos.
 
     If use_archive is true, both the current case and any existing
     archive is used.  Otherwise, just the current case.
 
     """
-    case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
-    archive_title = '%s/Archive' % case_title
-
-    case_doc = SpiSourceDocument(case_title, site.pages[case_title].text())
-    docs = [case_doc]
-
-    archive_text = use_archive and site.pages[archive_title].text()
-    if archive_text:
-        archive_doc = SpiSourceDocument(archive_title, archive_text)
-        docs.append(archive_doc)
-
-    case = SpiCase(*docs)
+    case = wiki.get_case(master_name, use_archive)
     return case.find_all_users()
 
 
 class SockInfoView(View):
     def get(self, request, case_name):
         wiki = Wiki()
-        site = Wiki.get_mw_site(request)
         socks = []
         use_archive = int(request.GET.get('archive', 1))
-        for sock in get_sock_names(site, case_name, use_archive):
+        for sock in get_sock_names(wiki, case_name, use_archive):
             socks.append(sock)
         summaries = list({self.make_user_summary(wiki, sock) for sock in socks})
         # This is a hack to make users with no registration time sort to the
@@ -143,9 +131,9 @@ class SockInfoView(View):
 
 class SockSelectView(View):
     def get(self, request, case_name):
-        site = Wiki.get_mw_site(request)
+        wiki = Wiki()
         use_archive = int(request.GET.get('archive', 1))
-        user_infos = list(get_sock_names(site, case_name, use_archive))
+        user_infos = list(get_sock_names(wiki, case_name, use_archive))
         return render(request,
                       'spi/sock-select.dtl',
                       self.build_context(case_name, user_infos))
@@ -359,9 +347,10 @@ class G5Score:
 
 class G5View(View):
     def get(self, request, case_name):
+        wiki = Wiki()
         site = Wiki.get_mw_site(request)
         use_archive = int(request.GET.get('archive', 1))
-        socks = get_sock_names(site, case_name, use_archive)
+        socks = get_sock_names(wiki, case_name, use_archive)
         sock_names = [s.username for s in socks]
         for sock_name in sock_names:
             if '|' in sock_name:

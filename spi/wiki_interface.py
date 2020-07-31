@@ -108,3 +108,24 @@ class Wiki:
             return userinfo['registration']
         except KeyError:
             return None
+
+
+    def get_case(self, master_name, use_archive=True):
+        """Returns a SpiCase.
+
+        If use_archive is true, both the current case and any existing
+        archive is used.  Otherwise, just the current case.
+
+        """
+        case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
+        archive_title = '%s/Archive' % case_title
+
+        case_doc = SpiSourceDocument(case_title, self.site.pages[case_title].text())
+        docs = [case_doc]
+
+        archive_text = use_archive and self.site.pages[archive_title].text()
+        if archive_text:
+            archive_doc = SpiSourceDocument(archive_title, archive_text)
+            docs.append(archive_doc)
+
+        return SpiCase(*docs)

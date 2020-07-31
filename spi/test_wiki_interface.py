@@ -6,7 +6,7 @@ from django.conf import settings
 from django.http import HttpRequest
 
 from .wiki_interface import Wiki
-from .spi_utils import SpiIpInfo
+from .spi_utils import SpiIpInfo, SpiCase
 
 
 class ConstructorTest(TestCase):
@@ -150,3 +150,21 @@ class GetCaseIpsTest(TestCase):
                                                 'Wikipedia:Sockpuppet investigations/foo'),
                                       SpiIpInfo('136.228.174.225', '26 July 2020',
                                                 'Wikipedia:Sockpuppet investigations/foo')])
+
+
+class GetCaseTest(TestCase):
+    # pylint: disable=invalid-name
+
+    @patch('spi.wiki_interface.Site')
+    def test_get_case_with_one_checkuser(self, mock_Site):
+        mock_Site().pages.__getitem__().text.return_value = textwrap.dedent('''
+        {{SPIarchive notice|foo}}
+        ===26 July 2020===
+        * {{checkuser|name in template}}
+        ''')
+        wiki = Wiki()
+
+        case = wiki.get_case('page name', True)
+
+        self.assertIsInstance(case, SpiCase)
+        self.assertEqual(case.master_name(), 'page name')
