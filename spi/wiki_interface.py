@@ -93,3 +93,18 @@ class Wiki:
 
         case = SpiCase(*docs)
         return case.find_all_ips()
+
+
+
+    def get_registration_time(self, user):
+        """Return the registration time for a user as a string.
+
+        If the registration time can't be determined, returns None.
+
+        """
+        registrations = self.site.users(users=[user], prop=['registration'])
+        userinfo = registrations.next()
+        try:
+            return userinfo['registration']
+        except KeyError:
+            return None

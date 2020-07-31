@@ -96,20 +96,6 @@ class IpAnalysisView(View):
         return render(request, 'spi/ip-analysis.dtl', context)
 
 
-def get_registration_time(site, user):
-    '''Return the registration time for a user as a string.
-
-    If the registration time can't be determined, returns None.
-
-    '''
-    registrations = site.users(users=[user], prop=['registration'])
-    userinfo = registrations.next()
-    try:
-        return userinfo['registration']
-    except KeyError:
-        return None
-
-
 def get_sock_names(site, master_name, use_archive=True):
     """Returns a iterable over SpiUserInfos.
 
@@ -132,25 +118,27 @@ def get_sock_names(site, master_name, use_archive=True):
     return case.find_all_users()
 
 
-def make_user_summary(site, sock):
-    return UserSummary(sock.username,
-                       get_registration_time(site, sock.username))
-
-
 class SockInfoView(View):
     def get(self, request, case_name):
+        wiki = Wiki()
         site = Wiki.get_mw_site(request)
         socks = []
         use_archive = int(request.GET.get('archive', 1))
         for sock in get_sock_names(site, case_name, use_archive):
             socks.append(sock)
-        summaries = list({make_user_summary(site, sock) for sock in socks})
+        summaries = list({self.make_user_summary(wiki, sock) for sock in socks})
         # This is a hack to make users with no registration time sort to the
         # beginning of the list.  We need to do something smarter here.
         summaries.sort(key=lambda x: x.registration_time or "")
         context = {'case_name': case_name,
                    'summaries': summaries}
         return render(request, 'spi/sock-info.dtl', context)
+
+
+    @staticmethod
+    def make_user_summary(wiki, sock):
+        username = sock.username
+        return UserSummary(username, wiki.get_registration_time(username))
 
 
 class SockSelectView(View):
