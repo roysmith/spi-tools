@@ -25,7 +25,7 @@ from .time_utils import struct_to_datetime
 from .wiki_interface import Wiki
 
 
-logger = logging.getLogger('view')
+logger = logging.getLogger('spi.views')
 
 
 EDITOR_INTERACT_BASE = "https://tools.wmflabs.org/sigma/editorinteract.py"

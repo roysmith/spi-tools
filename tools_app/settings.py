@@ -207,12 +207,12 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        'view': {
+        'spi': {
             'handlers': ['file', 'bastion'],
             'level': 'DEBUG',
             'propagate': True,
         },
-        'app': {
+        'tools_app': {
             'handlers': ['file', 'bastion'],
             'level': 'INFO',
             'propagate': True,

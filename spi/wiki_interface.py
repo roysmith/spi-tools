@@ -27,7 +27,7 @@ from .block_utils import BlockEvent, UnblockEvent
 from .time_utils import struct_to_datetime
 
 
-logger = logging.getLogger('wiki_interface')
+logger = logging.getLogger('spi.wiki_interface')
 
 
 @dataclass(frozen=True, order=True)
