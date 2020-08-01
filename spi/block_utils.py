@@ -31,3 +31,36 @@ class BlockMap:
             if block.start <= timestamp <= block.end:
                 return True
         return False
+
+
+@dataclass(frozen=True)
+class BlockEvent:
+    """A log event of type block/block or block/reblock.
+
+    Target is the user who is blocked (called "title" in the logs).
+    Note: the target field does not include the leading "User:".
+
+    For an indef block, expiry will be None.  If an expiry is given,
+    raises ValueError if expiry < timestamp.
+
+    """
+    target: str
+    timestamp: datetime
+    expiry: datetime = None
+    is_reblock: bool = False
+
+    def __post_init__(self):
+        if self.expiry and self.expiry < self.timestamp:
+            raise ValueError(f'expiry ({self.expiry}) > timestamp({self.timestamp})')
+
+
+@dataclass(frozen=True)
+class UnblockEvent:
+    """A log event of type block/unblock.
+
+    Target is the user who is blocked (called "title" in the logs).
+    Note: the target field does not include the leading "User:".
+
+    """
+    target: str
+    timestamp: datetime
