@@ -18,5 +18,7 @@
 
 
 {% block page_scripts %}
+<script>
   {% include "./timecard.js" %}
+</script>
 {% endblock %}

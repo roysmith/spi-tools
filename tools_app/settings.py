@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'spi',
     'pageutils',
     'tools_app.apps.ToolsAppConfig',
+    'tools_app.templatetags.tools_tags',
     'social_django',
     'debug_toolbar',
 ]
@@ -110,6 +111,10 @@ SOCIAL_AUTH_MEDIAWIKI_KEY = os.environ.get('MEDIAWIKI_KEY')
 SOCIAL_AUTH_MEDIAWIKI_SECRET = os.environ.get('MEDIAWIKI_SECRET')
 SOCIAL_AUTH_MEDIAWIKI_URL = 'https://meta.wikimedia.org/w/index.php'
 SOCIAL_AUTH_MEDIAWIKI_CALLBACK = 'https://%s.toolforge.org/oauth/complete/mediawiki/' % TOOL_NAME
+
+# For use with mwclient library
+MEDIAWIKI_SITE_NAME = 'en.wikipedia.org'
+MEDIAWIKI_USER_AGENT = f'{TOOL_NAME} (toolforge)'
 
 # It would be neater to use django.urls.reverse() here, but that's
 # apparently not available when this is executed.
@@ -169,12 +174,11 @@ USE_TZ = True
 # Static files setup.  For more information, see:
 #   https://wikitech.wikimedia.org/wiki/Portal:Toolforge/Tool_Accounts
 #   https://docs.djangoproject.com/en/2.2/howto/static-files
-if DEBUG:
-    STATIC_URL = f'/{TOOL_NAME}/static/'
-else:
-    STATIC_URL = f'//tools-static.wmflabs.org/{TOOL_NAME}/'
-    STATIC_ROOT = f'{WWW_DIR}/static/'
-    FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o711
+STATIC_URL = f'//tools-static.wmflabs.org/{TOOL_NAME}/'
+STATIC_ROOT = f'{WWW_DIR}/static/'
+
+# Unused?
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o711
 
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda x: False,
@@ -205,7 +209,7 @@ LOGGING = {
         },
         'view': {
             'handlers': ['file', 'bastion'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': True,
         },
         'app': {

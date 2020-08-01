@@ -6,8 +6,12 @@
   <tr><th>Username</th><th>Registration time</th></tr>
   {% for s in summaries %}
   <tr>
-    <th><a href="{% url 'spi-user-info' user_name=s.username %}">{{ s.username }}</a></th>
-    <th>{{ s.registration_time }}</th>
+    <th>
+      <a href="{% url 'spi-user-info' user_name=s.urlencoded_username %}">{{ s.username }}</a>
+    </th>
+    <th>
+      {{ s.registration_time }}
+    </th>
   </tr>
   {% endfor %}
 </table>

@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     {% include "./header.dtl" %}
+    {% block page_css %} <!-- per-page css --> {% endblock %}
   </head>
   <body>
     <div class="container">
@@ -34,8 +35,6 @@
       </div>
     </div>
     {% include "./footer.dtl" %}
-    <script>
-      {% block page_scripts %} <!-- per-page javascript --> {% endblock %}
-    </script>
+    {% block page_scripts %} <!-- per-page javascript --> {% endblock %}
   </body>
 </html>

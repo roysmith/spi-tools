@@ -1,2 +1,7 @@
+all: lint
+
 test:
-	python -m unittest discover  -p '*_test.py'
+	cd ..; ./manage.py test $(test)
+
+lint:	test
+	cd ..; pylint spi/*.py

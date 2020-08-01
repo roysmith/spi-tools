@@ -8,15 +8,15 @@ Network to block: <span id="network"></span>
   <li>
     <input type="radio"
 	   name="first_ip"
-	   value="{{ summary.ip }}"
+	   value="{{ summary.ip_address }}"
 	   {% if forloop.first %} checked {% endif %}
 	   onchange="updateBlockRange()">
     <input type="radio"
 	   name="last_ip"
-	   value="{{ summary.ip }}"
+	   value="{{ summary.ip_address }}"
 	   {% if forloop.last %} checked {% endif %}
 	   onchange="updateBlockRange()">
-    <code>{{ summary.ip }}</code>
+    <code>{{ summary.ip_address }}</code>
     {% for d in summary.spi_dates %}
     <a href="{{ d }}">(link)</a>
     {% endfor %}
@@ -26,6 +26,8 @@ Network to block: <span id="network"></span>
 {% endblock %}
 
 {% block page_scripts %}
+<script>
   {% include "./ip-analysis.js" %}
   $(document).ready(updateBlockRange);
+</script>
 {% endblock %}
