@@ -182,11 +182,7 @@ class Wiki:
             title = page['title']
             for revision in page['revisions']:
                 logger.debug("deleted revision = %s", revision)
-                rev_ts = revision['timestamp']
-                if rev_ts.endswith('Z'):
-                    timestamp = datetime.datetime.fromisoformat(rev_ts[:-1] + '+00:00')
-                else:
-                    raise ValueError("Unparsable timestamp: %s" % rev_ts)
+                timestamp = isoparse(revision['timestamp'])
                 title = page['title']
                 comment = revision['comment']
                 yield WikiContrib(timestamp, title, comment, is_live=False)
