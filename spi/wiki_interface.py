@@ -18,10 +18,11 @@ import django.contrib.auth
 from django.conf import settings
 from mwclient import Site
 from mwclient.listing import List
-
+from dateutil.parser import isoparse
 import mwparserfromhell
 
 from .spi_utils import SpiSourceDocument, SpiCase
+from .block_utils import BlockEvent, UnblockEvent
 
 logger = logging.getLogger('wiki_interface')
 
@@ -193,3 +194,29 @@ class Wiki:
                 title = page['title']
                 comment = revision['comment']
                 yield WikiContrib(timestamp, title, comment, is_live=False)
+
+
+    def get_user_blocks(self, user_name):
+        """Get the user's block history.
+
+        Returns a (heterogeneous) list of BlockEvents and
+        UnblockEvents in chronological order (i.e. oldest first).
+
+        """
+        blocks = self.site.logevents(title=f'User:{user_name}', type="block", dir="newer")
+        events = []
+        for block in blocks:
+            action = block['action']
+            timestamp = datetime.datetime.fromtimestamp(time.mktime(block['timestamp']),
+                                                        tz=datetime.timezone.utc)
+            mw_expiry = block['params'].get('expiry')
+            expiry = mw_expiry and isoparse(mw_expiry)
+            if action == 'block':
+                events.append(BlockEvent(user_name, timestamp, expiry))
+            if action == 'reblock':
+                events.append(BlockEvent(user_name, timestamp, expiry, reblock=True))
+            if action == 'unblock':
+                events.append(UnblockEvent(user_name, timestamp))
+            else:
+                logger.error('Ignoring block due to unknown block action in %s', block)
+        return events

@@ -3,11 +3,14 @@ from datetime import datetime, timezone
 from unittest import TestCase
 from unittest.mock import patch, Mock
 
+from dateutil.parser import isoparse
 from django.conf import settings
 from django.http import HttpRequest
+import mwclient.util
 
 from .wiki_interface import Wiki, WikiContrib
 from .spi_utils import SpiIpInfo, SpiCase
+from .block_utils import BlockEvent, UnblockEvent
 
 
 class ConstructorTest(TestCase):
@@ -253,3 +256,52 @@ class DeletedUserContributioneTest(TestCase):
         self.assertEqual(items, [
             WikiContrib(datetime(2015, 11, 25, tzinfo=timezone.utc), 'p1', 'c1', is_live=False),
             WikiContrib(datetime(2015, 11, 24, tzinfo=timezone.utc), 'p1', 'c2', is_live=False)])
+
+
+class GetUserBlocksTest(TestCase):
+    # pylint: disable=invalid-name
+
+    @patch('spi.wiki_interface.Site')
+    def test_get_user_blocks_with_no_blocks(self, mock_Site):
+        mock_Site().logevents.return_value = iter([])
+        wiki = Wiki()
+
+        user_blocks = wiki.get_user_blocks('fred')
+
+        self.assertEqual(user_blocks, [])
+
+
+
+    @patch('spi.wiki_interface.Site')
+    def test_get_user_blocks_with_multiple_events(self, mock_Site):
+        jan_1 = '2020-01-01T00:00:00Z'
+        feb_1 = '2020-02-01T00:00:00Z'
+        mar_1 = '2020-03-01T00:00:00Z'
+        apr_1 = '2020-04-01T00:00:00Z'
+        may_1 = '2020-05-01T00:00:00Z'
+
+        mock_Site().logevents.return_value = iter([
+            {'title': 'User:fred',
+             'timestamp': mwclient.util.parse_timestamp(jan_1),
+             'params': {'expiry': feb_1},
+             'type': 'block',
+             'action': 'block'},
+            {'title': 'User:fred',
+             'timestamp': mwclient.util.parse_timestamp(mar_1),
+             'params': {'expiry': apr_1},
+             'type': 'block',
+             'action': 'block'},
+            {'title': 'User:fred',
+             'timestamp': mwclient.util.parse_timestamp(may_1),
+             'params': {},
+             'type': 'block',
+             'action': 'unblock'}
+            ])
+
+        wiki = Wiki()
+
+        user_blocks = wiki.get_user_blocks('fred')
+
+        self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
+                                       BlockEvent('fred', isoparse(mar_1), isoparse(apr_1)),
+                                       UnblockEvent('fred', isoparse(may_1))])
