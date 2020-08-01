@@ -23,6 +23,8 @@ import mwparserfromhell
 
 from .spi_utils import SpiSourceDocument, SpiCase
 from .block_utils import BlockEvent, UnblockEvent
+from .time_utils import struct_to_datetime
+
 
 logger = logging.getLogger('wiki_interface')
 
@@ -146,12 +148,6 @@ class Wiki:
         return SpiCase(*docs)
 
 
-    @staticmethod
-    def _datetime_from_struct(time_struct):
-        return datetime.datetime.fromtimestamp(time.mktime(time_struct),
-                                               tz=datetime.timezone.utc)
-
-
     def user_contributions(self, user_name):
         """Get a user's live (i.e. non-deleted) edits.
 
@@ -159,7 +155,7 @@ class Wiki:
 
         """
         for contrib in self.site.usercontributions(user_name):
-            yield WikiContrib(self._datetime_from_struct(contrib['timestamp']),
+            yield WikiContrib(struct_to_datetime(contrib['timestamp']),
                               contrib['title'],
                               contrib['comment'])
 
@@ -207,8 +203,7 @@ class Wiki:
         events = []
         for block in blocks:
             action = block['action']
-            timestamp = datetime.datetime.fromtimestamp(time.mktime(block['timestamp']),
-                                                        tz=datetime.timezone.utc)
+            timestamp = struct_to_datetime(block['timestamp'])
             mw_expiry = block['params'].get('expiry')
             expiry = mw_expiry and isoparse(mw_expiry)
             if action == 'block':

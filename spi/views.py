@@ -4,7 +4,6 @@ from typing import List
 import logging
 import urllib.request
 import urllib.parse
-import time
 import datetime
 import itertools
 import functools
@@ -22,19 +21,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import CaseNameForm, SockSelectForm, UserInfoForm
 from .spi_utils import SpiIpInfo
 from .block_utils import BlockMap
+from .time_utils import struct_to_datetime
 from .wiki_interface import Wiki
 
 
 logger = logging.getLogger('view')
 
 
-
 EDITOR_INTERACT_BASE = "https://tools.wmflabs.org/sigma/editorinteract.py"
 TIMECARD_BASE = 'https://xtools.wmflabs.org/api/user/timecard/en.wikipedia.org'
-
-
-def datetime_from_struct(time_struct):
-    return datetime.datetime.fromtimestamp(time.mktime(time_struct), tz=datetime.timezone.utc)
 
 
 @dataclass(frozen=True, order=True)
@@ -329,7 +324,7 @@ class G5View(View):
 
         page_creations = []
         for contrib in site.usercontributions('|'.join(sock_names), show="new"):
-            timestamp = datetime_from_struct(contrib['timestamp'])
+            timestamp = struct_to_datetime(contrib['timestamp'])
             if block_map.is_blocked_at(timestamp):
                 title = contrib['title']
                 page = site.pages[title]

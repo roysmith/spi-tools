@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from time import mktime
+
+from .time_utils import struct_to_datetime
 
 @dataclass
 class Block:
@@ -13,11 +14,11 @@ class Block:
         string "infinity".
 
         """
-        self.start = datetime.fromtimestamp(mktime(timestamp), tz=timezone.utc)
+        self.start = struct_to_datetime(timestamp)
         if expiry == 'infinity':
             self.end = datetime.replace(datetime.max, tzinfo=timezone.utc)
         else:
-            self.end = datetime.fromtimestamp(mktime(expiry), tz=timezone.utc)
+            self.end = struct_to_datetime(expiry)
 
 
 @dataclass
