@@ -44,6 +44,7 @@ DEBUG = TOOL_NAME.lower().endswith('-dev')
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'tools.wmflabs.org',
+    'spi-tools.toolforge.org',
     'spi-tools-dev.toolforge.org',
 ]
 
