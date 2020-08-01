@@ -77,7 +77,7 @@ class BlockEventTest(TestCase):
 
     def test_construct_with_expiry_less_than_timestamp_raises_value_error(self):
         with self.assertRaises(ValueError):
-            event = BlockEvent("fred", _dt(2019, 1, 1), _dt(2018, 12, 30))
+            BlockEvent("fred", _dt(2019, 1, 1), _dt(2018, 12, 30))
 
 
     def test_construct_reblock_event(self):
