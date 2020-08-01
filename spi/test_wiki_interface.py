@@ -7,6 +7,7 @@ from dateutil.parser import isoparse
 from django.conf import settings
 from django.http import HttpRequest
 import mwclient.util
+import mwclient.errors
 
 from .wiki_interface import Wiki, WikiContrib
 from .spi_utils import SpiIpInfo, SpiCase
@@ -256,6 +257,19 @@ class DeletedUserContributioneTest(TestCase):
         self.assertEqual(items, [
             WikiContrib(datetime(2015, 11, 25, tzinfo=timezone.utc), 'p1', 'c1', is_live=False),
             WikiContrib(datetime(2015, 11, 24, tzinfo=timezone.utc), 'p1', 'c2', is_live=False)])
+
+
+
+    @patch('spi.wiki_interface.List')
+    def test_deleted_user_contributions(self, mock_List):
+        mock_List().__iter__.side_effect = mwclient.errors.APIError('permissiondenied',
+                                                                    'blah',
+                                                                    'blah-blah')
+        wiki = Wiki()
+
+        deleted_contributions = wiki.deleted_user_contributions('fred')
+
+        self.assertEqual(list(deleted_contributions), [])
 
 
 class GetUserBlocksTest(TestCase):

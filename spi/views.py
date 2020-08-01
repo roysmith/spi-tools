@@ -218,19 +218,10 @@ class UserActivitiesView(LoginRequiredMixin, View):
                                              bool(int(request.GET.get('other', 0))))
         active = wiki.user_contributions(user_name)
 
-        try:
-            deleted = wiki.deleted_user_contributions(user_name)
-            merged = heapq.merge(active, deleted, reverse=True)
-            filtered = itertools.filterfalse(namespace_filter, merged)
-            counted = list(itertools.islice(filtered, count))
-        except APIError as ex:
-            if ex.args[0] == 'permissiondenied':
-                context = {'user_name': user_name,
-                           'error_code': ex.args[0],
-                           'error_message': ex.args[1]}
-                return render(request, 'spi/user-activities.dtl', context)
-            raise
-
+        deleted = wiki.deleted_user_contributions(user_name)
+        merged = heapq.merge(active, deleted, reverse=True)
+        filtered = itertools.filterfalse(namespace_filter, merged)
+        counted = list(itertools.islice(filtered, count))
         daily_activities = self.group_by_day(counted)
         context = {'user_name': user_name,
                    'daily_activities': daily_activities}

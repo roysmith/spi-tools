@@ -18,6 +18,7 @@ import django.contrib.auth
 from django.conf import settings
 from mwclient import Site
 from mwclient.listing import List
+from mwclient.errors import APIError
 from dateutil.parser import isoparse
 import mwparserfromhell
 
@@ -165,8 +166,8 @@ class Wiki:
 
         Returns an interable over WikiContributions.
 
-        This requires that the mwclient connection be authenticated to a
-        user with admin rights.  Raises PermissionError otherwise.
+        If the mwclient connection is not authenticated to a
+        user with admin rights, returns an empty iterable.
 
         """
         kwargs = dict(List.generate_kwargs('adr', user=user_name))
@@ -178,14 +179,27 @@ class Wiki:
 
         # See https://www.mediawiki.org/wiki/API:Alldeletedrevisions#Response; this is
         # iterating over response['query']['alldeletedrevisions'].
-        for page in listing:
-            title = page['title']
-            for revision in page['revisions']:
-                logger.debug("deleted revision = %s", revision)
-                timestamp = isoparse(revision['timestamp'])
+        try:
+            for page in listing:
                 title = page['title']
-                comment = revision['comment']
-                yield WikiContrib(timestamp, title, comment, is_live=False)
+                for revision in page['revisions']:
+                    logger.debug("deleted revision = %s", revision)
+                    timestamp = isoparse(revision['timestamp'])
+                    title = page['title']
+                    comment = revision['comment']
+                    yield WikiContrib(timestamp, title, comment, is_live=False)
+        except APIError as ex:
+            if ex.args[0] == 'permissiondenied':
+                logger.warning('Permission denied in wiki_interface.deleted_user_contributions()')
+                # We're assuming that the exception will be raised
+                # before any data is returned.  There's probably some
+                # edge cases where data is returned in multiple chunks
+                # and the permission is lost between chunks.  At
+                # worst, this should result in incompplete data being
+                # returned, but that's not 100% clear.
+                return
+            raise
+
 
 
     def get_user_blocks(self, user_name):
