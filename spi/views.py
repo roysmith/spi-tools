@@ -4,70 +4,32 @@ from typing import List
 import logging
 import urllib.request
 import urllib.parse
-import time
 import datetime
 import itertools
 import functools
 import heapq
 
 import requests
-from mwclient import Site, APIError
-import mwclient.listing
+from mwclient import APIError
 
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
-import django.contrib.auth
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.conf import settings
 
 
 from .forms import CaseNameForm, SockSelectForm, UserInfoForm
-from .spi_utils import SpiCase, SpiIpInfo, SpiSourceDocument
+from .spi_utils import SpiIpInfo
 from .block_utils import BlockMap
+from .time_utils import struct_to_datetime
+from .wiki_interface import Wiki
 
 
 logger = logging.getLogger('view')
 
 
-
 EDITOR_INTERACT_BASE = "https://tools.wmflabs.org/sigma/editorinteract.py"
 TIMECARD_BASE = 'https://xtools.wmflabs.org/api/user/timecard/en.wikipedia.org'
-
-
-def datetime_from_struct(time_struct):
-    return datetime.datetime.fromtimestamp(time.mktime(time_struct), tz=datetime.timezone.utc)
-
-
-def get_site(request):
-    """Return a mwclient.Site object.
-
-    If the user is logged in, this will include OAUTH consumer and access
-    credentials.  Otherwise, it will be an anonymous connection.
-
-    """
-    user = django.contrib.auth.get_user(request)
-
-    # It's not clear if we need to bother checking to see if the user
-    # is authenticated.  Maybe with an AnonymousUser, everything just
-    # works?  If so, these two code paths could be merged.
-    if user.is_anonymous:
-        auth_info = {}
-    else:
-        access_token = (user
-                        .social_auth
-                        .get(provider='mediawiki')
-                        .extra_data['access_token'])
-        auth_info = {
-            'consumer_token': settings.SOCIAL_AUTH_MEDIAWIKI_KEY,
-            'consumer_secret': settings.SOCIAL_AUTH_MEDIAWIKI_SECRET,
-            'access_token': access_token['oauth_token'],
-            'access_secret': access_token['oauth_token_secret']
-        }
-
-    return Site(settings.MEDIAWIKI_SITE_NAME,
-                clients_useragent=settings.MEDIAWIKI_USER_AGENT,
-                **auth_info)
 
 
 @dataclass(frozen=True, order=True)
@@ -117,9 +79,9 @@ class IndexView(View):
 
 class IpAnalysisView(View):
     def get(self, request, case_name):
-        site = get_site(request)
+        wiki = Wiki()
         ip_data = defaultdict(list)
-        for i in self.get_spi_case_ips(site, case_name):
+        for i in wiki.get_case_ips(case_name):
             ip_data[i.ip_address].append(i.date)
         summaries = [IpSummary(ip, sorted(ip_data[ip])) for ip in ip_data]
         summaries.sort()
@@ -128,73 +90,25 @@ class IpAnalysisView(View):
         return render(request, 'spi/ip-analysis.dtl', context)
 
 
-    @staticmethod
-    def get_spi_case_ips(site, master_name):
-        "Returns a iterable over SpiIpInfos"
-        case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
-        archive_title = '%s/Archive' % case_title
-
-        case_doc = SpiSourceDocument(case_title, site.pages[case_title].text())
-        docs = [case_doc]
-
-        archive_text = site.pages[archive_title].text()
-        if archive_text:
-            archive_doc = SpiSourceDocument(archive_title, archive_text)
-            docs.append(archive_doc)
-
-        case = SpiCase(*docs)
-        return case.find_all_ips()
-
-
-def get_registration_time(site, user):
-    '''Return the registration time for a user as a string.
-
-    If the registration time can't be determined, returns None.
-
-    '''
-    registrations = site.users(users=[user], prop=['registration'])
-    userinfo = registrations.next()
-    try:
-        return userinfo['registration']
-    except KeyError:
-        return None
-
-
-def get_sock_names(site, master_name, use_archive=True):
+def get_sock_names(wiki, master_name, use_archive=True):
     """Returns a iterable over SpiUserInfos.
 
     If use_archive is true, both the current case and any existing
     archive is used.  Otherwise, just the current case.
 
     """
-    case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
-    archive_title = '%s/Archive' % case_title
-
-    case_doc = SpiSourceDocument(case_title, site.pages[case_title].text())
-    docs = [case_doc]
-
-    archive_text = use_archive and site.pages[archive_title].text()
-    if archive_text:
-        archive_doc = SpiSourceDocument(archive_title, archive_text)
-        docs.append(archive_doc)
-
-    case = SpiCase(*docs)
+    case = wiki.get_case(master_name, use_archive)
     return case.find_all_users()
-
-
-def make_user_summary(site, sock):
-    return UserSummary(sock.username,
-                       get_registration_time(site, sock.username))
 
 
 class SockInfoView(View):
     def get(self, request, case_name):
-        site = get_site(request)
+        wiki = Wiki()
         socks = []
         use_archive = int(request.GET.get('archive', 1))
-        for sock in get_sock_names(site, case_name, use_archive):
+        for sock in get_sock_names(wiki, case_name, use_archive):
             socks.append(sock)
-        summaries = list({make_user_summary(site, sock) for sock in socks})
+        summaries = list({self.make_user_summary(wiki, sock) for sock in socks})
         # This is a hack to make users with no registration time sort to the
         # beginning of the list.  We need to do something smarter here.
         summaries.sort(key=lambda x: x.registration_time or "")
@@ -203,11 +117,17 @@ class SockInfoView(View):
         return render(request, 'spi/sock-info.dtl', context)
 
 
+    @staticmethod
+    def make_user_summary(wiki, sock):
+        username = sock.username
+        return UserSummary(username, wiki.get_registration_time(username))
+
+
 class SockSelectView(View):
     def get(self, request, case_name):
-        site = get_site(request)
+        wiki = Wiki()
         use_archive = int(request.GET.get('archive', 1))
-        user_infos = list(get_sock_names(site, case_name, use_archive))
+        user_infos = list(get_sock_names(wiki, case_name, use_archive))
         return render(request,
                       'spi/sock-select.dtl',
                       self.build_context(case_name, user_infos))
@@ -288,7 +208,7 @@ class UserInfoView(View):
 
 class UserActivitiesView(LoginRequiredMixin, View):
     def get(self, request, user_name):
-        site = get_site(request)
+        wiki = Wiki(request)
         user_name = urllib.parse.unquote_plus(user_name)
         logger.debug("user_name = %s", user_name)
         count = int(request.GET.get('count', '1'))
@@ -296,21 +216,12 @@ class UserActivitiesView(LoginRequiredMixin, View):
                                              bool(int(request.GET.get('main', 0))),
                                              bool(int(request.GET.get('draft', 0))),
                                              bool(int(request.GET.get('other', 0))))
-        active = self.contribution_activities(site, user_name)
+        active = wiki.user_contributions(user_name)
 
-        try:
-            deleted = self.deleted_contribution_activities(site, user_name)
-            merged = heapq.merge(active, deleted, reverse=True)
-            filtered = itertools.filterfalse(namespace_filter, merged)
-            counted = list(itertools.islice(filtered, count))
-        except APIError as ex:
-            if ex.args[0] == 'permissiondenied':
-                context = {'user_name': user_name,
-                           'error_code': ex.args[0],
-                           'error_message': ex.args[1]}
-                return render(request, 'spi/user-activities.dtl', context)
-            raise
-
+        deleted = wiki.deleted_user_contributions(user_name)
+        merged = heapq.merge(active, deleted, reverse=True)
+        filtered = itertools.filterfalse(namespace_filter, merged)
+        counted = list(itertools.islice(filtered, count))
         daily_activities = self.group_by_day(counted)
         context = {'user_name': user_name,
                    'daily_activities': daily_activities}
@@ -319,8 +230,8 @@ class UserActivitiesView(LoginRequiredMixin, View):
 
     # https://github.com/roysmith/spi-tools/issues/51
     @staticmethod
-    def check_namespaces(main, draft, other, activity):
-        _, _, title, _ = activity
+    def check_namespaces(main, draft, other, contrib):
+        title = contrib.title
         if not ':' in title:
             return not main
         name_space, _ = title.split(':', 1)
@@ -328,40 +239,6 @@ class UserActivitiesView(LoginRequiredMixin, View):
         if name_space == 'draft':
             return not draft
         return not other
-
-
-    @staticmethod
-    def contribution_activities(site, user_name):
-        for contrib in site.usercontributions(user_name):
-            logger.debug("contrib = %s", contrib)
-            timestamp = datetime_from_struct(contrib['timestamp'])
-            title = contrib['title']
-            comment = contrib['comment']
-            yield timestamp, 'edit', title, comment
-
-
-    @staticmethod
-    def deleted_contribution_activities(site, user_name):
-        kwargs = dict(mwclient.listing.List.generate_kwargs('adr', user=user_name))
-        listing = mwclient.listing.List(site,
-                                        'alldeletedrevisions',
-                                        'adr',
-                                        limit=20,
-                                        uselang=None,
-                                        **kwargs)
-
-        for page in listing:
-            title = page['title']
-            for revision in page['revisions']:
-                logger.debug("deleted revision = %s", revision)
-                rev_ts = revision['timestamp']
-                if rev_ts.endswith('Z'):
-                    timestamp = datetime.datetime.fromisoformat(rev_ts[:-1] + '+00:00')
-                else:
-                    raise ValueError("Unparsable timestamp: %s" % rev_ts)
-                title = page['title']
-                comment = revision['comment']
-                yield timestamp, 'deleted', title, comment
 
 
     @staticmethod
@@ -376,12 +253,16 @@ class UserActivitiesView(LoginRequiredMixin, View):
         date_groups = ['primary', 'secondary']
 
         daily_activities = []
-        for timestamp, activity_type, title, comment in activities:
-            this_date = timestamp.date()
+        for activity in activities:
+            this_date = activity.timestamp.date()
             if this_date != previous_date:
                 date_groups.reverse()
                 previous_date = this_date
-            daily_activities.append((date_groups[0], timestamp, activity_type, title, comment))
+            daily_activities.append((date_groups[0],
+                                     activity.timestamp,
+                                     'edit' if activity.is_live else 'deleted',
+                                     activity.title,
+                                     activity.comment))
         return daily_activities
 
 
@@ -421,9 +302,10 @@ class G5Score:
 
 class G5View(View):
     def get(self, request, case_name):
-        site = get_site(request)
+        wiki = Wiki()
+        site = Wiki.get_mw_site(request)
         use_archive = int(request.GET.get('archive', 1))
-        socks = get_sock_names(site, case_name, use_archive)
+        socks = get_sock_names(wiki, case_name, use_archive)
         sock_names = [s.username for s in socks]
         for sock_name in sock_names:
             if '|' in sock_name:
@@ -433,27 +315,21 @@ class G5View(View):
 
         page_creations = []
         for contrib in site.usercontributions('|'.join(sock_names), show="new"):
-            timestamp = datetime_from_struct(contrib['timestamp'])
+            timestamp = struct_to_datetime(contrib['timestamp'])
             if block_map.is_blocked_at(timestamp):
-                summary = self.build_summary(site,
-                                             contrib['title'],
-                                             contrib['user'],
-                                             timestamp)
-                if summary:
-                    page_creations.append(summary)
+                title = contrib['title']
+                page = site.pages[title]
+                if page.exists:
+                    page_creations.append(G5Summary(title,
+                                                    contrib['user'],
+                                                    timestamp,
+                                                    self.g5_score(page)))
 
         context = {'case_name': case_name,
                    'block_map': block_map,
                    'page_creations': page_creations,
                    }
         return render(request, 'spi/g5.dtl', context)
-
-
-    def build_summary(self, site, title, user, timestamp):
-        page = site.pages[title]
-        if page.exists:
-            return G5Summary(title, user, timestamp, self.g5_score(page))
-        return None
 
 
     @staticmethod

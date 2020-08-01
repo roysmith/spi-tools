@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import List
 from ipaddress import IPv4Address, IPv4Network
 
 from mwparserfromhell import parse
@@ -34,7 +35,12 @@ class SpiParsedDocument(SpiDocumentBase):
     wikicode: Wikicode
 
 
+@dataclass
 class SpiCase:
+    parsed_docs: List[SpiParsedDocument]
+    _master_name: str
+
+
     def __init__(self, *sources):
         """A case can be made up of multiple source documents.  In practice,
         there will usually be two; the currently active page, and the
@@ -89,10 +95,10 @@ class SpiCase:
                 yield user
 
 
+@dataclass(frozen=True)
 class SpiCaseDay:
-    def __init__(self, wikicode, page_title):
-        self.wikicode = wikicode
-        self.page_title = page_title
+    wikicode: Wikicode
+    page_title: str
 
 
     def date(self):
@@ -117,6 +123,7 @@ class SpiCaseDay:
         for template in templates:
             username = template.get('1').value
             yield SpiUserInfo(str(username), str(date))
+
 
     def find_unique_users(self):
         '''Iterates over all the unique accounts mentioned in checkuser

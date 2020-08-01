@@ -5,15 +5,9 @@
 {% block content %}
 <h1><small>Consolidated activity for {{ user_name }}</small></h1>
 <pre>
-Deleted edits are in <del>strikeout</del> style
+Deleted edits are in <del>strikeout</del> style (elided for non-admins)
 Groups of similarly colored rows are individual days
 </pre>
-{% if error_code %}
-<div class="alert alert-danger" role="alert">
-Something went wrong when fetching user contributions (and deleted
-contributions).  The error was "{{ error_code }}" ({{ error_message }}).
-</div>
-{% else %}
 <table class="table table-hover table-sm small">
   {% for date_group, timestamp, activity_type, page, comment in daily_activities %}
   <tr class="table-{{ date_group }}">
@@ -33,5 +27,4 @@ contributions).  The error was "{{ error_code }}" ({{ error_message }}).
   </tr>
   {% endfor %}
 </table>
-{% endif %}
 {% endblock %}

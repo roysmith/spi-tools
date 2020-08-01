@@ -1,7 +1,7 @@
 from unittest import TestCase
 from datetime import datetime, timezone
 
-from .block_utils import Block, BlockMap
+from .block_utils import Block, BlockMap, BlockEvent, UnblockEvent
 
 
 # Note: In all of these tests, it is assumed that the last three
@@ -56,3 +56,39 @@ class BlockMapTest(TestCase):
         self.assertFalse(block_map.is_blocked_at(_dt(2020, 4, 2)))
         self.assertTrue(block_map.is_blocked_at(_dt(2020, 6, 2)))
         self.assertTrue(block_map.is_blocked_at(_dt(3000, 1, 1)))
+
+
+class BlockEventTest(TestCase):
+    def test_construct_finite_block_event(self):
+        event = BlockEvent("fred", _dt(2019, 1, 1), _dt(2019, 1, 5))
+        self.assertEqual(event.target, "fred")
+        self.assertEqual(event.timestamp, _dt(2019, 1, 1))
+        self.assertEqual(event.expiry, _dt(2019, 1, 5))
+        self.assertFalse(event.is_reblock)
+
+
+    def test_constuct_indef_block_event(self):
+        event = BlockEvent("fred", _dt(2019, 1, 1))
+        self.assertEqual(event.target, "fred")
+        self.assertEqual(event.timestamp, _dt(2019, 1, 1))
+        self.assertIsNone(event.expiry)
+        self.assertFalse(event.is_reblock)
+
+
+    def test_construct_with_expiry_less_than_timestamp_raises_value_error(self):
+        with self.assertRaises(ValueError):
+            BlockEvent("fred", _dt(2019, 1, 1), _dt(2018, 12, 30))
+
+
+    def test_construct_reblock_event(self):
+        event = BlockEvent("fred", _dt(2019, 1, 1), is_reblock=True)
+        self.assertEqual(event.target, "fred")
+        self.assertEqual(event.timestamp, _dt(2019, 1, 1))
+        self.assertIsNone(event.expiry)
+        self.assertTrue(event.is_reblock)
+
+
+    def test_construct_unblock_event(self):
+        event = UnblockEvent("fred", _dt(2019, 1, 1))
+        self.assertEqual(event.target, "fred")
+        self.assertEqual(event.timestamp, _dt(2019, 1, 1))

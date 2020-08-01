@@ -3,20 +3,9 @@ import urllib.parse
 from django import forms
 from django.core.exceptions import ValidationError
 
-from mwclient import Site
-import mwparserfromhell
+from .wiki_interface import Wiki
 
 SITE_NAME = 'en.wikipedia.org'
-
-def get_current_case_names():
-    site = Site(SITE_NAME)
-    overview = site.pages['Wikipedia:Sockpuppet investigations/Cases/Overview'].text()
-    wikicode = mwparserfromhell.parse(overview)
-    templates = wikicode.filter_templates(
-        matches=lambda n: n.name.matches('SPIstatusentry'))
-    choices = [(str(t.get(1)), str(t.get(1))) for t in templates]
-    return choices
-
 
 class CaseNameChoiceField(forms.ChoiceField):
     def __init__(self, *args, **kwargs):
@@ -28,17 +17,19 @@ class CaseNameChoiceField(forms.ChoiceField):
                                   code='required',
                                   params={'value': value})
         case_page_title = f'Wikipedia:Sockpuppet investigations/{value}'
-        site = Site(SITE_NAME)
-        if not site.pages[case_page_title].text():
+        wiki = Wiki()
+        if not wiki.page_exists(case_page_title):
             raise ValidationError(f'{case_page_title} does not exist.',
                                   code='invalid_choice',
                                   params={'value': value})
 
 class CaseNameForm(forms.Form):
+    wiki = Wiki()
     # Leading empty element needed by select2.js placeholder.
-    names = [('', '')] + get_current_case_names()
+    names = [''] + wiki.get_current_case_names()
     names.sort()
-    case_name = CaseNameChoiceField(label='Case (sockmaster) name', choices=names)
+    choices = [(n, n) for n in names]
+    case_name = CaseNameChoiceField(label='Case (sockmaster) name', choices=choices)
     use_archive = forms.BooleanField(label='Use archive?',
                                      initial=True,
                                      required=False)
