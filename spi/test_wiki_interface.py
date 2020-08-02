@@ -261,7 +261,7 @@ class DeletedUserContributioneTest(TestCase):
 
 
     @patch('spi.wiki_interface.List')
-    def test_deleted_user_contributions(self, mock_List):
+    def test_deleted_user_contributions_with_permission_denied_exception(self, mock_List):
         mock_List().__iter__.side_effect = mwclient.errors.APIError('permissiondenied',
                                                                     'blah',
                                                                     'blah-blah')
