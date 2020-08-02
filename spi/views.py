@@ -19,7 +19,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import CaseNameForm, SockSelectForm, UserInfoForm
 from .spi_utils import SpiIpInfo
-from .block_utils import BlockMap
+from .block_utils import UserBlockHistory
 from .time_utils import struct_to_datetime
 from .wiki_interface import Wiki
 
@@ -306,12 +306,12 @@ class G5View(View):
             if '|' in sock_name:
                 raise RuntimeError(f'"{sock_name}" has a "|" in it')
 
-        block_map = BlockMap(site.blocks(users=case_name))
+        history = UserBlockHistory(wiki.get_user_blocks(case_name))
 
         page_creations = []
         for contrib in site.usercontributions('|'.join(sock_names), show="new"):
             timestamp = struct_to_datetime(contrib['timestamp'])
-            if block_map.is_blocked_at(timestamp):
+            if history.is_blocked_at(timestamp):
                 title = contrib['title']
                 page = site.pages[title]
                 if page.exists:
@@ -321,7 +321,6 @@ class G5View(View):
                                                     self.g5_score(page)))
 
         context = {'case_name': case_name,
-                   'block_map': block_map,
                    'page_creations': page_creations,
                    }
         return render(request, 'spi/g5.dtl', context)
