@@ -203,7 +203,7 @@ class WikiContribTest(TestCase):
         self.assertFalse(contrib.is_live)
 
 
-class UserContributioneTest(TestCase):
+class UserContributionsTest(TestCase):
     # pylint: disable=invalid-name
 
     @patch('spi.wiki_interface.Site')
@@ -254,7 +254,7 @@ class UserContributioneTest(TestCase):
             list(wiki.user_contributions('foo|bar'))
 
 
-class DeletedUserContributioneTest(TestCase):
+class DeletedUserContributionsTest(TestCase):
     # pylint: disable=invalid-name
 
     @patch('spi.wiki_interface.List')
