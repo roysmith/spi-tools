@@ -177,26 +177,29 @@ class GetCaseTest(TestCase):
 
 class WikiContribTest(TestCase):
     def test_construct_default(self):
-        contrib = WikiContrib(datetime(2020, 7, 30), 'my title', 'my comment')
+        contrib = WikiContrib(datetime(2020, 7, 30), 'user', 'title', 'comment')
         self.assertEqual(contrib.timestamp, datetime(2020, 7, 30))
-        self.assertEqual(contrib.title, 'my title')
-        self.assertEqual(contrib.comment, 'my comment')
+        self.assertEqual(contrib.user_name, 'user')
+        self.assertEqual(contrib.title, 'title')
+        self.assertEqual(contrib.comment, 'comment')
         self.assertTrue(contrib.is_live)
 
 
     def test_construct_live_true(self):
-        contrib = WikiContrib(datetime(2020, 7, 30), 'my title', 'my comment', is_live=True)
+        contrib = WikiContrib(datetime(2020, 7, 30), 'user', 'title', 'comment', is_live=True)
         self.assertEqual(contrib.timestamp, datetime(2020, 7, 30))
-        self.assertEqual(contrib.title, 'my title')
-        self.assertEqual(contrib.comment, 'my comment')
+        self.assertEqual(contrib.user_name, 'user')
+        self.assertEqual(contrib.title, 'title')
+        self.assertEqual(contrib.comment, 'comment')
         self.assertTrue(contrib.is_live)
 
 
     def test_construct_live_false(self):
-        contrib = WikiContrib(datetime(2020, 7, 30), 'my title', 'my comment', is_live=False)
+        contrib = WikiContrib(datetime(2020, 7, 30), 'user', 'title', 'comment', is_live=False)
         self.assertEqual(contrib.timestamp, datetime(2020, 7, 30))
-        self.assertEqual(contrib.title, 'my title')
-        self.assertEqual(contrib.comment, 'my comment')
+        self.assertEqual(contrib.user_name, 'user')
+        self.assertEqual(contrib.title, 'title')
+        self.assertEqual(contrib.comment, 'comment')
         self.assertFalse(contrib.is_live)
 
 
@@ -215,8 +218,8 @@ class UserContributioneTest(TestCase):
         items = list(contributions)
         self.assertIsInstance(items[0], WikiContrib)
         self.assertEqual(items, [
-            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'p1', 'c1'),
-            WikiContrib(datetime(2020, 7, 29, tzinfo=timezone.utc), 'p2', 'c2')])
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 'p1', 'c1'),
+            WikiContrib(datetime(2020, 7, 29, tzinfo=timezone.utc), 'fred', 'p2', 'c2')])
 
 
 class DeletedUserContributioneTest(TestCase):
@@ -255,9 +258,10 @@ class DeletedUserContributioneTest(TestCase):
         items = list(deleted_contributions)
         self.assertIsInstance(items[0], WikiContrib)
         self.assertEqual(items, [
-            WikiContrib(datetime(2015, 11, 25, tzinfo=timezone.utc), 'p1', 'c1', is_live=False),
-            WikiContrib(datetime(2015, 11, 24, tzinfo=timezone.utc), 'p1', 'c2', is_live=False)])
-
+            WikiContrib(datetime(2015, 11, 25, tzinfo=timezone.utc),
+                        'fred', 'p1', 'c1', is_live=False),
+            WikiContrib(datetime(2015, 11, 24, tzinfo=timezone.utc),
+                        'fred', 'p1', 'c2', is_live=False)])
 
 
     @patch('spi.wiki_interface.List')
