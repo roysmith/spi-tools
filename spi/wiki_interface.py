@@ -10,7 +10,6 @@ mwclient.Site directly.
 
 """
 import logging
-import time
 import datetime
 from dataclasses import dataclass
 

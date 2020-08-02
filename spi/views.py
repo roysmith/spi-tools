@@ -10,7 +10,6 @@ import functools
 import heapq
 
 import requests
-from mwclient import APIError
 
 from django.shortcuts import render, redirect
 from django.urls import reverse
