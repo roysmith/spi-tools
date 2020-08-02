@@ -149,7 +149,7 @@ class Wiki:
         return SpiCase(*docs)
 
 
-    def user_contributions(self, user_name_or_names):
+    def user_contributions(self, user_name_or_names, show=''):
         """Get one or more users' live (i.e. non-deleted) edits.
 
         If user_name_or_names is a string, get the edits for that
@@ -172,7 +172,7 @@ class Wiki:
                 raise ValueError(f'"|" in user name: {str_name}')
             all_names.append(str_name)
 
-        for contrib in self.site.usercontributions('|'.join(all_names)):
+        for contrib in self.site.usercontributions('|'.join(all_names), show=show):
             logger.info('==> %s', contrib)
             yield WikiContrib(struct_to_datetime(contrib['timestamp']),
                               contrib['user'],

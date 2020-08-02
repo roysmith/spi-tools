@@ -20,7 +20,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import CaseNameForm, SockSelectForm, UserInfoForm
 from .spi_utils import SpiIpInfo
 from .block_utils import UserBlockHistory
-from .time_utils import struct_to_datetime
 from .wiki_interface import Wiki
 
 
@@ -309,15 +308,14 @@ class G5View(View):
         history = UserBlockHistory(wiki.get_user_blocks(case_name))
 
         page_creations = []
-        for contrib in site.usercontributions('|'.join(sock_names), show="new"):
-            timestamp = struct_to_datetime(contrib['timestamp'])
-            if history.is_blocked_at(timestamp):
-                title = contrib['title']
+        for contrib in wiki.user_contributions(sock_names, show="new"):
+            if history.is_blocked_at(contrib.timestamp):
+                title = contrib.title
                 page = site.pages[title]
                 if page.exists:
                     page_creations.append(G5Summary(title,
-                                                    contrib['user'],
-                                                    timestamp,
+                                                    contrib.user_name,
+                                                    contrib.timestamp,
                                                     self.g5_score(page)))
 
         context = {'case_name': case_name,

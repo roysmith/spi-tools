@@ -217,7 +217,7 @@ class UserContributionsTest(TestCase):
 
         contributions = list(wiki.user_contributions('fred'))
 
-        mock_Site().usercontributions.assert_called_once_with('fred')
+        mock_Site().usercontributions.assert_called_once_with('fred', show='')
         self.assertIsInstance(contributions[0], WikiContrib)
         self.assertEqual(contributions, [
             WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 'p1', 'c1'),
@@ -237,7 +237,7 @@ class UserContributionsTest(TestCase):
 
         contributions = list(wiki.user_contributions(['bob', 'alice']))
 
-        mock_Site().usercontributions.assert_called_once_with('bob|alice')
+        mock_Site().usercontributions.assert_called_once_with('bob|alice', show='')
         self.assertIsInstance(contributions[0], WikiContrib)
         self.assertEqual(contributions, [
             WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'bob', 'p1', 'c1'),
