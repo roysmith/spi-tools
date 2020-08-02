@@ -9,7 +9,7 @@ from django.http import HttpRequest
 import mwclient.util
 import mwclient.errors
 
-from .wiki_interface import Wiki, WikiContrib
+from .wiki_interface import Wiki, WikiContrib, Page
 from .spi_utils import SpiIpInfo, SpiCase
 from .block_utils import BlockEvent, UnblockEvent
 
@@ -355,3 +355,43 @@ class GetUserBlocksTest(TestCase):
         self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
                                        BlockEvent('fred', isoparse(mar_1), isoparse(apr_1)),
                                        UnblockEvent('fred', isoparse(may_1))])
+
+
+class GetPageTest(TestCase):
+    #pylint: disable=invalid-name
+
+    @patch('spi.wiki_interface.Site')
+    def test_page(self, mock_Site):
+        wiki = Wiki()
+        page = wiki.page('foo')
+
+        self.assertIsInstance(page, Page)
+
+
+class PageTest(TestCase):
+    #pylint: disable=invalid-name
+
+    def test_construct(self):
+        wiki = Wiki()
+        page = Page(wiki, "my page")
+
+        self.assertEqual(page.wiki, wiki)
+        self.assertIsNotNone(page.mw_page)
+
+
+    @patch('spi.wiki_interface.Site')
+    def test_exists_true(self, mock_Site):
+        mock_Site().pages.__getitem__().exists = True
+        wiki = Wiki()
+        page = Page(wiki, "my page")
+
+        self.assertTrue(page.exists())
+
+
+    @patch('spi.wiki_interface.Site')
+    def test_exists_false(self, mock_Site):
+        mock_Site().pages.__getitem__().exists = False
+        wiki = Wiki()
+        page = Page(wiki, "my page")
+
+        self.assertFalse(page.exists())

@@ -18,6 +18,7 @@ from django.conf import settings
 from mwclient import Site
 from mwclient.listing import List
 from mwclient.errors import APIError
+import mwclient
 from dateutil.parser import isoparse
 import mwparserfromhell
 
@@ -244,3 +245,22 @@ class Wiki:
             else:
                 logger.error('Ignoring block due to unknown block action in %s', block)
         return events
+
+
+    def page(self, title):
+        return Page(self, title)
+
+
+@dataclass
+class Page:
+    wiki: Wiki
+    mw_page: mwclient.page.Page
+
+
+    def __init__(self, wiki, title):
+        self.wiki = wiki
+        self.mw_page = self.wiki.site.pages[title]
+
+
+    def exists(self):
+        return self.mw_page.exists
