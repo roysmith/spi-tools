@@ -264,3 +264,11 @@ class Page:
 
     def exists(self):
         return self.mw_page.exists
+
+
+    def revisions(self):
+        for rev in self.mw_page.revisions():
+            yield WikiContrib(struct_to_datetime(rev['timestamp']),
+                              rev['user'],
+                              self.mw_page.name,
+                              rev['comment'])

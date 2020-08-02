@@ -360,8 +360,7 @@ class GetUserBlocksTest(TestCase):
 class GetPageTest(TestCase):
     #pylint: disable=invalid-name
 
-    @patch('spi.wiki_interface.Site')
-    def test_page(self, mock_Site):
+    def test_page(self):
         wiki = Wiki()
         page = wiki.page('foo')
 
@@ -395,3 +394,21 @@ class PageTest(TestCase):
         page = Page(wiki, "my page")
 
         self.assertFalse(page.exists())
+
+
+    @patch('spi.wiki_interface.Site')
+    def test_revisions(self, mock_Site):
+        mock_Site().pages.__getitem__().revisions.return_value = [
+            {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0), 'user': 'fred', 'comment': 'c1'},
+            {'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0), 'user': 'fred', 'comment': 'c2'}]
+        mock_Site().pages.__getitem__().name = 'blah'
+        wiki = Wiki()
+
+        revisions = list(wiki.page('blah').revisions())
+
+        self.maxDiff = None
+
+        self.assertIsInstance(revisions[0], WikiContrib)
+        self.assertEqual(revisions, [
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 'blah', 'c1'),
+            WikiContrib(datetime(2020, 7, 29, tzinfo=timezone.utc), 'fred', 'blah', 'c2')])

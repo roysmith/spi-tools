@@ -297,7 +297,6 @@ class G5Score:
 class G5View(View):
     def get(self, request, case_name):
         wiki = Wiki()
-        site = Wiki.get_mw_site(request)
         use_archive = int(request.GET.get('archive', 1))
         sock_names = [s.username for s in get_sock_names(wiki, case_name, use_archive)]
 
@@ -307,8 +306,8 @@ class G5View(View):
         for contrib in wiki.user_contributions(sock_names, show="new"):
             if history.is_blocked_at(contrib.timestamp):
                 title = contrib.title
-                page = site.pages[title]
-                if page.exists:
+                page = wiki.page(title)
+                if page.exists():
                     page_creations.append(G5Summary(title,
                                                     contrib.user_name,
                                                     contrib.timestamp,
@@ -325,7 +324,7 @@ class G5View(View):
         revisions = list(itertools.islice(page.revisions(), 50))
         if len(revisions) >= 50:
             return G5Score("unlikely", "50 or more revisions")
-        editors = {r['user'] for r in revisions}
+        editors = {r.user_name for r in revisions}
         if len(editors) == 1:
             return G5Score("likely", "only one editor")
         return G5Score("unknown")
