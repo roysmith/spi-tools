@@ -239,7 +239,7 @@ class Wiki:
             if action == 'block':
                 events.append(BlockEvent(user_name, timestamp, expiry))
             if action == 'reblock':
-                events.append(BlockEvent(user_name, timestamp, expiry, reblock=True))
+                events.append(BlockEvent(user_name, timestamp, expiry, is_reblock=True))
             if action == 'unblock':
                 events.append(UnblockEvent(user_name, timestamp))
             else:

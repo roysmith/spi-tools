@@ -347,7 +347,6 @@ class GetUserBlocksTest(TestCase):
              'type': 'block',
              'action': 'unblock'}
             ])
-
         wiki = Wiki()
 
         user_blocks = wiki.get_user_blocks('fred')
@@ -355,6 +354,33 @@ class GetUserBlocksTest(TestCase):
         self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
                                        BlockEvent('fred', isoparse(mar_1), isoparse(apr_1)),
                                        UnblockEvent('fred', isoparse(may_1))])
+
+
+    @patch('spi.wiki_interface.Site')
+    def test_get_user_blocks_with_reblock(self, mock_Site):
+        jan_1 = '2020-01-01T00:00:00Z'
+        jan_2 = '2020-01-02T00:00:00Z'
+        feb_1 = '2020-02-01T00:00:00Z'
+        mar_1 = '2020-03-01T00:00:00Z'
+
+        mock_Site().logevents.return_value = iter([
+            {'title': 'User:fred',
+             'timestamp': mwclient.util.parse_timestamp(jan_1),
+             'params': {'expiry': feb_1},
+             'type': 'block',
+             'action': 'block'},
+            {'title': 'User:fred',
+             'timestamp': mwclient.util.parse_timestamp(jan_2),
+             'params': {'expiry': mar_1},
+             'type': 'block',
+             'action': 'reblock'},
+        ])
+        wiki = Wiki()
+
+        user_blocks = wiki.get_user_blocks('fred')
+
+        self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
+                                       BlockEvent('fred', isoparse(jan_2), isoparse(mar_1), is_reblock=True)])
 
 
 class GetPageTest(TestCase):
