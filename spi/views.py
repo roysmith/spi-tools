@@ -61,17 +61,14 @@ class IndexView(View):
             if 'ip-info-button' in request.POST:
                 return redirect('spi-ip-analysis', case_name)
             if 'sock-info-button' in request.POST:
-                base_url = reverse('spi-sock-info', args=[case_name])
-                url = base_url + '?archive=%d' % int(use_archive)
-                return redirect(url)
+                return redirect('%s?archive=%d' % (reverse('spi-sock-info', args=[case_name]),
+                                                   use_archive))
             if 'sock-select-button' in request.POST:
-                base_url = reverse('spi-sock-select', args=[case_name])
-                url = base_url + '?archive=%d' % int(use_archive)
-                return redirect(url)
+                return redirect('%s?archive=%d' % (reverse('spi-sock-select', args=[case_name]),
+                                                   use_archive))
             if 'g5-button' in request.POST:
-                base_url = reverse('spi-g5', args=[case_name])
-                url = base_url + '?archive=%d' % int(use_archive)
-                return redirect(url)
+                return redirect('%s?archive=%d' % (reverse('spi-g5', args=[case_name]),
+                                                   use_archive))
             print("Egad, unknown button!")
         context = {'form': form}
         return render(request, 'spi/index.dtl', context)
@@ -191,13 +188,12 @@ class UserInfoView(View):
     def post(self, request, user_name):
         form = UserInfoForm(request.POST)
         if form.is_valid():
-            count = form.cleaned_data['count']
-            main = int(form.cleaned_data['main'])
-            draft = int(form.cleaned_data['draft'])
-            other = int(form.cleaned_data['other'])
-
-            base_url = reverse('spi-user-activities', args=[user_name])
-            url = f'{base_url}?count={count}&main={main}&draft={draft}&other={other}'
+            data = form.cleaned_data
+            url = (f'{reverse("spi-user-activities", args=[user_name])}'
+                   f'?count={data["count"]}'
+                   f'&main={int(data["main"])}'
+                   f'&draft={int(data["draft"])}'
+                   f'&other={int(data["other"])}')
             logger.debug("Redirecting to: %s", url)
             return redirect(url)
         logger.debug("post: not valid")
