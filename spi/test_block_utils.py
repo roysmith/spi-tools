@@ -1,7 +1,7 @@
 from unittest import TestCase
 from datetime import datetime, timezone
 
-from .block_utils import Block, BlockMap, BlockEvent, UnblockEvent
+from .block_utils import Block, BlockMap, BlockEvent, UnblockEvent, UserBlockHistory
 
 
 # Note: In all of these tests, it is assumed that the last three
@@ -92,3 +92,49 @@ class BlockEventTest(TestCase):
         event = UnblockEvent("fred", _dt(2019, 1, 1))
         self.assertEqual(event.target, "fred")
         self.assertEqual(event.timestamp, _dt(2019, 1, 1))
+
+
+class TestUserBlockHistory(TestCase):
+    def test_construct_with_no_data(self):
+        history = UserBlockHistory([])
+        self.assertIsInstance(history, UserBlockHistory)
+
+
+    def test_construct_with_valid_data(self):
+        events = [BlockEvent("fred", _dt(2019, 1, 1)),
+                  UnblockEvent("fred", _dt(2019, 1, 2))]
+        history = UserBlockHistory(events)
+        self.assertEqual(history.events, events)
+
+
+    def test_construct_with_incorrect_type(self):
+        with self.assertRaises(ValueError):
+            UserBlockHistory([1])
+
+
+    def test_construct_with_out_of_order_data(self):
+        with self.assertRaises(ValueError):
+            UserBlockHistory([BlockEvent("fred", _dt(2019, 1, 3)),
+                              BlockEvent("fred", _dt(2019, 1, 2))])
+
+
+    def test_is_blocked_at_with_indef_block(self):
+        events = [BlockEvent("fred", _dt(2019, 1, 1))]
+        history = UserBlockHistory(events)
+
+        self.assertTrue(history.is_blocked_at(_dt(2020, 1, 1)))
+
+
+
+    def test_is_blocked_at_with_prior_unblock(self):
+        history = UserBlockHistory([BlockEvent("fred", _dt(2019, 1, 1)),
+                                    UnblockEvent("fred", _dt(2019, 1, 2))])
+
+        self.assertFalse(history.is_blocked_at(_dt(2020, 1, 1)))
+
+
+    def test_is_blocked_at_with_later_unblock(self):
+        history = UserBlockHistory([BlockEvent("fred", _dt(2019, 1, 1)),
+                                    UnblockEvent("fred", _dt(2019, 1, 3))])
+
+        self.assertTrue(history.is_blocked_at(_dt(2019, 1, 2)))
