@@ -299,11 +299,7 @@ class G5View(View):
         wiki = Wiki()
         site = Wiki.get_mw_site(request)
         use_archive = int(request.GET.get('archive', 1))
-        socks = get_sock_names(wiki, case_name, use_archive)
-        sock_names = [s.username for s in socks]
-        for sock_name in sock_names:
-            if '|' in sock_name:
-                raise RuntimeError(f'"{sock_name}" has a "|" in it')
+        sock_names = [s.username for s in get_sock_names(wiki, case_name, use_archive)]
 
         history = UserBlockHistory(wiki.get_user_blocks(case_name))
 
