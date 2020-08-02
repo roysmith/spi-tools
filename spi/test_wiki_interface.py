@@ -406,8 +406,6 @@ class PageTest(TestCase):
 
         revisions = list(wiki.page('blah').revisions())
 
-        self.maxDiff = None
-
         self.assertIsInstance(revisions[0], WikiContrib)
         self.assertEqual(revisions, [
             WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 'blah', 'c1'),
