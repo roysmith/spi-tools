@@ -149,15 +149,33 @@ class Wiki:
         return SpiCase(*docs)
 
 
-    def user_contributions(self, user_name):
-        """Get a user's live (i.e. non-deleted) edits.
+    def user_contributions(self, user_name_or_names):
+        """Get one or more users' live (i.e. non-deleted) edits.
+
+        If user_name_or_names is a string, get the edits for that
+        user.  Otherwise, it's an iterable over strings, representing
+        a set of users.  The contributions for all of the users are
+        returned.
+
+        Little Bobby Tables alert: As a temporary hack, it is a
+        ValueError for any of the names to contain a pipe ('|')
+        character.
 
         Returns an iterable over WikiContribs.
 
         """
-        for contrib in self.site.usercontributions(user_name):
+        names = [user_name_or_names] if isinstance(user_name_or_names, str) else user_name_or_names
+        all_names = []
+        for name in names:
+            str_name = str(name)
+            if '|' in str_name:
+                raise ValueError(f'"|" in user name: {str_name}')
+            all_names.append(str_name)
+
+        for contrib in self.site.usercontributions('|'.join(all_names)):
+            logger.info('==> %s', contrib)
             yield WikiContrib(struct_to_datetime(contrib['timestamp']),
-                              user_name,
+                              contrib['user'],
                               contrib['title'],
                               contrib['comment'])
 

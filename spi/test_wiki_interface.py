@@ -207,19 +207,51 @@ class UserContributioneTest(TestCase):
     # pylint: disable=invalid-name
 
     @patch('spi.wiki_interface.Site')
-    def test_user_contributions(self, mock_Site):
+    def test_user_contributions_with_string(self, mock_Site):
         mock_Site().usercontributions.return_value = [
-            {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0), 'title': 'p1', 'comment': 'c1'},
-            {'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0), 'title': 'p2', 'comment': 'c2'}]
+            {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
+             'user': 'fred', 'title': 'p1', 'comment': 'c1'},
+            {'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0),
+             'user': 'fred', 'title': 'p2', 'comment': 'c2'}]
         wiki = Wiki()
 
-        contributions = wiki.user_contributions('fred')
+        contributions = list(wiki.user_contributions('fred'))
 
-        items = list(contributions)
-        self.assertIsInstance(items[0], WikiContrib)
-        self.assertEqual(items, [
+        mock_Site().usercontributions.assert_called_once_with('fred')
+        self.assertIsInstance(contributions[0], WikiContrib)
+        self.assertEqual(contributions, [
             WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 'p1', 'c1'),
             WikiContrib(datetime(2020, 7, 29, tzinfo=timezone.utc), 'fred', 'p2', 'c2')])
+
+
+    @patch('spi.wiki_interface.Site')
+    def test_user_contributions_with_list_of_strings(self, mock_Site):
+        mock_Site().usercontributions.return_value = [
+            {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
+             'user': 'bob', 'title': 'p1', 'comment': 'c1'},
+            {'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0),
+             'user': 'bob', 'title': 'p2', 'comment': 'c2'},
+            {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
+             'user': 'alice', 'title': 'p3', 'comment': 'c3'}]
+        wiki = Wiki()
+
+        contributions = list(wiki.user_contributions(['bob', 'alice']))
+
+        mock_Site().usercontributions.assert_called_once_with('bob|alice')
+        self.assertIsInstance(contributions[0], WikiContrib)
+        self.assertEqual(contributions, [
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'bob', 'p1', 'c1'),
+            WikiContrib(datetime(2020, 7, 29, tzinfo=timezone.utc), 'bob', 'p2', 'c2'),
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'alice', 'p3', 'c3')])
+
+
+    @patch('spi.wiki_interface.Site')
+    def test_user_contributions_raises_value_error_with_pipe_in_name(self, mock_Site):
+        mock_Site().usercontributions.return_value = iter([])
+        wiki = Wiki()
+
+        with self.assertRaises(ValueError):
+            list(wiki.user_contributions('foo|bar'))
 
 
 class DeletedUserContributioneTest(TestCase):
