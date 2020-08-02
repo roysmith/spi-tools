@@ -151,7 +151,7 @@ class Wiki:
     def user_contributions(self, user_name):
         """Get a user's live (i.e. non-deleted) edits.
 
-        Returns an iterable over WikiContributions.
+        Returns an iterable over WikiContribs.
 
         """
         for contrib in self.site.usercontributions(user_name):
@@ -163,7 +163,7 @@ class Wiki:
     def deleted_user_contributions(self, user_name):
         """Get a user's deleted edits.
 
-        Returns an interable over WikiContributions.
+        Returns an interable over WikiContribs.
 
         If the mwclient connection is not authenticated to a
         user with admin rights, returns an empty iterable.
