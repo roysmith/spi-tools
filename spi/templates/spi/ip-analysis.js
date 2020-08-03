@@ -4,9 +4,9 @@
  * IP range which covers those.
  */
 function updateBlockRange() {
-    var first_ip = $(":radio[name='first_ip']:checked")[0].value;
-    var last_ip = $(":radio[name='last_ip']:checked")[0].value;
-    var range = computeBlockRange(first_ip, last_ip);
+    var ip_1 = $(":radio[name='ip-1']:checked")[0].value;
+    var ip_2 = $(":radio[name='ip-2']:checked")[0].value;
+    var range = computeBlockRange(ip_1, ip_2);
     $("#network").html(range.network + "/" + range.prefix_length);
 }
 
@@ -16,7 +16,7 @@ function updateBlockRange() {
  * cover them.
  */
 function computeBlockRange(first_ip, last_ip) {
-    var first = ipToBits(first_ip);
+    var first = ipToBits(first_ip);141
     var last = ipToBits(last_ip);
     var prefix = 0;
     var prefix_length = 0;
@@ -56,4 +56,13 @@ function ipToBits(ip_string) {
     return zero_padded_bit_string.split('');
 }
 
-$(document).ready(updateBlockRange);
+$(document).ready(
+    function() {
+	// Check the first first-child and the last last-child radio buttons
+	$("#ip-list > li:first-child > :radio[name='ip-1']").prop('checked', true);
+	$("#ip-list > li:last-child > :radio[name='ip-2']").prop('checked', true);
+
+	// Hook up event handler and force initial call
+	$(".ip-radio").bind("change", updateBlockRange);
+	updateBlockRange();
+    });

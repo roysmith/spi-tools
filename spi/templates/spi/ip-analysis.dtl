@@ -3,19 +3,11 @@
 {% block content %}
 <h1><small>IP analysis for User:{{ case_name }}</small></h1>
 Network to block: <span id="network"></span>
-<ul>
+<ul id="ip-list">
   {% for summary in ip_summaries %}
   <li>
-    <input type="radio"
-	   name="first_ip"
-	   value="{{ summary.ip_address }}"
-	   {% if forloop.first %} checked {% endif %}
-	   onchange="updateBlockRange()">
-    <input type="radio"
-	   name="last_ip"
-	   value="{{ summary.ip_address }}"
-	   {% if forloop.last %} checked {% endif %}
-	   onchange="updateBlockRange()">
+    <input type="radio" class="ip-radio" name="ip-1" value="{{ summary.ip_address }}">
+    <input type="radio" class="ip-radio" name="ip-2" value="{{ summary.ip_address }}">
     <code>{{ summary.ip_address }}</code>
     {% for d in summary.spi_dates %}
     <a href="{{ d }}">(link)</a>
