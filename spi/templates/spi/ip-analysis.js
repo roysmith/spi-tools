@@ -35,12 +35,12 @@ function computeBlockRange(first_ip, last_ip) {
 	    prefix |= 1;
 	}
     }
-    
+
     var o1 = (prefix & 0xff000000) >> 24;
     var o2 = (prefix & 0xff0000) >> 16;
     var o3 = (prefix & 0xff00) >> 8;
     var o4 = prefix & 0xff;
-    
+
     network = o1 + "." + o2 + "." + o3 + "." + o4;
     return {'network':network, 'prefix_length':prefix_length};
 }
