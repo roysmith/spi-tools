@@ -55,3 +55,5 @@ function ipToBits(ip_string) {
     var zero_padded_bit_string = ("00000000000000000000000000000000" + i.toString(2)).slice(-32);
     return zero_padded_bit_string.split('');
 }
+
+$(document).ready(updateBlockRange);
