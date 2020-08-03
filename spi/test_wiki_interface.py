@@ -380,7 +380,8 @@ class GetUserBlocksTest(TestCase):
         user_blocks = wiki.get_user_blocks('fred')
 
         self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
-                                       BlockEvent('fred', isoparse(jan_2), isoparse(mar_1), is_reblock=True)])
+                                       BlockEvent('fred', isoparse(jan_2), isoparse(mar_1),
+                                                  is_reblock=True)])
 
 
 class GetPageTest(TestCase):
