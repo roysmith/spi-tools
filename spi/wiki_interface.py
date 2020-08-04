@@ -174,7 +174,6 @@ class Wiki:
             all_names.append(str_name)
 
         for contrib in self.site.usercontributions('|'.join(all_names), show=show):
-            logger.info('==> %s', contrib)
             yield WikiContrib(struct_to_datetime(contrib['timestamp']),
                               contrib['user'],
                               contrib['title'],
