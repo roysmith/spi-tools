@@ -35,6 +35,18 @@ def user_link(user_name, autoescape=True):
     name = safe(user_name, autoescape)
     return mark_safe(f'<a href="https://en.wikipedia.org/wiki/User:{name}">{name}</a>')
 
+
+@register.filter(needs_autoescape=True)
+def spi_link(case_name, display_text=None, autoescape=True):
+    """Return an anchor to a SPI page.
+
+    """
+    name = safe(case_name, autoescape)
+    text = safe(display_text or case_name, autoescape)
+    return mark_safe(
+        f'<a href="https://en.wikipedia.org/wiki/Wikipedia:Sockpuppet investigations/{name}">{text}</a>')
+
+
 @register.filter(needs_autoescape=True)
 def contributions(user_name, display_text=None, autoescape=True):
     """Return an anchor to a user's contributions.
@@ -46,6 +58,7 @@ def contributions(user_name, display_text=None, autoescape=True):
     text = safe(display_text or 'contributions', autoescape)
     return mark_safe(
         f'<a href="https://en.wikipedia.org/wiki/Special:Contributions/{name}">{text}</a>')
+
 
 @register.filter(needs_autoescape=True)
 def deleted_contributions(user_name, display_text=None, autoescape=True):
