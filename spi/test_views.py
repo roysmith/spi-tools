@@ -1,5 +1,6 @@
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
+import textwrap
 
 from django.test import Client
 
@@ -7,6 +8,8 @@ from .views import SockSelectView, UserSummary
 from .spi_utils import SpiUserInfo
 
 class SockSelectViewTest(TestCase):
+    # pylint: disable=invalid-name
+
     def test_build_context(self):
         case_name = "Foo"
         user_infos = [SpiUserInfo("User1", "20 June 2020"),
@@ -36,6 +39,25 @@ class SockSelectViewTest(TestCase):
         items = {(field.label, name, date)
                  for field, name, date in context['form_info']}
         self.assertEqual(items, expected_items)
+
+
+
+    @patch('spi.wiki_interface.Site')
+    def test_mismatched_quotes(self, mock_Site):
+        mock_Site().pages.__getitem__().text.return_value = textwrap.dedent(
+            """
+            ===31 January 2020===
+
+            ''Blah
+
+            ===4 February 2020===
+
+            ''Blah Blah
+            """)
+        client = Client()
+        response = client.get('/spi/spi-sock-select/Foo/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('spi/sock-select.dtl', [t.name for t in response.templates])
 
 
 class UserSummaryTest(TestCase):

@@ -49,7 +49,7 @@ class SpiCase:
 
         Each source is SpiSourceDocument.
         """
-        self.parsed_docs = [SpiParsedDocument(s.page_title, parse(s.wikitext))
+        self.parsed_docs = [SpiParsedDocument(s.page_title, parse(s.wikitext, skip_style_tags=True))
                             for s in sources]
 
         master_names = set(doc.master_name() for doc in self.parsed_docs)
