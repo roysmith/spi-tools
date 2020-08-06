@@ -12,6 +12,23 @@ from .spi_utils import SpiUserInfo
 from .wiki_interface import WikiContrib
 
 
+class IndexViewTest(TestCase):
+    # pylint: disable=invalid-name
+
+
+    @patch('spi.forms.Wiki')
+    def test_unknown_button(self, mock_Wiki):
+        mock_Wiki().page_exists.return_value = True
+        client = Client()
+
+        response = client.post('/spi/', {'case_name': ['Fred']})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'spi/index.dtl')
+        self.assertTrue(response.context['error'].startswith('No known button in POST'))
+        self.assertRegex(response.content, b'No known button in POST')
+
+
 class SockSelectViewTest(TestCase):
     # pylint: disable=invalid-name
 

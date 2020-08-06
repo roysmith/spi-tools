@@ -53,6 +53,7 @@ class IndexView(View):
 
     def post(self, request):
         form = CaseNameForm(request.POST)
+        context = {'form': form}
         if form.is_valid():
             case_name = form.cleaned_data['case_name']
             use_archive = form.cleaned_data['use_archive']
@@ -67,8 +68,10 @@ class IndexView(View):
             if 'g5-button' in request.POST:
                 return redirect('%s?archive=%d' % (reverse('spi-g5', args=[case_name]),
                                                    use_archive))
-            print("Egad, unknown button!")
-        context = {'form': form}
+            message = 'No known button in POST (%s)' % request.POST.keys()
+            logger.error(message)
+            context['error'] = message
+
         return render(request, 'spi/index.dtl', context)
 
 
