@@ -61,7 +61,7 @@ class SockSelectViewTest(TestCase):
         client = Client()
         response = client.get('/spi/spi-sock-select/Foo/')
         self.assertEqual(response.status_code, 200)
-        self.assertIn('spi/sock-select.dtl', [t.name for t in response.templates])
+        self.assertTemplateUsed(response, 'spi/sock-select.dtl')
 
 
 class UserSummaryTest(TestCase):
@@ -86,7 +86,7 @@ class SockInfoViewTest(TestCase):
         mock_site.users().return_value = iter([{}])
         client = Client()
         response = client.get('/spi/spi-sock-info/Foo/')
-        self.assertIn('spi/sock-info.dtl', [t.name for t in response.templates])
+        self.assertTemplateUsed(response, 'spi/sock-info.dtl')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['case_name'], 'Foo')
         self.assertEqual(response.context['summaries'], [UserSummary('Foo', None)])
@@ -107,7 +107,7 @@ class UserActivitiesViewTest(TestCase):
         client.force_login(user_fred, backend='django.contrib.auth.backends.ModelBackend')
         response = client.get('/spi/spi-user-activities/Foo', {'count': 10, 'main': 1}, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('spi/user-activities.dtl', [t.name for t in response.templates])
+        self.assertTemplateUsed(response, 'spi/user-activities.dtl')
         edit_data = response.context['daily_activities'][0]
         self.assertEqual(edit_data,
                          ('primary', datetime(2020, 1, 1), 'edit', 'Batman: xxx', 'comment'))
