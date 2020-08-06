@@ -34,6 +34,7 @@ logger = logging.getLogger('spi.wiki_interface')
 class WikiContrib:
     timestamp: datetime.datetime
     user_name: str
+    namespace: int
     title: str
     comment: str
     is_live: bool = True
@@ -174,8 +175,10 @@ class Wiki:
             all_names.append(str_name)
 
         for contrib in self.site.usercontributions('|'.join(all_names), show=show):
+            logger.debug("contrib = %s", contrib)
             yield WikiContrib(struct_to_datetime(contrib['timestamp']),
                               contrib['user'],
+                              contrib['ns'],
                               contrib['title'],
                               contrib['comment'])
 
@@ -201,12 +204,13 @@ class Wiki:
         try:
             for page in listing:
                 title = page['title']
+                namespace = page['ns']
                 for revision in page['revisions']:
                     logger.debug("deleted revision = %s", revision)
                     timestamp = isoparse(revision['timestamp'])
-                    title = page['title']
                     comment = revision['comment']
-                    yield WikiContrib(timestamp, user_name, title, comment, is_live=False)
+                    yield WikiContrib(
+                        timestamp, user_name, namespace, title, comment, is_live=False)
         except APIError as ex:
             if ex.args[0] == 'permissiondenied':
                 logger.warning('Permission denied in wiki_interface.deleted_user_contributions()')
@@ -269,5 +273,6 @@ class Page:
         for rev in self.mw_page.revisions():
             yield WikiContrib(struct_to_datetime(rev['timestamp']),
                               rev['user'],
+                              self.mw_page.namespace,
                               self.mw_page.name,
                               rev['comment'])

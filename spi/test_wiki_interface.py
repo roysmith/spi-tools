@@ -177,7 +177,7 @@ class GetCaseTest(TestCase):
 
 class WikiContribTest(TestCase):
     def test_construct_default(self):
-        contrib = WikiContrib(datetime(2020, 7, 30), 'user', 'title', 'comment')
+        contrib = WikiContrib(datetime(2020, 7, 30), 'user', 0, 'title', 'comment')
         self.assertEqual(contrib.timestamp, datetime(2020, 7, 30))
         self.assertEqual(contrib.user_name, 'user')
         self.assertEqual(contrib.title, 'title')
@@ -186,7 +186,7 @@ class WikiContribTest(TestCase):
 
 
     def test_construct_live_true(self):
-        contrib = WikiContrib(datetime(2020, 7, 30), 'user', 'title', 'comment', is_live=True)
+        contrib = WikiContrib(datetime(2020, 7, 30), 'user', 0, 'title', 'comment', is_live=True)
         self.assertEqual(contrib.timestamp, datetime(2020, 7, 30))
         self.assertEqual(contrib.user_name, 'user')
         self.assertEqual(contrib.title, 'title')
@@ -195,7 +195,7 @@ class WikiContribTest(TestCase):
 
 
     def test_construct_live_false(self):
-        contrib = WikiContrib(datetime(2020, 7, 30), 'user', 'title', 'comment', is_live=False)
+        contrib = WikiContrib(datetime(2020, 7, 30), 'user', 0, 'title', 'comment', is_live=False)
         self.assertEqual(contrib.timestamp, datetime(2020, 7, 30))
         self.assertEqual(contrib.user_name, 'user')
         self.assertEqual(contrib.title, 'title')
@@ -210,9 +210,9 @@ class UserContributionsTest(TestCase):
     def test_user_contributions_with_string(self, mock_Site):
         mock_Site().usercontributions.return_value = [
             {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
-             'user': 'fred', 'title': 'p1', 'comment': 'c1'},
+             'ns': 0, 'user': 'fred', 'title': 'p1', 'comment': 'c1'},
             {'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0),
-             'user': 'fred', 'title': 'p2', 'comment': 'c2'}]
+             'ns': 0, 'user': 'fred', 'title': 'p2', 'comment': 'c2'}]
         wiki = Wiki()
 
         contributions = list(wiki.user_contributions('fred'))
@@ -220,19 +220,19 @@ class UserContributionsTest(TestCase):
         mock_Site().usercontributions.assert_called_once_with('fred', show='')
         self.assertIsInstance(contributions[0], WikiContrib)
         self.assertEqual(contributions, [
-            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 'p1', 'c1'),
-            WikiContrib(datetime(2020, 7, 29, tzinfo=timezone.utc), 'fred', 'p2', 'c2')])
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 0, 'p1', 'c1'),
+            WikiContrib(datetime(2020, 7, 29, tzinfo=timezone.utc), 'fred', 0, 'p2', 'c2')])
 
 
     @patch('spi.wiki_interface.Site')
     def test_user_contributions_with_list_of_strings(self, mock_Site):
         mock_Site().usercontributions.return_value = [
             {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
-             'user': 'bob', 'title': 'p1', 'comment': 'c1'},
+             'user': 'bob', 'ns': 0, 'title': 'p1', 'comment': 'c1'},
             {'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0),
-             'user': 'bob', 'title': 'p2', 'comment': 'c2'},
+             'user': 'bob', 'ns': 0, 'title': 'p2', 'comment': 'c2'},
             {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
-             'user': 'alice', 'title': 'p3', 'comment': 'c3'}]
+             'user': 'alice', 'ns': 0, 'title': 'p3', 'comment': 'c3'}]
         wiki = Wiki()
 
         contributions = list(wiki.user_contributions(['bob', 'alice']))
@@ -240,9 +240,9 @@ class UserContributionsTest(TestCase):
         mock_Site().usercontributions.assert_called_once_with('bob|alice', show='')
         self.assertIsInstance(contributions[0], WikiContrib)
         self.assertEqual(contributions, [
-            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'bob', 'p1', 'c1'),
-            WikiContrib(datetime(2020, 7, 29, tzinfo=timezone.utc), 'bob', 'p2', 'c2'),
-            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'alice', 'p3', 'c3')])
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'bob', 0, 'p1', 'c1'),
+            WikiContrib(datetime(2020, 7, 29, tzinfo=timezone.utc), 'bob', 0, 'p2', 'c2'),
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'alice', 0, 'p3', 'c3')])
 
 
     @patch('spi.wiki_interface.Site')
@@ -291,9 +291,9 @@ class DeletedUserContributionsTest(TestCase):
         self.assertIsInstance(items[0], WikiContrib)
         self.assertEqual(items, [
             WikiContrib(datetime(2015, 11, 25, tzinfo=timezone.utc),
-                        'fred', 'p1', 'c1', is_live=False),
+                        'fred', 0, 'p1', 'c1', is_live=False),
             WikiContrib(datetime(2015, 11, 24, tzinfo=timezone.utc),
-                        'fred', 'p1', 'c2', is_live=False)])
+                        'fred', 0, 'p1', 'c2', is_live=False)])
 
 
     @patch('spi.wiki_interface.List')
@@ -429,11 +429,12 @@ class PageTest(TestCase):
             {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0), 'user': 'fred', 'comment': 'c1'},
             {'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0), 'user': 'fred', 'comment': 'c2'}]
         mock_Site().pages.__getitem__().name = 'blah'
+        mock_Site().pages.__getitem__().namespace = 0
         wiki = Wiki()
 
         revisions = list(wiki.page('blah').revisions())
 
         self.assertIsInstance(revisions[0], WikiContrib)
         self.assertEqual(revisions, [
-            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 'blah', 'c1'),
-            WikiContrib(datetime(2020, 7, 29, tzinfo=timezone.utc), 'fred', 'blah', 'c2')])
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 0, 'blah', 'c1'),
+            WikiContrib(datetime(2020, 7, 29, tzinfo=timezone.utc), 'fred', 0, 'blah', 'c2')])
