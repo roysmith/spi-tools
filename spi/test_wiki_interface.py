@@ -58,6 +58,21 @@ class ConstructorTest(TestCase):
         self.assertEqual(kwargs['clients_useragent'], settings.MEDIAWIKI_USER_AGENT)
 
 
+class NamespaceTest(TestCase):
+    # pylint: disable=invalid-name
+
+    @patch('spi.wiki_interface.Site')
+    def test_namespaces(self, mock_Site):
+        mock_Site().namespaces = {0: '',
+                                  1: 'Whatever'}
+        wiki = Wiki()
+
+        self.assertEqual(wiki.namespaces[0], '')
+        self.assertEqual(wiki.namespaces[1], 'Whatever')
+        self.assertEqual(wiki.namespace_values[''], 0)
+        self.assertEqual(wiki.namespace_values['Whatever'], 1)
+
+
 class GetCurrentCaseNamesTest(TestCase):
     # pylint: disable=invalid-name
 

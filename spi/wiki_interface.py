@@ -49,6 +49,8 @@ class Wiki:
     """
     def __init__(self, request=None):
         self.site = self.get_mw_site(request)
+        self.namespaces = self.site.namespaces
+        self.namespace_values = {v: k for k, v in self.namespaces.items()}
 
 
     @staticmethod
