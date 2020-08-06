@@ -1,11 +1,15 @@
-from unittest import TestCase
 from unittest.mock import patch, MagicMock
 import textwrap
+from datetime import datetime
 
+from django.test import TestCase
 from django.test import Client
+from django.contrib.auth import get_user_model
+
 
 from .views import SockSelectView, UserSummary
 from .spi_utils import SpiUserInfo
+from .wiki_interface import WikiContrib
 
 class SockSelectViewTest(TestCase):
     # pylint: disable=invalid-name
@@ -86,3 +90,24 @@ class SockInfoViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['case_name'], 'Foo')
         self.assertEqual(response.context['summaries'], [UserSummary('Foo', None)])
+
+
+class UserActivitiesViewTest(TestCase):
+    # pylint: disable=invalid-name
+
+    @patch('spi.views.Wiki')
+    def test_mainspace_title_contains_colon(self, mock_Wiki):
+        mock_Wiki().user_contributions.return_value = [
+            WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Batman: xxx', 'comment')]
+        mock_Wiki().deleted_user_contributions.return_value = []
+        mock_Wiki().namespace_values = {'': 0, 'Draft': 2}
+
+        user_fred = get_user_model().objects.create_user('Fred')
+        client = Client()
+        client.force_login(user_fred, backend='django.contrib.auth.backends.ModelBackend')
+        response = client.get('/spi/spi-user-activities/Foo', {'count': 10, 'main': 1}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('spi/user-activities.dtl', [t.name for t in response.templates])
+        edit_data = response.context['daily_activities'][0]
+        self.assertEqual(edit_data,
+                         ('primary', datetime(2020, 1, 1), 'edit', 'Batman: xxx', 'comment'))

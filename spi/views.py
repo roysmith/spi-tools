@@ -207,6 +207,7 @@ class UserActivitiesView(LoginRequiredMixin, View):
         logger.debug("user_name = %s", user_name)
         count = int(request.GET.get('count', '1'))
         namespace_filter = functools.partial(self.check_namespaces,
+                                             wiki.namespace_values,
                                              bool(int(request.GET.get('main', 0))),
                                              bool(int(request.GET.get('draft', 0))),
                                              bool(int(request.GET.get('other', 0))))
@@ -224,13 +225,10 @@ class UserActivitiesView(LoginRequiredMixin, View):
 
     # https://github.com/roysmith/spi-tools/issues/51
     @staticmethod
-    def check_namespaces(main, draft, other, contrib):
-        title = contrib.title
-        if not ':' in title:
+    def check_namespaces(namespace_values, main, draft, other, contrib):
+        if contrib.namespace == namespace_values['']:
             return not main
-        name_space, _ = title.split(':', 1)
-        name_space = name_space.lower().strip()
-        if name_space == 'draft':
+        if contrib.namespace == namespace_values['Draft']:
             return not draft
         return not other
 
@@ -249,14 +247,14 @@ class UserActivitiesView(LoginRequiredMixin, View):
         daily_activities = []
         for activity in activities:
             this_date = activity.timestamp.date()
-            if this_date != previous_date:
-                date_groups.reverse()
-                previous_date = this_date
             daily_activities.append((date_groups[0],
                                      activity.timestamp,
                                      'edit' if activity.is_live else 'deleted',
                                      activity.title,
                                      activity.comment))
+            if this_date != previous_date:
+                date_groups.reverse()
+                previous_date = this_date
         return daily_activities
 
 
