@@ -1,7 +1,7 @@
-all: lint
+all: test lint
 
 test:
 	cd ..; ./manage.py test $(test)
 
-lint:	test
+lint:
 	cd ..; pylint spi/*.py

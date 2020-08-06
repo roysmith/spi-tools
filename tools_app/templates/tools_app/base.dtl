@@ -6,6 +6,18 @@
   </head>
   <body>
     <div class="container">
+
+      {% if PRODUCTION_HOST_NAME %}
+      <div class="row mt-3">
+        <div class="alert alert-warning w-100" role="alert">
+          <div class="mx-auto">
+          This is a development server.  You should probably be using the production instance at
+          <a href="https://{{ PRODUCTION_HOST_NAME }}">{{ PRODUCTION_HOST_NAME }}</a>.
+        </div>
+        </div>
+      </div>
+      {% endif %}
+
       <div class="row">
         <div class="col-2">
           {% include "./navbar.dtl" %}
@@ -14,6 +26,7 @@
           {% block content %} <!-- main content --> {% endblock %}
         </div>
       </div>
+
       <div class="row">
         <div class="col-2">
           <div class="card mt-5">

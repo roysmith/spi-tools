@@ -10,7 +10,6 @@ mwclient.Site directly.
 
 """
 import logging
-import time
 import datetime
 from dataclasses import dataclass
 
@@ -19,6 +18,7 @@ from django.conf import settings
 from mwclient import Site
 from mwclient.listing import List
 from mwclient.errors import APIError
+import mwclient
 from dateutil.parser import isoparse
 import mwparserfromhell
 
@@ -27,12 +27,14 @@ from .block_utils import BlockEvent, UnblockEvent
 from .time_utils import struct_to_datetime
 
 
-logger = logging.getLogger('wiki_interface')
+logger = logging.getLogger('spi.wiki_interface')
 
 
 @dataclass(frozen=True, order=True)
 class WikiContrib:
     timestamp: datetime.datetime
+    user_name: str
+    namespace: int
     title: str
     comment: str
     is_live: bool = True
@@ -47,6 +49,8 @@ class Wiki:
     """
     def __init__(self, request=None):
         self.site = self.get_mw_site(request)
+        self.namespaces = self.site.namespaces
+        self.namespace_values = {v: k for k, v in self.namespaces.items()}
 
 
     @staticmethod
@@ -149,14 +153,34 @@ class Wiki:
         return SpiCase(*docs)
 
 
-    def user_contributions(self, user_name):
-        """Get a user's live (i.e. non-deleted) edits.
+    def user_contributions(self, user_name_or_names, show=''):
+        """Get one or more users' live (i.e. non-deleted) edits.
 
-        Returns an iterable over WikiContributions.
+        If user_name_or_names is a string, get the edits for that
+        user.  Otherwise, it's an iterable over strings, representing
+        a set of users.  The contributions for all of the users are
+        returned.
+
+        Little Bobby Tables alert: As a temporary hack, it is a
+        ValueError for any of the names to contain a pipe ('|')
+        character.
+
+        Returns an iterable over WikiContribs.
 
         """
-        for contrib in self.site.usercontributions(user_name):
+        names = [user_name_or_names] if isinstance(user_name_or_names, str) else user_name_or_names
+        all_names = []
+        for name in names:
+            str_name = str(name)
+            if '|' in str_name:
+                raise ValueError(f'"|" in user name: {str_name}')
+            all_names.append(str_name)
+
+        for contrib in self.site.usercontributions('|'.join(all_names), show=show):
+            logger.debug("contrib = %s", contrib)
             yield WikiContrib(struct_to_datetime(contrib['timestamp']),
+                              contrib['user'],
+                              contrib['ns'],
                               contrib['title'],
                               contrib['comment'])
 
@@ -164,7 +188,7 @@ class Wiki:
     def deleted_user_contributions(self, user_name):
         """Get a user's deleted edits.
 
-        Returns an interable over WikiContributions.
+        Returns an interable over WikiContribs.
 
         If the mwclient connection is not authenticated to a
         user with admin rights, returns an empty iterable.
@@ -182,12 +206,13 @@ class Wiki:
         try:
             for page in listing:
                 title = page['title']
+                namespace = page['ns']
                 for revision in page['revisions']:
                     logger.debug("deleted revision = %s", revision)
                     timestamp = isoparse(revision['timestamp'])
-                    title = page['title']
                     comment = revision['comment']
-                    yield WikiContrib(timestamp, title, comment, is_live=False)
+                    yield WikiContrib(
+                        timestamp, user_name, namespace, title, comment, is_live=False)
         except APIError as ex:
             if ex.args[0] == 'permissiondenied':
                 logger.warning('Permission denied in wiki_interface.deleted_user_contributions()')
@@ -219,9 +244,37 @@ class Wiki:
             if action == 'block':
                 events.append(BlockEvent(user_name, timestamp, expiry))
             if action == 'reblock':
-                events.append(BlockEvent(user_name, timestamp, expiry, reblock=True))
+                events.append(BlockEvent(user_name, timestamp, expiry, is_reblock=True))
             if action == 'unblock':
                 events.append(UnblockEvent(user_name, timestamp))
             else:
                 logger.error('Ignoring block due to unknown block action in %s', block)
         return events
+
+
+    def page(self, title):
+        return Page(self, title)
+
+
+@dataclass
+class Page:
+    wiki: Wiki
+    mw_page: mwclient.page.Page
+
+
+    def __init__(self, wiki, title):
+        self.wiki = wiki
+        self.mw_page = self.wiki.site.pages[title]
+
+
+    def exists(self):
+        return self.mw_page.exists
+
+
+    def revisions(self):
+        for rev in self.mw_page.revisions():
+            yield WikiContrib(struct_to_datetime(rev['timestamp']),
+                              rev['user'],
+                              self.mw_page.namespace,
+                              self.mw_page.name,
+                              rev['comment'])

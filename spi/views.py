@@ -10,7 +10,6 @@ import functools
 import heapq
 
 import requests
-from mwclient import APIError
 
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -20,12 +19,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .forms import CaseNameForm, SockSelectForm, UserInfoForm
 from .spi_utils import SpiIpInfo
-from .block_utils import BlockMap
-from .time_utils import struct_to_datetime
+from .block_utils import UserBlockHistory
 from .wiki_interface import Wiki
 
 
-logger = logging.getLogger('view')
+logger = logging.getLogger('spi.views')
 
 
 EDITOR_INTERACT_BASE = "https://tools.wmflabs.org/sigma/editorinteract.py"
@@ -55,25 +53,25 @@ class IndexView(View):
 
     def post(self, request):
         form = CaseNameForm(request.POST)
+        context = {'form': form}
         if form.is_valid():
             case_name = form.cleaned_data['case_name']
             use_archive = form.cleaned_data['use_archive']
             if 'ip-info-button' in request.POST:
                 return redirect('spi-ip-analysis', case_name)
             if 'sock-info-button' in request.POST:
-                base_url = reverse('spi-sock-info', args=[case_name])
-                url = base_url + '?archive=%d' % int(use_archive)
-                return redirect(url)
+                return redirect('%s?archive=%d' % (reverse('spi-sock-info', args=[case_name]),
+                                                   use_archive))
             if 'sock-select-button' in request.POST:
-                base_url = reverse('spi-sock-select', args=[case_name])
-                url = base_url + '?archive=%d' % int(use_archive)
-                return redirect(url)
+                return redirect('%s?archive=%d' % (reverse('spi-sock-select', args=[case_name]),
+                                                   use_archive))
             if 'g5-button' in request.POST:
-                base_url = reverse('spi-g5', args=[case_name])
-                url = base_url + '?archive=%d' % int(use_archive)
-                return redirect(url)
-            print("Egad, unknown button!")
-        context = {'form': form}
+                return redirect('%s?archive=%d' % (reverse('spi-g5', args=[case_name]),
+                                                   use_archive))
+            message = 'No known button in POST (%s)' % request.POST.keys()
+            logger.error(message)
+            context['error'] = message
+
         return render(request, 'spi/index.dtl', context)
 
 
@@ -191,13 +189,12 @@ class UserInfoView(View):
     def post(self, request, user_name):
         form = UserInfoForm(request.POST)
         if form.is_valid():
-            count = form.cleaned_data['count']
-            main = int(form.cleaned_data['main'])
-            draft = int(form.cleaned_data['draft'])
-            other = int(form.cleaned_data['other'])
-
-            base_url = reverse('spi-user-activities', args=[user_name])
-            url = f'{base_url}?count={count}&main={main}&draft={draft}&other={other}'
+            data = form.cleaned_data
+            url = (f'{reverse("spi-user-activities", args=[user_name])}'
+                   f'?count={data["count"]}'
+                   f'&main={int(data["main"])}'
+                   f'&draft={int(data["draft"])}'
+                   f'&other={int(data["other"])}')
             logger.debug("Redirecting to: %s", url)
             return redirect(url)
         logger.debug("post: not valid")
@@ -213,6 +210,7 @@ class UserActivitiesView(LoginRequiredMixin, View):
         logger.debug("user_name = %s", user_name)
         count = int(request.GET.get('count', '1'))
         namespace_filter = functools.partial(self.check_namespaces,
+                                             wiki.namespace_values,
                                              bool(int(request.GET.get('main', 0))),
                                              bool(int(request.GET.get('draft', 0))),
                                              bool(int(request.GET.get('other', 0))))
@@ -230,13 +228,10 @@ class UserActivitiesView(LoginRequiredMixin, View):
 
     # https://github.com/roysmith/spi-tools/issues/51
     @staticmethod
-    def check_namespaces(main, draft, other, contrib):
-        title = contrib.title
-        if not ':' in title:
+    def check_namespaces(namespace_values, main, draft, other, contrib):
+        if contrib.namespace == namespace_values['']:
             return not main
-        name_space, _ = title.split(':', 1)
-        name_space = name_space.lower().strip()
-        if name_space == 'draft':
+        if contrib.namespace == namespace_values['Draft']:
             return not draft
         return not other
 
@@ -255,14 +250,14 @@ class UserActivitiesView(LoginRequiredMixin, View):
         daily_activities = []
         for activity in activities:
             this_date = activity.timestamp.date()
-            if this_date != previous_date:
-                date_groups.reverse()
-                previous_date = this_date
             daily_activities.append((date_groups[0],
                                      activity.timestamp,
                                      'edit' if activity.is_live else 'deleted',
                                      activity.title,
                                      activity.comment))
+            if this_date != previous_date:
+                date_groups.reverse()
+                previous_date = this_date
         return daily_activities
 
 
@@ -303,30 +298,23 @@ class G5Score:
 class G5View(View):
     def get(self, request, case_name):
         wiki = Wiki()
-        site = Wiki.get_mw_site(request)
         use_archive = int(request.GET.get('archive', 1))
-        socks = get_sock_names(wiki, case_name, use_archive)
-        sock_names = [s.username for s in socks]
-        for sock_name in sock_names:
-            if '|' in sock_name:
-                raise RuntimeError(f'"{sock_name}" has a "|" in it')
+        sock_names = [s.username for s in get_sock_names(wiki, case_name, use_archive)]
 
-        block_map = BlockMap(site.blocks(users=case_name))
+        history = UserBlockHistory(wiki.get_user_blocks(case_name))
 
         page_creations = []
-        for contrib in site.usercontributions('|'.join(sock_names), show="new"):
-            timestamp = struct_to_datetime(contrib['timestamp'])
-            if block_map.is_blocked_at(timestamp):
-                title = contrib['title']
-                page = site.pages[title]
-                if page.exists:
+        for contrib in wiki.user_contributions(sock_names, show="new"):
+            if history.is_blocked_at(contrib.timestamp):
+                title = contrib.title
+                page = wiki.page(title)
+                if page.exists():
                     page_creations.append(G5Summary(title,
-                                                    contrib['user'],
-                                                    timestamp,
+                                                    contrib.user_name,
+                                                    contrib.timestamp,
                                                     self.g5_score(page)))
 
         context = {'case_name': case_name,
-                   'block_map': block_map,
                    'page_creations': page_creations,
                    }
         return render(request, 'spi/g5.dtl', context)
@@ -337,7 +325,7 @@ class G5View(View):
         revisions = list(itertools.islice(page.revisions(), 50))
         if len(revisions) >= 50:
             return G5Score("unlikely", "50 or more revisions")
-        editors = {r['user'] for r in revisions}
+        editors = {r.user_name for r in revisions}
         if len(editors) == 1:
             return G5Score("likely", "only one editor")
         return G5Score("unknown")

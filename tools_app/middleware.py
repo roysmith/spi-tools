@@ -1,7 +1,7 @@
 import logging
 import datetime
 
-logger = logging.getLogger('view')
+logger = logging.getLogger('tools_app.middleware')
 
 class LoggingMiddleware:
     def __init__(self, get_response):

@@ -3,7 +3,7 @@ import sys
 from django.apps import AppConfig
 
 
-logger = logging.getLogger('app')
+logger = logging.getLogger('tools_app.apps')
 
 
 class ToolsAppConfig(AppConfig):

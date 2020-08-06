@@ -77,12 +77,12 @@ class LogRecordSocketReceiver(socketserver.ThreadingTCPServer):
             abort = self.abort
 
 def main():
-    
+
     parser = argparse.ArgumentParser()
     parser.add_argument('host', help='hostname to listen on')
     parser.add_argument('port', type=int, help='port to listen on')
     args = parser.parse_args()
-    
+
     logging.basicConfig(
         format='%(asctime)s  %(levelname)-8s %(name)-15s %(message)s')
     tcpserver = LogRecordSocketReceiver(args.host, args.port)

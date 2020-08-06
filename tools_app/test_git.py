@@ -24,5 +24,3 @@ class ParseOutputTest(TestCase):
         expected_result = 'dev (6606c459dd972a1e8907839c6775ae1cd30ce840+)'
         result = git.parse_output(output)
         self.assertEqual(result, expected_result)
-
-        
