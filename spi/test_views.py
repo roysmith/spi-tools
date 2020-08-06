@@ -11,6 +11,7 @@ from .views import SockSelectView, UserSummary
 from .spi_utils import SpiUserInfo
 from .wiki_interface import WikiContrib
 
+
 class SockSelectViewTest(TestCase):
     # pylint: disable=invalid-name
 
@@ -43,7 +44,6 @@ class SockSelectViewTest(TestCase):
         items = {(field.label, name, date)
                  for field, name, date in context['form_info']}
         self.assertEqual(items, expected_items)
-
 
 
     @patch('spi.wiki_interface.Site')
