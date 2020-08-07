@@ -48,13 +48,13 @@ class Wiki:
 
     """
     def __init__(self, request=None):
-        self.site = self.get_mw_site(request)
+        self.site = self._get_mw_site(request)
         self.namespaces = self.site.namespaces
         self.namespace_values = {v: k for k, v in self.namespaces.items()}
 
 
     @staticmethod
-    def get_mw_site(request):
+    def _get_mw_site(request):
         user = request and django.contrib.auth.get_user(request)
 
         # It's not clear if we need to bother checking to see if the user
