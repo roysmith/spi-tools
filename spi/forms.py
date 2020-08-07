@@ -5,7 +5,6 @@ from django.core.exceptions import ValidationError
 
 from .wiki_interface import Wiki
 
-SITE_NAME = 'en.wikipedia.org'
 
 class CaseNameChoiceField(forms.ChoiceField):
     def __init__(self, *args, **kwargs):
