@@ -42,6 +42,17 @@ class SpiCaseTest(TestCase):
             self.assertIsInstance(day, SpiCaseDay)
 
 
+    def test_find_all_ips_with_no_data(self):
+        text = '''
+        {{SPIarchive notice|Maung Ko Htet}}
+        '''
+        case = SpiCase(make_source(text, 'Maung Ko Htet'))
+
+        infos = case.find_all_ips()
+
+        self.assertEqual(list(infos), [])
+
+
     def test_find_all_ips(self):
         text1 = '''
         __TOC__

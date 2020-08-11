@@ -18,7 +18,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 from .forms import CaseNameForm, SockSelectForm, UserInfoForm
-from .spi_utils import SpiIpInfo
+from .spi_utils import SpiIpInfo, SpiCase
 from .block_utils import UserBlockHistory
 from .wiki_interface import Wiki
 
@@ -79,7 +79,7 @@ class IpAnalysisView(View):
     def get(self, request, case_name):
         wiki = Wiki()
         ip_data = defaultdict(list)
-        for i in wiki.get_case_ips(case_name):
+        for i in SpiCase.get_case(wiki, case_name).find_all_ips():
             ip_data[i.ip_address].append(i.date)
         summaries = [IpSummary(ip, sorted(ip_data[ip])) for ip in ip_data]
         summaries.sort()
@@ -95,7 +95,7 @@ def get_sock_names(wiki, master_name, use_archive=True):
     archive is used.  Otherwise, just the current case.
 
     """
-    case = wiki.get_case(master_name, use_archive)
+    case = SpiCase.get_case(wiki, master_name, use_archive)
     return case.find_all_users()
 
 

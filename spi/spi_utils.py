@@ -41,6 +41,27 @@ class SpiCase:
     _master_name: str
 
 
+    @staticmethod
+    def get_case(wiki, master_name, use_archive=True):
+        """Returns a SpiCase.
+
+        If use_archive is true, both the active case page and any
+        existing archive is used.  Otherwise, just the active page.
+
+        """
+        case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
+        case_doc = SpiSourceDocument(case_title, wiki.page(case_title).text())
+        docs = [case_doc]
+
+        archive_title = f'{case_title}/Archive'
+        archive_text = use_archive and wiki.page(archive_title).text()
+        if archive_text:
+            archive_doc = SpiSourceDocument(archive_title, archive_text)
+            docs.append(archive_doc)
+
+        return SpiCase(*docs)
+
+
     def __init__(self, *sources):
         """A case can be made up of multiple source documents.  In practice,
         there will usually be two; the currently active page, and the

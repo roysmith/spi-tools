@@ -21,7 +21,6 @@ from mwclient.errors import APIError
 import mwclient
 from dateutil.parser import isoparse
 
-from .spi_utils import SpiSourceDocument, SpiCase
 from .block_utils import BlockEvent, UnblockEvent
 from .time_utils import struct_to_datetime
 
@@ -84,29 +83,6 @@ class Wiki:
         return self.site.pages[title].exists
 
 
-    def get_case_ips(self, case_name):
-        """Get all the IP addresses which have been mentioned
-        in a SPI case.
-
-        Returns a iterable over SpiIpInfos
-
-        """
-        case_title = 'Wikipedia:Sockpuppet investigations/%s' % case_name
-        archive_title = '%s/Archive' % case_title
-
-        case_doc = SpiSourceDocument(case_title, self.site.pages[case_title].text())
-        docs = [case_doc]
-
-        archive_text = self.site.pages[archive_title].text()
-        if archive_text:
-            archive_doc = SpiSourceDocument(archive_title, archive_text)
-            docs.append(archive_doc)
-
-        case = SpiCase(*docs)
-        return case.find_all_ips()
-
-
-
     def get_registration_time(self, user):
         """Return the registration time for a user as a string.
 
@@ -119,27 +95,6 @@ class Wiki:
             return userinfo['registration']
         except KeyError:
             return None
-
-
-    def get_case(self, master_name, use_archive=True):
-        """Returns a SpiCase.
-
-        If use_archive is true, both the current case and any existing
-        archive is used.  Otherwise, just the current case.
-
-        """
-        case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
-        archive_title = '%s/Archive' % case_title
-
-        case_doc = SpiSourceDocument(case_title, self.site.pages[case_title].text())
-        docs = [case_doc]
-
-        archive_text = use_archive and self.site.pages[archive_title].text()
-        if archive_text:
-            archive_doc = SpiSourceDocument(archive_title, archive_text)
-            docs.append(archive_doc)
-
-        return SpiCase(*docs)
 
 
     def user_contributions(self, user_name_or_names, show=''):
