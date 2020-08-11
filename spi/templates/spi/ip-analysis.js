@@ -16,7 +16,7 @@ function updateBlockRange() {
  * cover them.
  */
 function computeBlockRange(first_ip, last_ip) {
-    var first = ipToBits(first_ip);141
+    var first = ipToBits(first_ip);
     var last = ipToBits(last_ip);
     var prefix = 0;
     var prefix_length = 0;
