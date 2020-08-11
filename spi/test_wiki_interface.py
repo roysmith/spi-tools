@@ -73,35 +73,6 @@ class NamespaceTest(TestCase):
         self.assertEqual(wiki.namespace_values['Whatever'], 1)
 
 
-class GetCurrentCaseNamesTest(TestCase):
-    # pylint: disable=invalid-name
-
-    @patch('spi.wiki_interface.Site')
-    def test_no_entries(self, mock_Site):
-        mock_Site().pages.__getitem__().text.return_value = ''
-
-        wiki = Wiki()
-        names = wiki.get_current_case_names()
-
-        self.assertEqual(names, [])
-
-
-    @patch('spi.wiki_interface.Site')
-    def test_multiple_entries_with_duplicates(self, mock_Site):
-        mock_Site().pages.__getitem__().text.return_value = '''
-        {{SPIstatusheader}}
-        {{SPIstatusentry|Rajumitwa878|--|--|--|--|--|--}}
-        {{SPIstatusentry|AntiRacistSwede|--|--|--|--|--|--}}
-        {{SPIstatusentry|Trumanshow69|--|--|--|--|--|--}}
-        {{SPIstatusentry|AntiRacistSwede|--|--|--|--|--|--}}
-        '''
-
-        wiki = Wiki()
-        names = wiki.get_current_case_names()
-
-        self.assertEqual(set(names), {'Rajumitwa878', 'AntiRacistSwede', 'Trumanshow69'})
-
-
 class GetCaseIpsTest(TestCase):
     # pylint: disable=invalid-name
 

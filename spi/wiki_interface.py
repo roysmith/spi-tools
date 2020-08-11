@@ -20,7 +20,6 @@ from mwclient.listing import List
 from mwclient.errors import APIError
 import mwclient
 from dateutil.parser import isoparse
-import mwparserfromhell
 
 from .spi_utils import SpiSourceDocument, SpiCase
 from .block_utils import BlockEvent, UnblockEvent
@@ -77,16 +76,6 @@ class Wiki:
         return Site(settings.MEDIAWIKI_SITE_NAME,
                     clients_useragent=settings.MEDIAWIKI_USER_AGENT,
                     **auth_info)
-
-
-    def get_current_case_names(self):
-        """Return an list of the currently active SPI case names as strings.
-
-        """
-        overview = self.site.pages['Wikipedia:Sockpuppet investigations/Cases/Overview'].text()
-        wikicode = mwparserfromhell.parse(overview)
-        templates = wikicode.filter_templates(matches=lambda n: n.name.matches('SPIstatusentry'))
-        return [str(t.get(1)) for t in templates]
 
 
     def page_exists(self, title):
@@ -278,3 +267,6 @@ class Page:
                               self.mw_page.namespace,
                               self.mw_page.name,
                               rev['comment'])
+
+    def text(self):
+        return self.mw_page.text()

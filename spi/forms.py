@@ -4,6 +4,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from .wiki_interface import Wiki
+from .spi_utils import get_current_case_names
 
 
 class CaseNameChoiceField(forms.ChoiceField):
@@ -25,7 +26,7 @@ class CaseNameChoiceField(forms.ChoiceField):
 class CaseNameForm(forms.Form):
     wiki = Wiki()
     # Leading empty element needed by select2.js placeholder.
-    names = [''] + wiki.get_current_case_names()
+    names = [''] + get_current_case_names(wiki)
     names.sort()
     choices = [(n, n) for n in names]
     case_name = CaseNameChoiceField(label='Case (sockmaster) name', choices=choices)

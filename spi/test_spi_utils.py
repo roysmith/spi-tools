@@ -1,9 +1,12 @@
 from unittest import TestCase
+from unittest.mock import patch
 import textwrap
 from ipaddress import IPv4Network
 import mwparserfromhell
 
-from .spi_utils import SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo, ArchiveError
+from .spi_utils import (SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo,
+                        ArchiveError, get_current_case_names)
+from .wiki_interface import Wiki
 
 
 def make_code(text):
@@ -272,3 +275,32 @@ class SpiIpInfoTest(TestCase):
             SpiIpInfo('1.2.3.26', '1 January 2019', 'title')]
         network = SpiIpInfo.find_common_network(infos)
         self.assertEqual(network, IPv4Network('1.2.3.0/27'))
+
+
+class GetCurrentCaseNamesTest(TestCase):
+    # pylint: disable=invalid-name
+
+    @patch('spi.wiki_interface.Site')
+    def test_no_entries(self, mock_Site):
+        mock_Site().pages.__getitem__().text.return_value = ''
+
+        wiki = Wiki()
+        names = get_current_case_names(wiki)
+
+        self.assertEqual(names, [])
+
+
+    @patch('spi.wiki_interface.Site')
+    def test_multiple_entries_with_duplicates(self, mock_Site):
+        mock_Site().pages.__getitem__().text.return_value = '''
+        {{SPIstatusheader}}
+        {{SPIstatusentry|Rajumitwa878|--|--|--|--|--|--}}
+        {{SPIstatusentry|AntiRacistSwede|--|--|--|--|--|--}}
+        {{SPIstatusentry|Trumanshow69|--|--|--|--|--|--}}
+        {{SPIstatusentry|AntiRacistSwede|--|--|--|--|--|--}}
+        '''
+
+        wiki = Wiki()
+        names = get_current_case_names(wiki)
+
+        self.assertEqual(set(names), {'Rajumitwa878', 'AntiRacistSwede', 'Trumanshow69'})

@@ -195,3 +195,14 @@ class SpiIpInfo:
             prefix_length += 1
             prefix |= bit_set.pop()
         return IPv4Network((prefix, prefix_length))
+
+
+
+def get_current_case_names(wiki):
+    """Return an list of the currently active SPI case names as strings.
+
+    """
+    overview = wiki.page('Wikipedia:Sockpuppet investigations/Cases/Overview').text()
+    wikicode = parse(overview)
+    templates = wikicode.filter_templates(matches=lambda n: n.name.matches('SPIstatusentry'))
+    return [str(t.get(1)) for t in templates]
