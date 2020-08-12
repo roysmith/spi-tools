@@ -7,9 +7,9 @@ from django.test import Client
 from django.contrib.auth import get_user_model
 
 
+from wiki_interface import WikiContrib
 from .views import SockSelectView, UserSummary
 from .spi_utils import SpiUserInfo
-from .wiki_interface import WikiContrib
 
 
 class IndexViewTest(TestCase):
@@ -63,7 +63,7 @@ class SockSelectViewTest(TestCase):
         self.assertEqual(items, expected_items)
 
 
-    @patch('spi.wiki_interface.Site')
+    @patch('wiki_interface.wiki.Site')
     def test_mismatched_quotes(self, mock_Site):
         mock_Site().pages.__getitem__().text.return_value = textwrap.dedent(
             """

@@ -4,9 +4,9 @@ import textwrap
 from ipaddress import IPv4Network
 import mwparserfromhell
 
+from wiki_interface import Wiki
 from .spi_utils import (SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo,
                         ArchiveError, get_current_case_names)
-from .wiki_interface import Wiki
 
 
 def make_code(text):
@@ -291,7 +291,7 @@ class SpiIpInfoTest(TestCase):
 class GetCurrentCaseNamesTest(TestCase):
     # pylint: disable=invalid-name
 
-    @patch('spi.wiki_interface.Site')
+    @patch('wiki_interface.wiki.Site')
     def test_no_entries(self, mock_Site):
         mock_Site().pages.__getitem__().text.return_value = ''
 
@@ -301,7 +301,7 @@ class GetCurrentCaseNamesTest(TestCase):
         self.assertEqual(names, [])
 
 
-    @patch('spi.wiki_interface.Site')
+    @patch('wiki_interface.wiki.Site')
     def test_multiple_entries_with_duplicates(self, mock_Site):
         mock_Site().pages.__getitem__().text.return_value = '''
         {{SPIstatusheader}}

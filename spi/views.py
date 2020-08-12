@@ -17,10 +17,10 @@ from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 
+from wiki_interface import Wiki
+from wiki_interface.block_utils import UserBlockHistory
 from .forms import CaseNameForm, SockSelectForm, UserInfoForm
 from .spi_utils import SpiIpInfo, SpiCase
-from .block_utils import UserBlockHistory
-from .wiki_interface import Wiki
 
 
 logger = logging.getLogger('spi.views')

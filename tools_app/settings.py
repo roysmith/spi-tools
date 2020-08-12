@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'cat_checker',
     'spi',
     'pageutils',
+    'wiki_interface',
     'tools_app.apps.ToolsAppConfig',
     'tools_app.templatetags.tools_tags',
     'social_django',
