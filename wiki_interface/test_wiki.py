@@ -8,7 +8,8 @@ from django.http import HttpRequest
 import mwclient.util
 import mwclient.errors
 
-from .wiki import Wiki, WikiContrib, Page
+from .data import WikiContrib
+from .wiki import Wiki, Page
 from .block_utils import BlockEvent, UnblockEvent
 
 

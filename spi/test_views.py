@@ -7,7 +7,7 @@ from django.test import Client
 from django.contrib.auth import get_user_model
 
 
-from wiki_interface import WikiContrib
+from wiki_interface.data import WikiContrib
 from .views import SockSelectView, UserSummary
 from .spi_utils import SpiUserInfo
 

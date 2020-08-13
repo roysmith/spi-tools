@@ -10,7 +10,6 @@ mwclient.Site directly.
 
 """
 import logging
-import datetime
 from dataclasses import dataclass
 
 import django.contrib.auth
@@ -21,21 +20,12 @@ from mwclient.errors import APIError
 import mwclient
 from dateutil.parser import isoparse
 
+from .data import WikiContrib
 from .block_utils import BlockEvent, UnblockEvent
 from .time_utils import struct_to_datetime
 
 
 logger = logging.getLogger('spi.wiki_interface')
-
-
-@dataclass(frozen=True, order=True)
-class WikiContrib:
-    timestamp: datetime.datetime
-    user_name: str
-    namespace: int
-    title: str
-    comment: str
-    is_live: bool = True
 
 
 class Wiki:
