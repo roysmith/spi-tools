@@ -1,7 +1,7 @@
 from unittest import TestCase
 from datetime import datetime, timezone
 
-from .block_utils import BlockEvent, UnblockEvent, UserBlockHistory
+from wiki_interface.block_utils import BlockEvent, UnblockEvent, UserBlockHistory
 
 
 # Note: In all of these tests, it is assumed that the last three

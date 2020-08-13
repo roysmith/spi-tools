@@ -8,9 +8,9 @@ from django.http import HttpRequest
 import mwclient.util
 import mwclient.errors
 
-from .data import WikiContrib
-from .wiki import Wiki, Page
-from .block_utils import BlockEvent, UnblockEvent
+from wiki_interface.data import WikiContrib
+from wiki_interface.wiki import Wiki, Page
+from wiki_interface.block_utils import BlockEvent, UnblockEvent
 
 
 class ConstructorTest(TestCase):

@@ -20,9 +20,9 @@ from mwclient.errors import APIError
 import mwclient
 from dateutil.parser import isoparse
 
-from .data import WikiContrib
-from .block_utils import BlockEvent, UnblockEvent
-from .time_utils import struct_to_datetime
+from wiki_interface.data import WikiContrib
+from wiki_interface.block_utils import BlockEvent, UnblockEvent
+from wiki_interface.time_utils import struct_to_datetime
 
 
 logger = logging.getLogger('spi.wiki_interface')

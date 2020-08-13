@@ -2,7 +2,7 @@ from unittest import TestCase
 import time
 import datetime
 
-from .time_utils import struct_to_datetime
+from wiki_interface.time_utils import struct_to_datetime
 
 class StructToDatetimeTest(TestCase):
     def test_convert(self):
