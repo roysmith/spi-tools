@@ -25,7 +25,7 @@ from wiki_interface.block_utils import BlockEvent, UnblockEvent
 from wiki_interface.time_utils import struct_to_datetime
 
 
-logger = logging.getLogger('spi.wiki_interface')
+logger = logging.getLogger('wiki_interface')
 
 
 class Wiki:

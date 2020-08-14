@@ -213,6 +213,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'wiki_interface': {
+            'handlers': ['file', 'bastion'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
         'tools_app': {
             'handlers': ['file', 'bastion'],
             'level': 'INFO',
