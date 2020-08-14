@@ -5,8 +5,8 @@ from ipaddress import IPv4Network
 import mwparserfromhell
 
 from wiki_interface import Wiki
-from .spi_utils import (SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo,
-                        ArchiveError, get_current_case_names)
+from spi.spi_utils import (SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo,
+                           ArchiveError, get_current_case_names)
 
 
 def make_code(text):

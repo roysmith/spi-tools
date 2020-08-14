@@ -4,7 +4,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from wiki_interface import Wiki
-from .spi_utils import get_current_case_names
+from spi.spi_utils import get_current_case_names
 
 
 class CaseNameChoiceField(forms.ChoiceField):

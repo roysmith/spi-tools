@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import (IndexView, IpAnalysisView, SockInfoView, SockSelectView,
-                    UserInfoView, TimecardView, UserActivitiesView, G5View)
+from spi.views import (IndexView, IpAnalysisView, SockInfoView, SockSelectView,
+                       UserInfoView, TimecardView, UserActivitiesView, G5View)
 
 urlpatterns = [
     # pylint: disable=line-too-long

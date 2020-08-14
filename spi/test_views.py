@@ -8,8 +8,8 @@ from django.contrib.auth import get_user_model
 
 
 from wiki_interface.data import WikiContrib
-from .views import SockSelectView, UserSummary
-from .spi_utils import SpiUserInfo
+from spi.views import SockSelectView, UserSummary
+from spi.spi_utils import SpiUserInfo
 
 
 class IndexViewTest(TestCase):
