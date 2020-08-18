@@ -1,3 +1,6 @@
+//
+// Main function.
+//
 function checkTags() {
     const masterRegex = /{{sockmaster.*}}/;
     const puppetRegex = /{{sockpuppet.*}}/;
@@ -24,6 +27,13 @@ function checkTags() {
 };
 
 
+//
+// Given a page title (ex: "User:Foo"), return a Promise of a string
+// containing the page's wikitext.
+//
+// On any kind of error, including the page not existing, the string
+// is empty.
+//
 async function getWikitext(pageTitle) {
     const api = new mw.Api();
     const request = {
@@ -42,8 +52,12 @@ async function getWikitext(pageTitle) {
     }
 };
 
-
-// Return an object with color: and tooltip: elements.
+//
+// Return an object describing how to style a SPI tag indicator.
+//
+// color: what color to make the box.
+// tooltip: a text description of the type of tag
+//
 function tagStatus(wikitext) {
     const blockedRegex = /\|(2=)?blocked/;
     const provenRegex = /\|(2=)?proven/;
