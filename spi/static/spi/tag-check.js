@@ -53,8 +53,8 @@ async function getWikitext(pageTitle) {
 // If there is no SPI tag, an empty object is returned.
 //
 function tagStatus(wikitext) {
-    const masterRegex = /{{sockmaster.*}}/;
-    const puppetRegex = /{{sockpuppet.*}}/;
+    const masterRegex = /{{sockmaster}}|{{sockmaster\|.*}}|{{sockpuppeteer}}|{{sockpuppeteer\|.*}}/;
+    const puppetRegex = /{{sockpuppet}}|{{sockpuppet\|.*}}/;
     const blockedRegex = /\|(2=)?blocked/;
     const provenRegex = /\|(2=)?proven/;
     const confirmedRegex = /\|(2=)?confirmed/;
