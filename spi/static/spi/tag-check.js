@@ -2,25 +2,17 @@
 // Main function.
 //
 function checkTags() {
-    const masterRegex = /{{sockmaster.*}}/;
-    const puppetRegex = /{{sockpuppet.*}}/;
-
+    console.info("checkTags");
     $("span.cuEntry a.userlink[href*='/User:']").each(async function() {
 	const wikitext = await getWikitext("User:" + this.text);
-	let tagType = "";
-	if (masterRegex.test(wikitext)) {
-	    tagType = "M";
-	} else if (puppetRegex.test(wikitext)) {
-	    tagType = "P";
-	}
-	if (tagType != "") {
-	    const status = tagStatus(wikitext);
+	const status = tagStatus(wikitext);
+	if ('tagType' in status) {
 	    $(this).before("<span style=\"background-color:"
 			   + status.color
 			   + "; border:darkgrey solid 1px; padding:1px;\" title=\""
 			   + wikitext
 			   + "\">"
-			   + tagType
+			   + status.tagType
 			   + " </span>");
 	}
     });
@@ -55,33 +47,52 @@ async function getWikitext(pageTitle) {
 //
 // Return an object describing how to style a SPI tag indicator.
 //
+// tagType: "M" for a sockmater, "P" for a sockpuppet
 // color: what color to make the box.
 // tooltip: a text description of the type of tag
 //
+// If there is no SPI tag, an empty object is returned.
+//
 function tagStatus(wikitext) {
+    const masterRegex = /{{sockmaster.*}}/;
+    const puppetRegex = /{{sockpuppet.*}}/;
     const blockedRegex = /\|(2=)?blocked/;
     const provenRegex = /\|(2=)?proven/;
     const confirmedRegex = /\|(2=)?confirmed/;
 
+    let tagType = null;
+    if (masterRegex.test(wikitext)) {
+	tagType = "M";
+    } else if (puppetRegex.test(wikitext)) {
+	tagType = "P";
+    }
+    if (tagType == null) {
+	return {};
+    }
+
     if (blockedRegex.test(wikitext)) {
 	return {
+	    tagType: tagType,
 	    color: "#ffff66",
 	    tooltip: "blocked"
 	};
     }
     if (provenRegex.test(wikitext)) {
 	return {
+	    tagType: tagType,
 	    color: "#ffcc99",
 	    tooltip: "proven"
 	};
     }
     if (confirmedRegex.test(wikitext)) {
 	return {
+	    tagType: tagType,
 	    color: "#ff3300",
 	    tooltip: "confirmed"
 	}
     }
     return {
+	tagType: tagType,
 	color: "#ffffff",
 	tooltip: "unknown"
     };
