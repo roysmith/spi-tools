@@ -2,7 +2,6 @@
 // Main function.
 //
 function checkTags() {
-    console.info("checkTags");
     $("span.cuEntry a.userlink[href*='/User:']").each(async function() {
 	const wikitext = await getWikitext("User:" + this.text);
 	const status = tagStatus(wikitext);
