@@ -3,17 +3,17 @@
 //
 function checkTags() {
     $("span.cuEntry a[href*='/User:']").each(async function() {
-	const wikitext = await getWikitext("User:" + this.text);
-	const status = tagStatus(wikitext);
-	if ('tagType' in status) {
-	    $(this).before("<span style=\"background-color:"
-			   + status.color
-			   + "; border:darkgrey solid 1px; padding:1px;\" title=\""
-			   + wikitext
-			   + "\">"
-			   + status.tagType
-			   + " </span>");
-	}
+        const wikitext = await getWikitext("User:" + this.text);
+        const status = tagStatus(wikitext);
+        if ('tagType' in status) {
+            $(this).before("<span style=\"background-color:"
+                           + status.color
+                           + "; border:darkgrey solid 1px; padding:1px;\" title=\""
+                           + wikitext
+                           + "\">"
+                           + status.tagType
+                           + " </span>");
+        }
     });
 };
 
@@ -28,18 +28,18 @@ function checkTags() {
 async function getWikitext(pageTitle) {
     const api = new mw.Api();
     const request = {
-	action: 'parse',
-	page: pageTitle,
-	prop: 'wikitext',
-	formatversion: 2
+        action: 'parse',
+        page: pageTitle,
+        prop: 'wikitext',
+        formatversion: 2
     };
     try {
-	const response = await api.get(request);
-	if ('parse' in response) {
-	    return response.parse.wikitext;
-	}
+        const response = await api.get(request);
+        if ('parse' in response) {
+            return response.parse.wikitext;
+        }
     } catch (error) {
-	return "";
+        return "";
     }
 };
 
@@ -61,39 +61,39 @@ function tagStatus(wikitext) {
 
     let tagType = null;
     if (masterRegex.test(wikitext)) {
-	tagType = "M";
+        tagType = "M";
     } else if (puppetRegex.test(wikitext)) {
-	tagType = "P";
+        tagType = "P";
     }
     if (tagType == null) {
-	return {};
+        return {};
     }
 
     if (blockedRegex.test(wikitext)) {
-	return {
-	    tagType: tagType,
-	    color: "#ffff66",
-	    tooltip: "blocked"
-	};
+        return {
+            tagType: tagType,
+            color: "#ffff66",
+            tooltip: "blocked"
+        };
     }
     if (provenRegex.test(wikitext)) {
-	return {
-	    tagType: tagType,
-	    color: "#ffcc99",
-	    tooltip: "proven"
-	};
+        return {
+            tagType: tagType,
+            color: "#ffcc99",
+            tooltip: "proven"
+        };
     }
     if (confirmedRegex.test(wikitext)) {
-	return {
-	    tagType: tagType,
-	    color: "#ff3300",
-	    tooltip: "confirmed"
-	}
+        return {
+            tagType: tagType,
+            color: "#ff3300",
+            tooltip: "confirmed"
+        }
     }
     return {
-	tagType: tagType,
-	color: "#ffffff",
-	tooltip: "unknown"
+        tagType: tagType,
+        color: "#ffffff",
+        tooltip: "unknown"
     };
 }
 
@@ -104,6 +104,6 @@ mw.hook('wikipage.content').add(function () {
     //only use on a SPI page (or my sandbox for testing)
     const pageName = mw.config.get("wgPageName");
     if (titleRegex.test(pageName) || sandboxRegex.test(pageName)) {
-	checkTags();
+        checkTags();
     }
 });
