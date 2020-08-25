@@ -2,7 +2,7 @@
 // Main function.
 //
 function checkTags() {
-    $("span.cuEntry a.userlink[href*='/User:']").each(async function() {
+    $("span.cuEntry a[href*='/User:']").each(async function() {
 	const wikitext = await getWikitext("User:" + this.text);
 	const status = tagStatus(wikitext);
 	if ('tagType' in status) {
