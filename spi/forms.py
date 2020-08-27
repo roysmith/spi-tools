@@ -11,6 +11,20 @@ class CaseNameChoiceField(forms.ChoiceField):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+
+    @staticmethod
+    def generate_choices():
+        """Return a list of 2-tuples suitable for ChoiceField
+        to use as a choices list.
+
+        """
+        wiki = Wiki()
+        # Leading empty element needed by select2.js placeholder.
+        names = [''] + get_current_case_names(wiki)
+        names.sort()
+        return [(n, n) for n in names]
+
+
     def validate(self, value):
         if not value:
             raise ValidationError(self.error_messages['required'],
@@ -23,16 +37,10 @@ class CaseNameChoiceField(forms.ChoiceField):
                                   code='invalid_choice',
                                   params={'value': value})
 
+
 class CaseNameForm(forms.Form):
-    wiki = Wiki()
-    # Leading empty element needed by select2.js placeholder.
-    names = [''] + get_current_case_names(wiki)
-    names.sort()
-    choices = [(n, n) for n in names]
-    case_name = CaseNameChoiceField(choices=choices)
-    use_archive = forms.BooleanField(label='Use archive?',
-                                     initial=True,
-                                     required=False)
+    case_name = CaseNameChoiceField(choices=CaseNameChoiceField.generate_choices)
+    use_archive = forms.BooleanField(label='Use archive?', initial=True, required=False)
 
 
 class SockSelectForm(forms.Form):
