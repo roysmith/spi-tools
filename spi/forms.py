@@ -29,7 +29,7 @@ class CaseNameForm(forms.Form):
     names = [''] + get_current_case_names(wiki)
     names.sort()
     choices = [(n, n) for n in names]
-    case_name = CaseNameChoiceField(label='Case (sockmaster) name', choices=choices)
+    case_name = CaseNameChoiceField(choices=choices)
     use_archive = forms.BooleanField(label='Use archive?',
                                      initial=True,
                                      required=False)
