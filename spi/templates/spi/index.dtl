@@ -46,6 +46,7 @@
 {% block page_scripts %}
 <script src="{% static "spi/select2.min.js" %}"></script>
 <script>
+  const spiToolsSelectChoices = JSON.parse("{{choices|escapejs}}");
   {% include "./index.js" %}
 </script>
 

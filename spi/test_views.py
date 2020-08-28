@@ -1,6 +1,7 @@
 from unittest.mock import patch, MagicMock
 import textwrap
 from datetime import datetime
+import json
 
 from django.test import TestCase
 from django.test import Client
@@ -16,11 +17,9 @@ class IndexViewTest(TestCase):
     # pylint: disable=invalid-name
 
 
-    @patch('spi.forms.get_current_case_names')
     @patch('spi.forms.Wiki')
-    def test_unknown_button(self, mock_Wiki, mock_get_current_case_names):
+    def test_unknown_button(self, mock_Wiki):
         mock_Wiki().page_exists.return_value = True
-        mock_get_current_case_names.return_value = ['Alice', 'Bob']
         client = Client()
 
         response = client.post('/spi/', {'case_name': ['Fred']})
@@ -29,6 +28,52 @@ class IndexViewTest(TestCase):
         self.assertTemplateUsed(response, 'spi/index.dtl')
         self.assertTrue(response.context['error'].startswith('No known button in POST'))
         self.assertRegex(response.content, b'No known button in POST')
+
+
+    @patch('spi.views.get_current_case_names')
+    def test_renders_correct_case_names(self, mock_get_current_case_names):
+        mock_get_current_case_names.return_value = ['Alice', 'Bob']
+        client = Client()
+
+        response = client.get('/spi/')
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.context['choices'])
+        expected_data = [{'id': '', 'text': ''},
+                         {'id': 'Alice', 'text': 'Alice'},
+                         {'id': 'Bob', 'text': 'Bob'}]
+        self.assertEqual(data, expected_data)
+
+
+    @patch('spi.views.get_current_case_names')
+    def test_url_case_name_is_selected(self, mock_get_current_case_names):
+        mock_get_current_case_names.return_value = ['Alice', 'Bob']
+        client = Client()
+
+        response = client.get('/spi/?caseName=Bob')
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.context['choices'])
+        expected_data = [{'id': '', 'text': ''},
+                         {'id': 'Alice', 'text': 'Alice'},
+                         {'id': 'Bob', 'text': 'Bob', 'selected': True}]
+        self.assertEqual(data, expected_data)
+
+
+    @patch('spi.views.get_current_case_names')
+    def test_url_case_name_is_added_if_missing(self, mock_get_current_case_names):
+        mock_get_current_case_names.return_value = ['Alice', 'Bob']
+        client = Client()
+
+        response = client.get('/spi/?caseName=Arnold')
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.context['choices'])
+        expected_data = [{'id': '', 'text': ''},
+                         {'id': 'Alice', 'text': 'Alice'},
+                         {'id': 'Arnold', 'text': 'Arnold', 'selected': True},
+                         {'id': 'Bob', 'text': 'Bob'}]
+        self.assertEqual(data, expected_data)
 
 
 class SockSelectViewTest(TestCase):

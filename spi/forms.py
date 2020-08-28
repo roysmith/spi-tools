@@ -4,25 +4,11 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from wiki_interface import Wiki
-from spi.spi_utils import get_current_case_names
 
 
 class CaseNameChoiceField(forms.ChoiceField):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-
-    @staticmethod
-    def generate_choices():
-        """Return a list of 2-tuples suitable for ChoiceField
-        to use as a choices list.
-
-        """
-        wiki = Wiki()
-        # Leading empty element needed by select2.js placeholder.
-        names = [''] + get_current_case_names(wiki)
-        names.sort()
-        return [(n, n) for n in names]
 
 
     def validate(self, value):
@@ -39,7 +25,7 @@ class CaseNameChoiceField(forms.ChoiceField):
 
 
 class CaseNameForm(forms.Form):
-    case_name = CaseNameChoiceField(choices=CaseNameChoiceField.generate_choices)
+    case_name = CaseNameChoiceField()
     use_archive = forms.BooleanField(label='Use archive?', initial=True, required=False)
 
 

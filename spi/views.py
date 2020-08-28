@@ -8,6 +8,7 @@ import datetime
 import itertools
 import functools
 import heapq
+import json
 
 import requests
 
@@ -20,7 +21,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from wiki_interface import Wiki
 from wiki_interface.block_utils import UserBlockHistory
 from .forms import CaseNameForm, SockSelectForm, UserInfoForm
-from .spi_utils import SpiIpInfo, SpiCase
+from .spi_utils import SpiIpInfo, SpiCase, get_current_case_names
 
 
 logger = logging.getLogger('spi.views')
@@ -48,12 +49,17 @@ class UserSummary:
 class IndexView(View):
     def get(self, request):
         form = CaseNameForm()
-        context = {'form': form}
+        case_name = request.GET.get('caseName')
+        context = {'form': form,
+                   'choices': self.generate_select2_data(case_name=case_name),
+                   }
         return render(request, 'spi/index.dtl', context)
 
     def post(self, request):
         form = CaseNameForm(request.POST)
-        context = {'form': form}
+        context = {'form': form,
+                   'choices': self.generate_select2_data()
+                   }
         if form.is_valid():
             case_name = form.cleaned_data['case_name']
             use_archive = form.cleaned_data['use_archive']
@@ -73,6 +79,34 @@ class IndexView(View):
             context['error'] = message
 
         return render(request, 'spi/index.dtl', context)
+
+    @staticmethod
+    def generate_select2_data(case_name=None):
+        """Return a jsonized string containing data appropriate for the
+        'data' element of a select2.js configuration object.
+
+        If case_name is provided, that option has the "selected"
+        attribute set.  If it doesn't exist in the default list, it is
+        added (and selected).
+
+        """
+        wiki = Wiki()
+        # Leading empty element needed by select2.js placeholder.
+        names = [''] + get_current_case_names(wiki)
+        if case_name and case_name not in names:
+            names.append(case_name)
+        names.sort()
+
+        data = []
+        for name in names:
+            item = {"id": name,
+                    "text": name,
+                    }
+            if case_name and name == case_name:
+                item['selected'] = True
+            data.append(item)
+
+        return json.dumps(data)
 
 
 class IpAnalysisView(View):
