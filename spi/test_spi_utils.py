@@ -1,9 +1,12 @@
 from unittest import TestCase
+from unittest.mock import patch
 import textwrap
 from ipaddress import IPv4Network
 import mwparserfromhell
 
-from .spi_utils import SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo, ArchiveError
+from wiki_interface import Wiki
+from spi.spi_utils import (SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo,
+                           ArchiveError, get_current_case_names)
 
 
 def make_code(text):
@@ -37,6 +40,17 @@ class SpiCaseTest(TestCase):
         case = SpiCase(make_source(text))
         for day in case.days():
             self.assertIsInstance(day, SpiCaseDay)
+
+
+    def test_find_all_ips_with_no_data(self):
+        text = '''
+        {{SPIarchive notice|Maung Ko Htet}}
+        '''
+        case = SpiCase(make_source(text, 'Maung Ko Htet'))
+
+        infos = case.find_all_ips()
+
+        self.assertEqual(list(infos), [])
 
 
     def test_find_all_ips(self):
@@ -272,3 +286,32 @@ class SpiIpInfoTest(TestCase):
             SpiIpInfo('1.2.3.26', '1 January 2019', 'title')]
         network = SpiIpInfo.find_common_network(infos)
         self.assertEqual(network, IPv4Network('1.2.3.0/27'))
+
+
+class GetCurrentCaseNamesTest(TestCase):
+    # pylint: disable=invalid-name
+
+    @patch('wiki_interface.wiki.Site')
+    def test_no_entries(self, mock_Site):
+        mock_Site().pages.__getitem__().text.return_value = ''
+
+        wiki = Wiki()
+        names = get_current_case_names(wiki)
+
+        self.assertEqual(names, [])
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_multiple_entries_with_duplicates(self, mock_Site):
+        mock_Site().pages.__getitem__().text.return_value = '''
+        {{SPIstatusheader}}
+        {{SPIstatusentry|Rajumitwa878|--|--|--|--|--|--}}
+        {{SPIstatusentry|AntiRacistSwede|--|--|--|--|--|--}}
+        {{SPIstatusentry|Trumanshow69|--|--|--|--|--|--}}
+        {{SPIstatusentry|AntiRacistSwede|--|--|--|--|--|--}}
+        '''
+
+        wiki = Wiki()
+        names = get_current_case_names(wiki)
+
+        self.assertEqual(set(names), {'Rajumitwa878', 'AntiRacistSwede', 'Trumanshow69'})

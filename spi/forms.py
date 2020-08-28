@@ -3,13 +3,13 @@ import urllib.parse
 from django import forms
 from django.core.exceptions import ValidationError
 
-from .wiki_interface import Wiki
+from wiki_interface import Wiki
 
-SITE_NAME = 'en.wikipedia.org'
 
 class CaseNameChoiceField(forms.ChoiceField):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
 
     def validate(self, value):
         if not value:
@@ -23,16 +23,10 @@ class CaseNameChoiceField(forms.ChoiceField):
                                   code='invalid_choice',
                                   params={'value': value})
 
+
 class CaseNameForm(forms.Form):
-    wiki = Wiki()
-    # Leading empty element needed by select2.js placeholder.
-    names = [''] + wiki.get_current_case_names()
-    names.sort()
-    choices = [(n, n) for n in names]
-    case_name = CaseNameChoiceField(label='Case (sockmaster) name', choices=choices)
-    use_archive = forms.BooleanField(label='Use archive?',
-                                     initial=True,
-                                     required=False)
+    case_name = CaseNameChoiceField()
+    use_archive = forms.BooleanField(label='Use archive?', initial=True, required=False)
 
 
 class SockSelectForm(forms.Form):

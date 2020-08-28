@@ -10,7 +10,6 @@ mwclient.Site directly.
 
 """
 import logging
-import datetime
 from dataclasses import dataclass
 
 import django.contrib.auth
@@ -20,24 +19,13 @@ from mwclient.listing import List
 from mwclient.errors import APIError
 import mwclient
 from dateutil.parser import isoparse
-import mwparserfromhell
 
-from .spi_utils import SpiSourceDocument, SpiCase
-from .block_utils import BlockEvent, UnblockEvent
-from .time_utils import struct_to_datetime
-
-
-logger = logging.getLogger('spi.wiki_interface')
+from wiki_interface.data import WikiContrib
+from wiki_interface.block_utils import BlockEvent, UnblockEvent
+from wiki_interface.time_utils import struct_to_datetime
 
 
-@dataclass(frozen=True, order=True)
-class WikiContrib:
-    timestamp: datetime.datetime
-    user_name: str
-    namespace: int
-    title: str
-    comment: str
-    is_live: bool = True
+logger = logging.getLogger('wiki_interface')
 
 
 class Wiki:
@@ -48,13 +36,13 @@ class Wiki:
 
     """
     def __init__(self, request=None):
-        self.site = self.get_mw_site(request)
+        self.site = self._get_mw_site(request)
         self.namespaces = self.site.namespaces
         self.namespace_values = {v: k for k, v in self.namespaces.items()}
 
 
     @staticmethod
-    def get_mw_site(request):
+    def _get_mw_site(request):
         user = request and django.contrib.auth.get_user(request)
 
         # It's not clear if we need to bother checking to see if the user
@@ -79,43 +67,10 @@ class Wiki:
                     **auth_info)
 
 
-    def get_current_case_names(self):
-        """Return an list of the currently active SPI case names as strings.
-
-        """
-        overview = self.site.pages['Wikipedia:Sockpuppet investigations/Cases/Overview'].text()
-        wikicode = mwparserfromhell.parse(overview)
-        templates = wikicode.filter_templates(matches=lambda n: n.name.matches('SPIstatusentry'))
-        return [str(t.get(1)) for t in templates]
-
-
     def page_exists(self, title):
         """Return True if the page exists, False otherwise."""
 
         return self.site.pages[title].exists
-
-
-    def get_case_ips(self, case_name):
-        """Get all the IP addresses which have been mentioned
-        in a SPI case.
-
-        Returns a iterable over SpiIpInfos
-
-        """
-        case_title = 'Wikipedia:Sockpuppet investigations/%s' % case_name
-        archive_title = '%s/Archive' % case_title
-
-        case_doc = SpiSourceDocument(case_title, self.site.pages[case_title].text())
-        docs = [case_doc]
-
-        archive_text = self.site.pages[archive_title].text()
-        if archive_text:
-            archive_doc = SpiSourceDocument(archive_title, archive_text)
-            docs.append(archive_doc)
-
-        case = SpiCase(*docs)
-        return case.find_all_ips()
-
 
 
     def get_registration_time(self, user):
@@ -130,27 +85,6 @@ class Wiki:
             return userinfo['registration']
         except KeyError:
             return None
-
-
-    def get_case(self, master_name, use_archive=True):
-        """Returns a SpiCase.
-
-        If use_archive is true, both the current case and any existing
-        archive is used.  Otherwise, just the current case.
-
-        """
-        case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
-        archive_title = '%s/Archive' % case_title
-
-        case_doc = SpiSourceDocument(case_title, self.site.pages[case_title].text())
-        docs = [case_doc]
-
-        archive_text = use_archive and self.site.pages[archive_title].text()
-        if archive_text:
-            archive_doc = SpiSourceDocument(archive_title, archive_text)
-            docs.append(archive_doc)
-
-        return SpiCase(*docs)
 
 
     def user_contributions(self, user_name_or_names, show=''):
@@ -278,3 +212,6 @@ class Page:
                               self.mw_page.namespace,
                               self.mw_page.name,
                               rev['comment'])
+
+    def text(self):
+        return self.mw_page.text()

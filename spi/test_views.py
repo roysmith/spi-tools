@@ -1,15 +1,16 @@
 from unittest.mock import patch, MagicMock
 import textwrap
 from datetime import datetime
+import json
 
 from django.test import TestCase
 from django.test import Client
 from django.contrib.auth import get_user_model
 
 
-from .views import SockSelectView, UserSummary
-from .spi_utils import SpiUserInfo
-from .wiki_interface import WikiContrib
+from wiki_interface.data import WikiContrib
+from spi.views import SockSelectView, UserSummary
+from spi.spi_utils import SpiUserInfo
 
 
 class IndexViewTest(TestCase):
@@ -27,6 +28,52 @@ class IndexViewTest(TestCase):
         self.assertTemplateUsed(response, 'spi/index.dtl')
         self.assertTrue(response.context['error'].startswith('No known button in POST'))
         self.assertRegex(response.content, b'No known button in POST')
+
+
+    @patch('spi.views.get_current_case_names')
+    def test_renders_correct_case_names(self, mock_get_current_case_names):
+        mock_get_current_case_names.return_value = ['Alice', 'Bob']
+        client = Client()
+
+        response = client.get('/spi/')
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.context['choices'])
+        expected_data = [{'id': '', 'text': ''},
+                         {'id': 'Alice', 'text': 'Alice'},
+                         {'id': 'Bob', 'text': 'Bob'}]
+        self.assertEqual(data, expected_data)
+
+
+    @patch('spi.views.get_current_case_names')
+    def test_url_case_name_is_selected(self, mock_get_current_case_names):
+        mock_get_current_case_names.return_value = ['Alice', 'Bob']
+        client = Client()
+
+        response = client.get('/spi/?caseName=Bob')
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.context['choices'])
+        expected_data = [{'id': '', 'text': ''},
+                         {'id': 'Alice', 'text': 'Alice'},
+                         {'id': 'Bob', 'text': 'Bob', 'selected': True}]
+        self.assertEqual(data, expected_data)
+
+
+    @patch('spi.views.get_current_case_names')
+    def test_url_case_name_is_added_if_missing(self, mock_get_current_case_names):
+        mock_get_current_case_names.return_value = ['Alice', 'Bob']
+        client = Client()
+
+        response = client.get('/spi/?caseName=Arnold')
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.context['choices'])
+        expected_data = [{'id': '', 'text': ''},
+                         {'id': 'Alice', 'text': 'Alice'},
+                         {'id': 'Arnold', 'text': 'Arnold', 'selected': True},
+                         {'id': 'Bob', 'text': 'Bob'}]
+        self.assertEqual(data, expected_data)
 
 
 class SockSelectViewTest(TestCase):
@@ -63,7 +110,7 @@ class SockSelectViewTest(TestCase):
         self.assertEqual(items, expected_items)
 
 
-    @patch('spi.wiki_interface.Site')
+    @patch('wiki_interface.wiki.Site')
     def test_mismatched_quotes(self, mock_Site):
         mock_Site().pages.__getitem__().text.return_value = textwrap.dedent(
             """
@@ -76,7 +123,7 @@ class SockSelectViewTest(TestCase):
             ''Blah Blah
             """)
         client = Client()
-        response = client.get('/spi/spi-sock-select/Foo/')
+        response = client.get('/spi/sock-select/Foo/')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'spi/sock-select.dtl')
 
@@ -102,7 +149,7 @@ class SockInfoViewTest(TestCase):
         mock_site.pages.__getitem__().text.return_value = ''
         mock_site.users().return_value = iter([{}])
         client = Client()
-        response = client.get('/spi/spi-sock-info/Foo/')
+        response = client.get('/spi/sock-info/Foo/')
         self.assertTemplateUsed(response, 'spi/sock-info.dtl')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['case_name'], 'Foo')
@@ -122,7 +169,7 @@ class UserActivitiesViewTest(TestCase):
         user_fred = get_user_model().objects.create_user('Fred')
         client = Client()
         client.force_login(user_fred, backend='django.contrib.auth.backends.ModelBackend')
-        response = client.get('/spi/spi-user-activities/Foo', {'count': 10, 'main': 1}, follow=True)
+        response = client.get('/spi/user-activities/Foo', {'count': 10, 'main': 1}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'spi/user-activities.dtl')
         edit_data = response.context['daily_activities'][0]

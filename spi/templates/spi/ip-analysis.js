@@ -16,7 +16,7 @@ function updateBlockRange() {
  * cover them.
  */
 function computeBlockRange(first_ip, last_ip) {
-    var first = ipToBits(first_ip);141
+    var first = ipToBits(first_ip);
     var last = ipToBits(last_ip);
     var prefix = 0;
     var prefix_length = 0;
@@ -36,9 +36,9 @@ function computeBlockRange(first_ip, last_ip) {
 	}
     }
 
-    var o1 = (prefix & 0xff000000) >> 24;
-    var o2 = (prefix & 0xff0000) >> 16;
-    var o3 = (prefix & 0xff00) >> 8;
+    var o1 = (prefix >> 24) & 0xff;
+    var o2 = (prefix >> 16) & 0xff;
+    var o3 = (prefix >> 8) & 0xff;
     var o4 = prefix & 0xff;
 
     network = o1 + "." + o2 + "." + o3 + "." + o4;
@@ -51,9 +51,10 @@ function computeBlockRange(first_ip, last_ip) {
  */
 function ipToBits(ip_string) {
     var octets = ip_string.split(".").map(Number);
-    var i = (octets[0] << 24) + (octets[1] << 16) + (octets[2] << 8) + octets[3];
-    var zero_padded_bit_string = ("00000000000000000000000000000000" + i.toString(2)).slice(-32);
-    return zero_padded_bit_string.split('');
+    var bits = octets.map(function(o) {
+	return ("00000000" + o.toString(2)).slice(-8);
+    })
+    return bits.join('').split('');
 }
 
 $(document).ready(

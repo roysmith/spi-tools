@@ -7,4 +7,4 @@ test:
 	cd ..; ./manage.py test $(test)
 
 lint:
-	cd ..; pylint spi/*.py
+	cd ..; pylint wiki_interface/*.py
