@@ -16,9 +16,11 @@ class IndexViewTest(TestCase):
     # pylint: disable=invalid-name
 
 
+    @patch('spi.forms.get_current_case_names')
     @patch('spi.forms.Wiki')
-    def test_unknown_button(self, mock_Wiki):
+    def test_unknown_button(self, mock_Wiki, mock_get_current_case_names):
         mock_Wiki().page_exists.return_value = True
+        mock_get_current_case_names.return_value = ['Alice', 'Bob']
         client = Client()
 
         response = client.post('/spi/', {'case_name': ['Fred']})
