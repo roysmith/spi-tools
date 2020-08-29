@@ -20,8 +20,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from wiki_interface import Wiki
 from wiki_interface.block_utils import UserBlockHistory
-from .forms import CaseNameForm, SockSelectForm, UserInfoForm
-from .spi_utils import SpiIpInfo, SpiCase, get_current_case_names
+from spi.forms import CaseNameForm, SockSelectForm, UserInfoForm
+from spi.spi_utils import SpiIpInfo, SpiCase, get_current_case_names
 
 
 logger = logging.getLogger('spi.views')
