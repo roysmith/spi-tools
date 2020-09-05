@@ -48,16 +48,16 @@ async function getParseTree(pageTitle) {
 //
 function tagStatus(parseTree) {
     const template = parseTree.parts[0].template;
-    const templateName = template.target.wt;
+    const templateName = template.target.wt.trim();
     let tagType = null;
     let typeParam = null;
 
     if (templateName == 'sockmaster') {
         tagType = "M";
-        typeParam = template.params[1].wt;
+        typeParam = template.params[1].wt.trim();
     } else if (templateName == 'sockpuppet') {
         tagType = "P";
-        typeParam = template.params[2].wt;
+        typeParam = template.params[2].wt.trim();
     } else {
         return {};
     }
