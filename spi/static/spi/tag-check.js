@@ -52,7 +52,7 @@ function tagStatus(parseTree) {
     let tagType = null;
     let typeParam = null;
 
-    if (templateName == 'sockmaster') {
+    if (templateName == 'sockmaster' || templateName == 'sockpuppeteer') {
         tagType = "M";
         typeParam = template.params[1].wt.trim();
     } else if (templateName == 'sockpuppet') {
@@ -81,6 +81,13 @@ function tagStatus(parseTree) {
             tagType: tagType,
             color: "#ff3300",
             tooltip: "confirmed"
+        }
+    }
+    if (typeParam == 'banned') {
+        return {
+            tagType: tagType,
+            color: "#7a00ff61",
+            tooltip: "banned"
         }
     }
     return {
