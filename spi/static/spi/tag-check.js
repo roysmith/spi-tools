@@ -1,45 +1,39 @@
 //
 // Main function.
 //
-function checkTags() {
+async function checkTags() {
     $("span.cuEntry a[href*='/User:']").each(async function() {
-        const wikitext = await getWikitext("User:" + this.text);
-        const status = tagStatus(wikitext);
-        if ('tagType' in status) {
-            $(this).before("<span style=\"background-color:"
-                           + status.color
-                           + "; border:darkgrey solid 1px; padding:1px;\" title=\""
-                           + wikitext
-                           + "\">"
-                           + status.tagType
-                           + " </span>");
+        const parseTree = await getParseTree("User:" + this.text);
+        if (parseTree !== null) {
+            const status = tagStatus(parseTree);
+            if ('tagType' in status) {
+                $(this).before("<span style=\"background-color:"
+                               + status.color
+                               + "; border:darkgrey solid 1px; padding:1px;\" title=\""
+                               + status.tooltip
+                               + "\">"
+                               + status.tagType
+                               + " </span>");
+            }
         }
     });
 };
 
 
 //
-// Given a page title (ex: "User:Foo"), return a Promise of a string
-// containing the page's wikitext.
+// Given a page title (ex: "User:Foo"), return a Promise of a JSON
+// parse tree.
 //
-// On any kind of error, including the page not existing, the string
-// is empty.
+// On any kind of error, null is returned.
 //
-async function getWikitext(pageTitle) {
-    const api = new mw.Api();
-    const request = {
-        action: 'parse',
-        page: pageTitle,
-        prop: 'wikitext',
-        formatversion: 2
-    };
+async function getParseTree(pageTitle) {
     try {
-        const response = await api.get(request);
-        if ('parse' in response) {
-            return response.parse.wikitext;
-        }
+        const page = await $.get('/api/rest_v1/page/html/' + pageTitle);
+        const $html = $($.parseHTML(page));
+        const jsonText = $html.find("table[typeof='mw:Transclusion'][data-mw*='sock']").attr('data-mw');
+        return JSON.parse(jsonText);
     } catch (error) {
-        return "";
+        return null;
     }
 };
 
@@ -52,38 +46,37 @@ async function getWikitext(pageTitle) {
 //
 // If there is no SPI tag, an empty object is returned.
 //
-function tagStatus(wikitext) {
-    const masterRegex = /{{sockmaster}}|{{sockmaster\|.*}}|{{sockpuppeteer}}|{{sockpuppeteer\|.*}}/;
-    const puppetRegex = /{{sockpuppet}}|{{sockpuppet\|.*}}/;
-    const blockedRegex = /\|(2=)?blocked/;
-    const provenRegex = /\|(2=)?proven/;
-    const confirmedRegex = /\|(2=)?confirmed/;
-
+function tagStatus(parseTree) {
+    const template = parseTree.parts[0].template;
+    const templateName = template.target.wt;
     let tagType = null;
-    if (masterRegex.test(wikitext)) {
+    let typeParam = null;
+
+    if (templateName == 'sockmaster') {
         tagType = "M";
-    } else if (puppetRegex.test(wikitext)) {
+        typeParam = template.params[1].wt;
+    } else if (templateName == 'sockpuppet') {
         tagType = "P";
-    }
-    if (tagType == null) {
+        typeParam = template.params[2].wt;
+    } else {
         return {};
     }
 
-    if (blockedRegex.test(wikitext)) {
+    if (typeParam == 'blocked') {
         return {
             tagType: tagType,
             color: "#ffff66",
             tooltip: "blocked"
         };
     }
-    if (provenRegex.test(wikitext)) {
+    if (typeParam == 'proven') {
         return {
             tagType: tagType,
             color: "#ffcc99",
             tooltip: "proven"
         };
     }
-    if (confirmedRegex.test(wikitext)) {
+    if (typeParam == 'confirmed') {
         return {
             tagType: tagType,
             color: "#ff3300",
