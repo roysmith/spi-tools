@@ -55,7 +55,7 @@ function tagStatus(parseTree) {
     if (templateName == 'sockmaster' || templateName == 'sockpuppeteer') {
         tagType = "M";
         typeParam = template.params[1].wt.trim();
-    } else if (templateName == 'sockpuppet') {
+    } else if (templateName == 'sock' || templateName == 'sockpuppet') {
         tagType = "P";
         typeParam = template.params[2].wt.trim();
     } else {
