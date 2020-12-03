@@ -62,7 +62,7 @@ function emulateRedirects(rawTemplateName) {
 function tagStatus(parseTree) {
     const template = parseTree.parts[0].template;
     const rawTemplateName = template.target.wt.trim();
-    const templateName = emulateRedirects(rawTemplateName);
+    const templateName = emulateRedirects(rawTemplateName).toLowerCase();
     let tagType = null;
     let typeParam = null;
 
@@ -77,6 +77,9 @@ function tagStatus(parseTree) {
     } else if (templateName == 'sock' || templateName == 'sockpuppet') {
         tagType = "P";
         typeParam = template.params[2].wt.trim();
+    } else if (templateName == 'checked sockpuppet') {
+        tagType = "P";
+        typeParam = 'confirmed';
     } else {
         return {};
     }

@@ -30,4 +30,15 @@ QUnit.module('tag-check', function() {
                                };
         assert.propEqual(status, expectedStatus);
     });
+
+    QUnit.test('checked sockpuppet (#119)', function(assert) {
+        const rawDataMw ='{"parts":[{"template":{"target":{"wt":"Checked sockpuppet","href":"./Template:Checked_sockpuppet"},"params":{"1":{"wt":"Prince Shobuz"}},"i":0}}]}';
+        const parseTree = JSON.parse(rawDataMw);
+        const status = tagStatus(parseTree);
+        const expectedStatus = {tagType: "P",
+                                color: "#ff3300",
+                                tooltip: "confirmed"
+                               };
+        assert.propEqual(status, expectedStatus);
+    });
 });
