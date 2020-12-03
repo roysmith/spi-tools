@@ -38,6 +38,19 @@ async function getParseTree(pageTitle) {
 };
 
 //
+// Handle redirected template names.  This is playing whack-a-mole;
+// it should really be handled on the server side.
+//
+function emulateRedirects(rawTemplateName) {
+    switch(rawTemplateName) {
+    case 'sockmaster':
+        return 'sockpuppeteer';
+    default:
+        return rawTemplateName;
+    }
+}
+
+//
 // Return an object describing how to style a SPI tag indicator.
 //
 // tagType: "M" for a sockmater, "P" for a sockpuppet
@@ -48,18 +61,32 @@ async function getParseTree(pageTitle) {
 //
 function tagStatus(parseTree) {
     const template = parseTree.parts[0].template;
-    const templateName = template.target.wt.trim();
+    const rawTemplateName = template.target.wt.trim();
+    const templateName = emulateRedirects(rawTemplateName);
     let tagType = null;
     let typeParam = null;
 
-    if (templateName == 'sockmaster' || templateName == 'sockpuppeteer') {
+    if (templateName == 'sockpuppeteer') {
         tagType = "M";
-        typeParam = template.params[1].wt.trim();
+        const params = template.params;
+        if ('1' in params) {
+            typeParam = params[1].wt.trim();
+        } else {
+            typeParam = 'suspected';
+        }
     } else if (templateName == 'sock' || templateName == 'sockpuppet') {
         tagType = "P";
         typeParam = template.params[2].wt.trim();
     } else {
         return {};
+    }
+
+    if (typeParam == 'suspected') {
+        return {
+            tagType: tagType,
+            color: "#ffffff",
+            tooltip: "suspected"
+        };
     }
 
     if (typeParam == 'blocked') {
@@ -97,13 +124,17 @@ function tagStatus(parseTree) {
     };
 }
 
-// Cribbed from User:Writ Keeper/Scripts/cuStaleness.js
-mw.hook('wikipage.content').add(function () {
-    const titleRegex = /Wikipedia:Sockpuppet_investigations\/[^\/]+/;
-    const sandboxRegex = /User:RoySmith\/sandbox/;
-    //only use on a SPI page (or my sandbox for testing)
-    const pageName = mw.config.get("wgPageName");
-    if (titleRegex.test(pageName) || sandboxRegex.test(pageName)) {
-        checkTags();
-    }
-});
+// There's probably a nicer way to do this.  The check for mw being undefined
+// lets us import this file into QUnit for testing.
+if (typeof mw !== "undefined") {
+    // Cribbed from User:Writ Keeper/Scripts/cuStaleness.js
+    mw.hook('wikipage.content').add(function () {
+        const titleRegex = /Wikipedia:Sockpuppet_investigations\/[^\/]+/;
+        const sandboxRegex = /User:RoySmith\/sandbox/;
+        //only use on a SPI page (or my sandbox for testing)
+        const pageName = mw.config.get("wgPageName");
+        if (titleRegex.test(pageName) || sandboxRegex.test(pageName)) {
+            checkTags();
+        }
+    });
+};
