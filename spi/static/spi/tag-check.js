@@ -29,13 +29,34 @@ async function checkTags() {
 async function getParseTree(pageTitle) {
     try {
         const page = await $.get('/api/rest_v1/page/html/' + pageTitle);
-        const $html = $($.parseHTML(page));
-        const jsonText = $html.find("table[typeof='mw:Transclusion'][data-mw*='sock']").attr('data-mw');
+        const jsonText = findSpiTemplate(page);
         return JSON.parse(jsonText);
     } catch (error) {
         return null;
     }
 };
+
+//
+// Given the parsoid text of a page, find the SPI-related template.
+//
+// Page is whatever a '/api/rest_v1/page/html/' API call returns.  The
+// data-mw attribute for the template is returned as a JSON string.
+//
+// If the page contains multiple SPI templates, the first one is used.
+//
+function findSpiTemplate(page) {
+    const $html = $($.parseHTML(page));
+    const template = $html.find("table").filter(function() {
+        try {
+            const data = JSON.parse($(this).attr('data-mw'));
+            return data["parts"][0]["template"]["target"]["wt"].match(/[sS]ock/);
+        } catch(err) {
+            return false;
+        }
+    });
+    return template.attr('data-mw');
+};
+
 
 //
 // Handle redirected template names.  This is playing whack-a-mole;

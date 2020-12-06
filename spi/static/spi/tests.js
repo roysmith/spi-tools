@@ -41,4 +41,30 @@ QUnit.module('tag-check', function() {
                                };
         assert.propEqual(status, expectedStatus);
     });
+
+    QUnit.test('sockpuppet proven', function(assert) {
+        const rawDataMw = '{"parts":[{"template":{"target":{"wt":"Sockpuppet","href":"./Template:Sockpuppet"},"params":{"1":{"wt":"JesusLuna19"},"2":{"wt":"proven"}},"i":0}}]}';
+        const parseTree = JSON.parse(rawDataMw);
+        const status = tagStatus(parseTree);
+        const expectedStatus = {tagType: "P",
+                                color: "#ffcc99",
+                                tooltip: "proven"
+                               };
+        assert.propEqual(status, expectedStatus);
+    });
+
+    async function getParsoidText(pageTitle) {
+        const url = 'https://en.wikipedia.org//api/rest_v1/page/html/' + pageTitle;
+        return $.get(url);
+    };
+
+    QUnit.test('select uppercase template name (#109)', async function(assert) {
+        // It's not clear why the <section> wrapper is needed here.  This is partly explained by
+        // https://stackoverflow.com/questions/15403600/jquery-not-finding-elements-in-jquery-parsehtml-result
+        // but not entirely.  You can, for example, replace <section> with <div> or <span> and it still
+        // works, but replacing it with <p> will fail.
+        let parsoidText = `<section><table typeof="mw:Transclusion" data-mw='{"parts":[{"template":{"target":{"wt":"Sockpuppet","href":"./Template:Sockpuppet"},"params":{"1":{"wt":"JesusLuna19"},"2":{"wt":"proven"}},"i":0}}]}'></table></section>`;
+        const template = findSpiTemplate(parsoidText);
+        assert.ok(template);
+    });
 });
