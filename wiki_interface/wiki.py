@@ -19,6 +19,7 @@ from mwclient.listing import List
 from mwclient.errors import APIError
 import mwclient
 from dateutil.parser import isoparse
+from more_itertools import always_iterable
 
 from wiki_interface.data import WikiContrib
 from wiki_interface.block_utils import BlockEvent, UnblockEvent
@@ -102,9 +103,8 @@ class Wiki:
         Returns an iterable over WikiContribs.
 
         """
-        names = [user_name_or_names] if isinstance(user_name_or_names, str) else user_name_or_names
         all_names = []
-        for name in names:
+        for name in always_iterable(user_name_or_names):
             str_name = str(name)
             if '|' in str_name:
                 raise ValueError(f'"|" in user name: {str_name}')
