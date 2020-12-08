@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from unittest import TestCase
-from unittest.mock import patch, Mock
+from unittest.mock import call, patch, Mock
 
 from dateutil.parser import isoparse
 from django.conf import settings
@@ -149,6 +149,44 @@ class UserContributionsTest(TestCase):
 
         with self.assertRaises(ValueError):
             list(wiki.user_contributions('foo|bar'))
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_user_contributions_with_too_many_names(self, mock_Site):
+        mock_Site().usercontributions.side_effect = [
+            [{'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
+              'user': 'bob',
+              'ns': 0,
+              'title': 'p1',
+              'comment': 'c1'}],
+            [{'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
+              'user': 'alice',
+              'ns': 0,
+              'title': 'p2',
+              'comment': 'c2'}],
+        ]
+        wiki = Wiki()
+
+        # This is a hack.  In theory, we should paramaterize the test
+        # to work with any value of MAX_UCUSER.  In practice, doing so
+        # is just more effort (and complicated test code) than is
+        # worth it.  At least this future-proofs us a bit.
+        self.assertEqual(wiki.MAX_UCUSER, 50)
+
+        user_names = [str(i) for i in range(55)]
+        contributions = list(wiki.user_contributions(user_names))
+
+        self.assertEqual(mock_Site().usercontributions.call_args_list,
+                         [call('0|1|2|3|4|5|6|7|8|9'
+                               '|10|11|12|13|14|15|16|17|18|19'
+                               '|20|21|22|23|24|25|26|27|28|29'
+                               '|30|31|32|33|34|35|36|37|38|39'
+                               '|40|41|42|43|44|45|46|47|48|49', show=''),
+                          call('50|51|52|53|54', show=''),
+                         ])
+        self.assertEqual(contributions, [
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'bob', 0, 'p1', 'c1'),
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'alice', 0, 'p2', 'c2')])
 
 
 class DeletedUserContributionsTest(TestCase):

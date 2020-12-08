@@ -19,7 +19,7 @@ from mwclient.listing import List
 from mwclient.errors import APIError
 import mwclient
 from dateutil.parser import isoparse
-from more_itertools import always_iterable
+from more_itertools import always_iterable, chunked
 
 from wiki_interface.data import WikiContrib
 from wiki_interface.block_utils import BlockEvent, UnblockEvent
@@ -88,6 +88,9 @@ class Wiki:
             return None
 
 
+    # See https://www.mediawiki.org/wiki/API:Usercontribs.
+    MAX_UCUSER = 50
+
     def user_contributions(self, user_name_or_names, show=''):
         """Get one or more users' live (i.e. non-deleted) edits.
 
@@ -110,13 +113,14 @@ class Wiki:
                 raise ValueError(f'"|" in user name: {str_name}')
             all_names.append(str_name)
 
-        for contrib in self.site.usercontributions('|'.join(all_names), show=show):
-            logger.debug("contrib = %s", contrib)
-            yield WikiContrib(struct_to_datetime(contrib['timestamp']),
-                              contrib['user'],
-                              contrib['ns'],
-                              contrib['title'],
-                              contrib['comment'])
+        for chunk in chunked(all_names, self.MAX_UCUSER):
+            for contrib in self.site.usercontributions('|'.join(chunk), show=show):
+                logger.debug("contrib = %s", contrib)
+                yield WikiContrib(struct_to_datetime(contrib['timestamp']),
+                                  contrib['user'],
+                                  contrib['ns'],
+                                  contrib['title'],
+                                  contrib['comment'])
 
 
     def deleted_user_contributions(self, user_name):
