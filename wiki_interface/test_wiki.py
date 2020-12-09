@@ -256,7 +256,6 @@ class GetUserBlocksTest(TestCase):
         self.assertEqual(user_blocks, [])
 
 
-
     @patch('wiki_interface.wiki.Site')
     def test_get_user_blocks_with_multiple_events(self, mock_Site):
         jan_1 = '2020-01-01T00:00:00Z'
