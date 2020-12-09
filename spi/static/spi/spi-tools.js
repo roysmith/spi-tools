@@ -28,9 +28,12 @@ async function spiTools_init(caseName) {
  * Install on SPI pages
  */
 mw.hook('wikipage.content').add(function () {
-    const titleRegex = /Wikipedia:Sockpuppet_investigations\/[^\/]+/;
-    const pageTitle = mw.config.get("wgPageName");
-    if (titleRegex.test(pageTitle)) {
-        spiTools_addLink(pageTitle);
+    const wikipediaNS = mw.config.get('wgNamespaceIds')['wikipedia']
+    if (mw.config.get('wgNamespaceNumber') == wikipediaNS) {
+        const titleRegex = /^Sockpuppet investigations\/[^\/]+/;
+        const pageTitle = mw.config.get("wgTitle");
+        if (titleRegex.test(pageTitle)) {
+            spiTools_addLink(pageTitle);
+        }
     }
 });
