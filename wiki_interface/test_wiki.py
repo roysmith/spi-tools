@@ -373,3 +373,19 @@ class PageTest(TestCase):
         self.assertEqual(revisions, [
             WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 0, 'blah', 'c1'),
             WikiContrib(datetime(2020, 7, 29, tzinfo=timezone.utc), 'fred', 0, 'blah', 'c2')])
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_revisions_with_hidden_comment(self, mock_Site):
+        mock_Site().pages.__getitem__().revisions.return_value = [
+            {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0), 'user': 'fred', 'commenthidden': ''}]
+        mock_Site().pages.__getitem__().name = 'blah'
+        mock_Site().pages.__getitem__().namespace = 0
+        wiki = Wiki()
+
+        revisions = list(wiki.page('blah').revisions())
+
+        self.assertIsInstance(revisions[0], WikiContrib)
+        self.assertEqual(revisions, [
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 0, 'blah', None)
+        ])

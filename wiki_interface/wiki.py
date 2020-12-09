@@ -211,11 +211,12 @@ class Page:
 
     def revisions(self):
         for rev in self.mw_page.revisions():
+            comment = rev['comment'] if 'commenthidden' not in rev else None
             yield WikiContrib(struct_to_datetime(rev['timestamp']),
                               rev['user'],
                               self.mw_page.namespace,
                               self.mw_page.name,
-                              rev['comment'])
+                              comment)
 
     def text(self):
         return self.mw_page.text()
