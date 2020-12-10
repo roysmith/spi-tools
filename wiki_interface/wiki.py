@@ -181,9 +181,9 @@ class Wiki:
             expiry = mw_expiry and isoparse(mw_expiry)
             if action == 'block':
                 events.append(BlockEvent(user_name, timestamp, expiry))
-            if action == 'reblock':
+            elif action == 'reblock':
                 events.append(BlockEvent(user_name, timestamp, expiry, is_reblock=True))
-            if action == 'unblock':
+            elif action == 'unblock':
                 events.append(UnblockEvent(user_name, timestamp))
             else:
                 logger.error('Ignoring block due to unknown block action in %s', block)

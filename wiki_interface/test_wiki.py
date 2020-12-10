@@ -246,18 +246,21 @@ class DeletedUserContributionsTest(TestCase):
 class GetUserBlocksTest(TestCase):
     # pylint: disable=invalid-name
 
+    @patch('wiki_interface.wiki.logger')
     @patch('wiki_interface.wiki.Site')
-    def test_get_user_blocks_with_no_blocks(self, mock_Site):
+    def test_get_user_blocks_with_no_blocks(self, mock_Site, mock_logger):
         mock_Site().logevents.return_value = iter([])
         wiki = Wiki()
 
         user_blocks = wiki.get_user_blocks('fred')
 
         self.assertEqual(user_blocks, [])
+        mock_logger.error.assert_not_called()
 
 
+    @patch('wiki_interface.wiki.logger')
     @patch('wiki_interface.wiki.Site')
-    def test_get_user_blocks_with_multiple_events(self, mock_Site):
+    def test_get_user_blocks_with_multiple_events(self, mock_Site, mock_logger):
         jan_1 = '2020-01-01T00:00:00Z'
         feb_1 = '2020-02-01T00:00:00Z'
         mar_1 = '2020-03-01T00:00:00Z'
@@ -288,10 +291,12 @@ class GetUserBlocksTest(TestCase):
         self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
                                        BlockEvent('fred', isoparse(mar_1), isoparse(apr_1)),
                                        UnblockEvent('fred', isoparse(may_1))])
+        mock_logger.error.assert_not_called()
 
 
+    @patch('wiki_interface.wiki.logger')
     @patch('wiki_interface.wiki.Site')
-    def test_get_user_blocks_with_reblock(self, mock_Site):
+    def test_get_user_blocks_with_reblock(self, mock_Site, mock_logger):
         jan_1 = '2020-01-01T00:00:00Z'
         jan_2 = '2020-01-02T00:00:00Z'
         feb_1 = '2020-02-01T00:00:00Z'
@@ -316,6 +321,35 @@ class GetUserBlocksTest(TestCase):
         self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
                                        BlockEvent('fred', isoparse(jan_2), isoparse(mar_1),
                                                   is_reblock=True)])
+        mock_logger.error.assert_not_called()
+
+
+    @patch('wiki_interface.wiki.logger')
+    @patch('wiki_interface.wiki.Site')
+    def test_get_user_blocks_with_unknown_action(self, mock_Site, mock_logger):
+        jan_1 = '2020-01-01T00:00:00Z'
+        feb_1 = '2020-02-01T00:00:00Z'
+        mar_1 = '2020-03-01T00:00:00Z'
+        apr_1 = '2020-04-01T00:00:00Z'
+
+        mock_Site().logevents.return_value = iter([
+            {'title': 'User:fred',
+             'timestamp': mwclient.util.parse_timestamp(jan_1),
+             'params': {'expiry': feb_1},
+             'type': 'block',
+             'action': 'wugga-wugga'},
+            {'title': 'User:fred',
+             'timestamp': mwclient.util.parse_timestamp(mar_1),
+             'params': {'expiry': apr_1},
+             'type': 'block',
+             'action': 'block'},
+        ])
+        wiki = Wiki()
+
+        user_blocks = wiki.get_user_blocks('fred')
+
+        self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(mar_1), isoparse(apr_1))])
+        mock_logger.error.assert_called_once()
 
 
 class GetPageTest(TestCase):
