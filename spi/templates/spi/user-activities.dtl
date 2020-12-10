@@ -19,7 +19,7 @@ Groups of similarly colored rows are individual days
         {% if activity_type == "edit" %}
         {{ page|page_link }}
         {% elif activity_type == "deleted" %}
-        <del>{{ page|page_link }}<</del>
+        <del>{{ page|page_link }}</del>
         {% endif %}
       </div>
       <div class="font-italic">({{ comment }})</div>
