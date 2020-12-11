@@ -1,0 +1,34 @@
+{% extends "tools_app/base.dtl" %}
+
+{% load tools_tags %}
+
+{% block content %}
+<h1><small>Consolidated timeline for {{case_name }}</small></h1>
+<table class="table table-hover table-sm small">
+  {% for event in events %}
+  <tr class="table-{{ event.tag }}">
+    <td class="align-top">
+      <div class="text-nowrap">{{ event.timestamp|date:"Y-m-d" }} {{ event.timestamp|time:"H:i:s" }}</div>
+    </td>
+    <td class="align-top">
+      <div class="text-nowrap">{{ event.user_name }}</div>
+    </td>
+    <td class="align-top">
+      <div>
+        {% if event.type == "edit" %}
+        {{ event.title|page_link }}
+        {% elif event.type == "deleted" %}
+        <del>{{ event.title|page_link }}</del>
+        {% endif %}
+      </div>
+      <div class="font-italic">({{ event.comment }})</div>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+</script>
+{% endblock %}
