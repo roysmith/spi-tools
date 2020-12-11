@@ -36,6 +36,6 @@
 {% endblock %}
 
 {% block page_scripts %}
-<script>
-</script>
+  <script>
+  </script>
 {% endblock %}

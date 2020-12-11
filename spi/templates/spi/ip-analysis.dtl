@@ -3,24 +3,24 @@
 {% load tools_tags %}
 
 {% block content %}
-<h1><small>IP analysis for {{ case_name|spi_link }}</small></h1>
-Network to block: <span id="network"></span>
-<ul id="ip-list">
-  {% for summary in ip_summaries %}
-  <li>
-    <input type="radio" class="ip-radio" name="ip-1" value="{{ summary.ip_address }}">
-    <input type="radio" class="ip-radio" name="ip-2" value="{{ summary.ip_address }}">
-    <code>{{ summary.ip_address }}</code>
-    {% for d in summary.spi_dates %}
-    ({{ d }})
+  <h1><small>IP analysis for {{ case_name|spi_link }}</small></h1>
+  Network to block: <span id="network"></span>
+  <ul id="ip-list">
+    {% for summary in ip_summaries %}
+      <li>
+	<input type="radio" class="ip-radio" name="ip-1" value="{{ summary.ip_address }}">
+	<input type="radio" class="ip-radio" name="ip-2" value="{{ summary.ip_address }}">
+	<code>{{ summary.ip_address }}</code>
+	{% for d in summary.spi_dates %}
+	  ({{ d }})
+	{% endfor %}
+      </li>
     {% endfor %}
-  </li>
-  {% endfor %}
-</ul>
+  </ul>
 {% endblock %}
 
 {% block page_scripts %}
-<script>
-  {% include "./ip-analysis.js" %}
-</script>
+  <script>
+   {% include "./ip-analysis.js" %}
+  </script>
 {% endblock %}
