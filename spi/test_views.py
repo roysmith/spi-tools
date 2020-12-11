@@ -9,7 +9,7 @@ from django.contrib.auth import get_user_model
 
 
 from wiki_interface.data import WikiContrib
-from spi.views import SockSelectView, UserSummary
+from spi.views import SockSelectView, UserSummary, TimelineView
 from spi.spi_utils import SpiUserInfo
 
 
@@ -175,3 +175,18 @@ class UserActivitiesViewTest(TestCase):
         edit_data = response.context['daily_activities'][0]
         self.assertEqual(edit_data,
                          ('primary', datetime(2020, 1, 1), 'edit', 'Batman: xxx', 'comment'))
+
+
+class TimelineViewTest(TestCase):
+    def test_group_by_day(self):
+        activities = [WikiContrib(datetime(2020, 1, 1), "user", 0, "title", "comment", True),
+                      WikiContrib(datetime(2020, 1, 1), "user", 0, "title", "comment", True),
+                      WikiContrib(datetime(2020, 1, 2), "user", 0, "title", "comment", True),
+                      WikiContrib(datetime(2020, 1, 3), "user", 0, "title", "comment", True),
+                      WikiContrib(datetime(2020, 1, 3), "user", 0, "title", "comment", True),
+                      WikiContrib(datetime(2020, 1, 3), "user", 0, "title", "comment", True)]
+
+        grouped_events = TimelineView.group_by_day(activities)
+
+        self.assertEqual([event.tag for event in grouped_events],
+                         ['primary', 'primary', 'secondary', 'primary', 'primary', 'primary'])

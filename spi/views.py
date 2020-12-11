@@ -178,6 +178,11 @@ class SockSelectView(View):
                                  self.get_encoded_users(request))
                 return redirect(url)
 
+            if 'timeline-button' in request.POST:
+                url = '%s?%s' % (reverse("spi-timeline", args=[case_name]),
+                                 self.get_encoded_users(request))
+                return redirect(url)
+
             logger.error("Unknown button!")
 
         logger.debug("post: not valid")
@@ -313,6 +318,72 @@ class TimecardView(View):
                    'users': user_names,
                    'data': data}
         return render(request, 'spi/timecard.dtl', context)
+
+
+@dataclass(frozen=True)
+class TimelineEvent:
+    tag: str
+    timestamp: datetime
+    user_name: str
+    type: str
+    title: str
+    comment: str
+
+
+class TimelineView(View):
+    def get(self, request, case_name):
+        wiki = Wiki(request)
+        user_names = request.GET.getlist('users')
+        logger.debug("user_names = %s", user_names)
+
+        event_streams = [self.get_events_for_user(wiki, user) for user in user_names]
+        events = heapq.merge(*event_streams, reverse=True)
+        daily_events = self.group_by_day(events)
+        context = {'case_name': case_name,
+                   'user_names': user_names,
+                   'events': daily_events}
+        return render(request, 'spi/timeline.dtl', context)
+
+
+    @staticmethod
+    def get_events_for_user(wiki, user_name):
+        """Returns an interable over WikiEvents"""
+        active = wiki.user_contributions(user_name)
+        deleted = wiki.deleted_user_contributions(user_name)
+        merged = heapq.merge(active, deleted, reverse=True)
+        return merged
+
+    #
+    # Refactor with UserActivitiesView.group_by_day()
+    #
+    @staticmethod
+    def group_by_day(activities):
+        """Group activities into daily chunks.  Assumes that activities is
+        sorted in chronological order.
+
+        This could probably all be done at the template layer, with
+        some combination of {% ifchanged %} and {% cycle %}.  That
+        might be simpler, and it would certainly be a better
+        segregation of presentation from logic.
+
+        """
+        # https://getbootstrap.com/docs/4.0/content/tables/#contextual-classes
+        date_groups = ['primary', 'secondary']
+
+        previous_date = None
+        daily_activities = []
+        for activity in activities:
+            this_date = activity.timestamp.date()
+            if previous_date and this_date != previous_date:
+                date_groups.reverse()
+            previous_date = this_date
+            daily_activities.append(TimelineEvent(date_groups[0],
+                                                  activity.timestamp,
+                                                  activity.user_name,
+                                                  'edit' if activity.is_live else 'deleted',
+                                                  activity.title,
+                                                  activity.comment))
+        return daily_activities
 
 
 @dataclass(frozen=True)

@@ -9,6 +9,7 @@
   <button type="button" class="btn btn-primary" id="uncheck-all" href="javascript:void(0)">Uncheck all</button>
   <p><input type="submit" name="interaction-analyzer-button" value="Interaction analyser">
   <p><input type="submit" name="timecard-button" value="Timecard comparison">
+  <p><input type="submit" name="timeline-button" value="Consolidated timeline">
   <table id="sock-table" class="table table-sm table-hover">
     <tr>
       <th>Use?</th>
