@@ -320,21 +320,13 @@ class TimecardView(View):
         return render(request, 'spi/timecard.dtl', context)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class TimelineEvent:
     timestamp: datetime
     user_name: str
     type: str
     title: str
     comment: str
-
-    @staticmethod
-    def fromWikiEvent(wikiEvent):
-        return TimelineEvent(wikiEvent.timestamp,
-                             wikiEvent.user_name,
-                             'edit' if wikiEvent.is_live else 'deleted',
-                             wikiEvent.title,
-                             wikiEvent.comment)
 
 
 class TimelineView(View):
@@ -343,22 +335,30 @@ class TimelineView(View):
         user_names = request.GET.getlist('users')
         logger.debug("user_names = %s", user_names)
 
-        streams = [self.get_events_for_user(wiki, u) for u in user_names]
+        streams = [self.get_contribs_for_user(wiki, u) for u in user_names]
         events = heapq.merge(*streams, reverse=True)
-        timeline_events = (TimelineEvent.fromWikiEvent(e) for e in events)
         context = {'case_name': case_name,
                    'user_names': user_names,
-                   'events': timeline_events}
+                   'events': events}
         return render(request, 'spi/timeline.dtl', context)
 
 
     @staticmethod
-    def get_events_for_user(wiki, user_name):
-        """Returns an interable over WikiEvents"""
-        active = wiki.user_contributions(user_name)
-        deleted = wiki.deleted_user_contributions(user_name)
-        merged = heapq.merge(active, deleted, reverse=True)
-        return merged
+    def get_contribs_for_user(wiki, user_name):
+        """Returns an interable over TimelineEvents.
+
+        """
+
+        def to_timeline(c):
+            return TimelineEvent(c.timestamp,
+                                 c.user_name,
+                                 'edit' if c.is_live else 'deleted',
+                                 c.title,
+                                 c.comment)
+
+        active = (to_timeline(c) for c in wiki.user_contributions(user_name))
+        deleted = (to_timeline(c) for c in wiki.deleted_user_contributions(user_name))
+        return heapq.merge(active, deleted, reverse=True)
 
 
 @dataclass(frozen=True)
