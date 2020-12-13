@@ -329,7 +329,7 @@ class TimelineEvent:
     comment: str
 
 
-class TimelineView(View):
+class TimelineView(LoginRequiredMixin, View):
     def get(self, request, case_name):
         wiki = Wiki(request)
         user_names = request.GET.getlist('users')
