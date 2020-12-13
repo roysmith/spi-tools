@@ -19,7 +19,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 from wiki_interface import Wiki
-from wiki_interface.block_utils import UserBlockHistory
+from wiki_interface.block_utils import BlockEvent, UnblockEvent, UserBlockHistory
 from spi.forms import CaseNameForm, SockSelectForm, UserInfoForm
 from spi.spi_utils import SpiIpInfo, SpiCase, get_current_case_names
 
@@ -335,8 +335,12 @@ class TimelineView(View):
         user_names = request.GET.getlist('users')
         logger.debug("user_names = %s", user_names)
 
-        streams = [self.get_contribs_for_user(wiki, u) for u in user_names]
-        events = heapq.merge(*streams, reverse=True)
+        streams = []
+        for user in user_names:
+            streams.append(self.get_contribs_for_user(wiki, user))
+            streams.append(self.get_blocks_for_user(wiki, user))
+
+        events = list(heapq.merge(*streams, reverse=True))
         context = {'case_name': case_name,
                    'user_names': user_names,
                    'events': events}
@@ -349,16 +353,42 @@ class TimelineView(View):
 
         """
 
-        def to_timeline(c):
-            return TimelineEvent(c.timestamp,
-                                 c.user_name,
-                                 'edit' if c.is_live else 'deleted',
-                                 c.title,
-                                 c.comment)
+        def to_timeline(contrib):
+            return TimelineEvent(contrib.timestamp,
+                                 contrib.user_name,
+                                 'edit' if contrib.is_live else 'deleted',
+                                 contrib.title,
+                                 contrib.comment)
 
         active = (to_timeline(c) for c in wiki.user_contributions(user_name))
         deleted = (to_timeline(c) for c in wiki.deleted_user_contributions(user_name))
         return heapq.merge(active, deleted, reverse=True)
+
+
+    @staticmethod
+    def get_blocks_for_user(wiki, user_name):
+        """Returns an interable over TimelineEvents.
+
+        """
+        for block in wiki.get_user_blocks(user_name):
+            if isinstance(block, BlockEvent):
+                yield TimelineEvent(block.timestamp,
+                                    block.target,
+                                    'reblock' if block.is_reblock else 'block',
+                                    block.expiry or 'indef',
+                                    '')
+            elif isinstance(block, UnblockEvent):
+                yield TimelineEvent(block.timestamp,
+                                    block.target,
+                                    'unblock',
+                                    '',
+                                    '')
+            else:
+                yield TimelineEvent(block.timestamp,
+                                    block.target,
+                                    'unknown block event',
+                                    '',
+                                    '')
 
 
 @dataclass(frozen=True)

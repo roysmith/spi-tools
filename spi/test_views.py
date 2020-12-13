@@ -9,7 +9,8 @@ from django.contrib.auth import get_user_model
 
 
 from wiki_interface.data import WikiContrib
-from spi.views import SockSelectView, UserSummary, TimelineView
+from wiki_interface.block_utils import BlockEvent
+from spi.views import SockSelectView, UserSummary, TimelineEvent
 from spi.spi_utils import SpiUserInfo
 
 
@@ -178,15 +179,26 @@ class UserActivitiesViewTest(TestCase):
 
 
 class TimelineViewTest(TestCase):
-    def test_group_by_day(self):
-        activities = [WikiContrib(datetime(2020, 1, 1), "user", 0, "title", "comment", True),
-                      WikiContrib(datetime(2020, 1, 1), "user", 0, "title", "comment", True),
-                      WikiContrib(datetime(2020, 1, 2), "user", 0, "title", "comment", True),
-                      WikiContrib(datetime(2020, 1, 3), "user", 0, "title", "comment", True),
-                      WikiContrib(datetime(2020, 1, 3), "user", 0, "title", "comment", True),
-                      WikiContrib(datetime(2020, 1, 3), "user", 0, "title", "comment", True)]
+    # pylint: disable=invalid-name
 
-        grouped_events = TimelineView.group_by_day(activities)
+    @patch('spi.views.Wiki')
+    def test_event_list(self, mock_Wiki):
+        mock_Wiki().user_contributions.return_value = [
+            WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment'),
+            WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment'),
+        ]
+        mock_Wiki().deleted_user_contributions.return_value = [
+            WikiContrib(datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', False)]
+        mock_Wiki().get_user_blocks.return_value = [
+            BlockEvent('Wilma', datetime(2020, 2, 1))]
+        client = Client()
 
-        self.assertEqual([event.tag for event in grouped_events],
-                         ['primary', 'primary', 'secondary', 'primary', 'primary', 'primary'])
+        response = client.get('/spi/timeline/Foo', {'users': ['u1']})
+
+        # pylint: disable=line-too-long
+        self.assertEqual(response.context['events'],
+                         [TimelineEvent(datetime(2020, 2, 1), 'Wilma', 'block', 'indef', ''),
+                          TimelineEvent(datetime(2020, 1, 3), 'Fred', 'edit', 'Title', 'comment'),
+                          TimelineEvent(datetime(2020, 1, 2), 'Fred', 'deleted', 'Title', 'comment'),
+                          TimelineEvent(datetime(2020, 1, 1), 'Fred', 'edit', 'Title', 'comment'),
+                         ])
