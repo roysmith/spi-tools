@@ -1,6 +1,4 @@
-from collections import OrderedDict
 from datetime import datetime, timezone
-from time import struct_time
 from unittest import TestCase
 from unittest.mock import call, patch, Mock
 
@@ -355,6 +353,8 @@ class GetUserBlocksTest(TestCase):
 
 
 class GetUserLogsTest(TestCase):
+    # pylint: disable=invalid-name
+
     @patch('wiki_interface.wiki.Site')
     def test_get_user_log_events(self, mock_Site):
         mock_Site().logevents.return_value = iter([
@@ -377,8 +377,7 @@ class GetUserLogsTest(TestCase):
             'Fred-sock',
             'newusers',
             'create2',
-            'testing')
-        ])
+            'testing')])
 
 
 class GetPageTest(TestCase):

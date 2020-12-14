@@ -45,16 +45,18 @@ class UnblockEvent(BaseBlockEvent):
     timestamp: datetime
 
 
-@dataclass(frozen=True)
+@dataclass
 class UserBlockHistory:
     """A representation of a user's block log.
 
-    Constructor takes a list of BlockEvents and/or UnblockEvents,
-    sorted in strictly increasing order of timestamp.  Raises
-    ValueError is they're out of order or not one of those classes.
+    Constructor takes a iterable of BlockEvents and/or UnblockEvents
+    in arbitrary order.
 
     """
     events: List[BaseBlockEvent]
+
+    def __init__(self, unordered_events):
+        self.events = sorted(unordered_events, key=lambda e: e.timestamp)
 
 
     def __post_init__(self):

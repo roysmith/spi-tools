@@ -68,17 +68,6 @@ class TestUserBlockHistory(TestCase):
         self.assertEqual(history.events, events)
 
 
-    def test_construct_with_incorrect_type(self):
-        with self.assertRaises(ValueError):
-            UserBlockHistory([1])
-
-
-    def test_construct_with_out_of_order_data(self):
-        with self.assertRaises(ValueError):
-            UserBlockHistory([BlockEvent("fred", _dt(2019, 1, 3)),
-                              BlockEvent("fred", _dt(2019, 1, 2))])
-
-
     def test_is_blocked_at_with_indef_block(self):
         events = [BlockEvent("fred", _dt(2019, 1, 1))]
         history = UserBlockHistory(events)

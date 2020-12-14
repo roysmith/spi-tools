@@ -169,10 +169,12 @@ class Wiki:
         """Get the user's block history.
 
         Returns a (heterogeneous) list of BlockEvents and
-        UnblockEvents in chronological order (i.e. oldest first).
+        UnblockEvents.
 
+        Events are returned in reverse chronological order
+        (i.e. most recent first).
         """
-        blocks = self.site.logevents(title=f'User:{user_name}', type="block", dir="newer")
+        blocks = self.site.logevents(title=f'User:{user_name}', type="block")
         events = []
         for block in blocks:
             action = block['action']
@@ -199,13 +201,13 @@ class Wiki:
         Returns an iterable over LogEvents.
 
         """
-        for e in self.site.logevents(user=user_name):
-            yield LogEvent(struct_to_datetime(e['timestamp']),
-                           e['user'],
-                           e['title'],
-                           e['type'],
-                           e['action'],
-                           e['comment'])
+        for event in self.site.logevents(user=user_name):
+            yield LogEvent(struct_to_datetime(event['timestamp']),
+                           event['user'],
+                           event['title'],
+                           event['type'],
+                           event['action'],
+                           event['comment'])
 
     def page(self, title):
         return Page(self, title)
