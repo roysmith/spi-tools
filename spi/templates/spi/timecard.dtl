@@ -1,19 +1,17 @@
 {% extends "tools_app/base.dtl" %}
 
 {% block content %}
-<h1><small>Timecard analysis for {{case_name }}</small></h1>
-<table>
-  {% for user in data %}
-  <tr>
-    <td>
-      <div class="chart-container">
-        <canvas id="chart-{{ user }}" width="300" height="150"></canvas>
-    </td>
-  </tr>
-  {% endfor %}
-</table>
-
-</div>
+  <h1><small>Timecard analysis for {{case_name }}</small></h1>
+  <table>
+    {% for user in data %}
+      <tr>
+	<td>
+	  <div class="chart-container">
+            <canvas id="chart-{{ user }}" width="300" height="150"></canvas>
+	</td>
+      </tr>
+    {% endfor %}
+  </table>
 {% endblock %}
 
 

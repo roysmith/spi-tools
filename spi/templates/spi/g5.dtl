@@ -3,41 +3,41 @@
 {% load tools_tags %}
 
 {% block content %}
-<h1><small>G5 analysis for User:{{ case_name }}</small></h1>
-<p>The following edits are possible G5 candidates.  They are pages
-  which were created by socks (or suspected socks) while the master
-  was blocked.  There's also a score, based on some vague heuristics,
-  indicating how likely it is that each page is G5 eligible.</p>
-<p>Note: Everything here is just hints and guidance.  You are
-  soley reponsible for determining if each page meets all the G5
-  criteria and what to do about it.</p>
-<table class="table table-hover table-sm small">
-  <tr>
-    <th>Creator</th>
-    <th>Page</th>
-    <th>G5 score</th>
-  </tr>
-  {% for c in page_creations %}
-  <tr class="table-primary">
-    <td class="align-top">
-      <div class="font-weight-bold">
-        {{ c.user|user_link }}
-      </div>
-    </td>
-    <td class="align-top">
-      <div>
-        {{ c.title|page_link }}
-      </div>
-    </td>
-    <td class="align-top">
-      <div>
-        {{ c.score.rating }}
-        {% if c.score.reason %}
-        ({{ c.score.reason }})
-        {% endif %}
-      </div>
-    </td>
-  </tr>
-  {% endfor %}
-</table>
+  <h1><small>G5 analysis for User:{{ case_name }}</small></h1>
+  <p>The following edits are possible G5 candidates.  They are pages
+    which were created by socks (or suspected socks) while the master
+    was blocked.  There's also a score, based on some vague heuristics,
+    indicating how likely it is that each page is G5 eligible.</p>
+  <p>Note: Everything here is just hints and guidance.  You are
+    soley reponsible for determining if each page meets all the G5
+    criteria and what to do about it.</p>
+  <table class="table table-hover table-sm small">
+    <tr>
+      <th>Creator</th>
+      <th>Page</th>
+      <th>G5 score</th>
+    </tr>
+    {% for c in page_creations %}
+      <tr class="table-primary">
+	<td class="align-top">
+	  <div class="font-weight-bold">
+            {{ c.user|user_link }}
+	  </div>
+	</td>
+	<td class="align-top">
+	  <div>
+            {{ c.title|page_link }}
+	  </div>
+	</td>
+	<td class="align-top">
+	  <div>
+            {{ c.score.rating }}
+            {% if c.score.reason %}
+              ({{ c.score.reason }})
+            {% endif %}
+	  </div>
+	</td>
+      </tr>
+    {% endfor %}
+  </table>
 {% endblock %}

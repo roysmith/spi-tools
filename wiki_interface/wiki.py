@@ -19,8 +19,9 @@ from mwclient.listing import List
 from mwclient.errors import APIError
 import mwclient
 from dateutil.parser import isoparse
+from more_itertools import always_iterable, chunked
 
-from wiki_interface.data import WikiContrib
+from wiki_interface.data import WikiContrib, LogEvent
 from wiki_interface.block_utils import BlockEvent, UnblockEvent
 from wiki_interface.time_utils import struct_to_datetime
 
@@ -87,6 +88,9 @@ class Wiki:
             return None
 
 
+    # See https://www.mediawiki.org/wiki/API:Usercontribs.
+    MAX_UCUSER = 50
+
     def user_contributions(self, user_name_or_names, show=''):
         """Get one or more users' live (i.e. non-deleted) edits.
 
@@ -102,21 +106,21 @@ class Wiki:
         Returns an iterable over WikiContribs.
 
         """
-        names = [user_name_or_names] if isinstance(user_name_or_names, str) else user_name_or_names
         all_names = []
-        for name in names:
+        for name in always_iterable(user_name_or_names):
             str_name = str(name)
             if '|' in str_name:
                 raise ValueError(f'"|" in user name: {str_name}')
             all_names.append(str_name)
 
-        for contrib in self.site.usercontributions('|'.join(all_names), show=show):
-            logger.debug("contrib = %s", contrib)
-            yield WikiContrib(struct_to_datetime(contrib['timestamp']),
-                              contrib['user'],
-                              contrib['ns'],
-                              contrib['title'],
-                              contrib['comment'])
+        for chunk in chunked(all_names, self.MAX_UCUSER):
+            for contrib in self.site.usercontributions('|'.join(chunk), show=show):
+                logger.debug("contrib = %s", contrib)
+                yield WikiContrib(struct_to_datetime(contrib['timestamp']),
+                                  contrib['user'],
+                                  contrib['ns'],
+                                  contrib['title'],
+                                  contrib['comment'])
 
 
     def deleted_user_contributions(self, user_name):
@@ -165,10 +169,12 @@ class Wiki:
         """Get the user's block history.
 
         Returns a (heterogeneous) list of BlockEvents and
-        UnblockEvents in chronological order (i.e. oldest first).
+        UnblockEvents.
 
+        Events are returned in reverse chronological order
+        (i.e. most recent first).
         """
-        blocks = self.site.logevents(title=f'User:{user_name}', type="block", dir="newer")
+        blocks = self.site.logevents(title=f'User:{user_name}', type="block")
         events = []
         for block in blocks:
             action = block['action']
@@ -177,14 +183,31 @@ class Wiki:
             expiry = mw_expiry and isoparse(mw_expiry)
             if action == 'block':
                 events.append(BlockEvent(user_name, timestamp, expiry))
-            if action == 'reblock':
+            elif action == 'reblock':
                 events.append(BlockEvent(user_name, timestamp, expiry, is_reblock=True))
-            if action == 'unblock':
+            elif action == 'unblock':
                 events.append(UnblockEvent(user_name, timestamp))
             else:
                 logger.error('Ignoring block due to unknown block action in %s', block)
         return events
 
+
+
+    def get_user_log_events(self, user_name):
+        """Get the user's log events, i.e. where the user is the performer.
+        Things that happened *to* the user are accessed through other
+        calls, such as get_user_blocks().
+
+        Returns an iterable over LogEvents.
+
+        """
+        for event in self.site.logevents(user=user_name):
+            yield LogEvent(struct_to_datetime(event['timestamp']),
+                           event['user'],
+                           event['title'],
+                           event['type'],
+                           event['action'],
+                           event['comment'])
 
     def page(self, title):
         return Page(self, title)
@@ -207,11 +230,12 @@ class Page:
 
     def revisions(self):
         for rev in self.mw_page.revisions():
+            comment = rev['comment'] if 'commenthidden' not in rev else None
             yield WikiContrib(struct_to_datetime(rev['timestamp']),
                               rev['user'],
                               self.mw_page.namespace,
                               self.mw_page.name,
-                              rev['comment'])
+                              comment)
 
     def text(self):
         return self.mw_page.text()

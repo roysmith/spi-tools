@@ -1,0 +1,47 @@
+{% extends "tools_app/base.dtl" %}
+
+{% load tools_tags %}
+
+{% block content %}
+  <h1><small>Consolidated timeline for {{case_name }}</small></h1>
+
+  Change of stripe background color indicates day boundaries.
+
+  {% regroup events by timestamp.date as grouped_events %}
+  <table class="table table-hover table-sm small">
+    {% for group in grouped_events %}
+      {% cycle 'primary' 'secondary' as row_class silent %}
+      {% for event in group.list %}
+	<tr class="table-{{ row_class }}">
+	  <td class="align-top">
+	    <div class="text-nowrap">{{ event.timestamp|date:"Y-m-d" }} {{ event.timestamp|time:"H:i:s" }}</div>
+	  </td>
+	  <td class="align-top">
+	    <div class="text-nowrap">{{ event.description }}</div>
+	    <div class="text-nowrap">{{ event.details }}</div>
+	  </td>
+	  <td class="align-top">
+	    <div class="text-nowrap">{{ event.user_name }}</div>
+	  </td>
+	  <td class="align-top">
+	    <div>
+              {% if event.description == "edit" %}
+		{% if event.details == "deleted" %}
+		  <del>{{ event.title|page_link }}</del>
+		{% else %}
+		  {{ event.title|page_link }}
+		{% endif %}
+	      {% endif %}
+	    </div>
+	    <div class="font-italic">({{ event.comment }})</div>
+	  </td>
+	</tr>
+      {% endfor %}
+    {% endfor %}
+  </table>
+{% endblock %}
+
+{% block page_scripts %}
+  <script>
+  </script>
+{% endblock %}

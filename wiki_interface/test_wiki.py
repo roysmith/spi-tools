@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from unittest import TestCase
-from unittest.mock import patch, Mock
+from unittest.mock import call, patch, Mock
 
 from dateutil.parser import isoparse
 from django.conf import settings
@@ -8,7 +8,7 @@ from django.http import HttpRequest
 import mwclient.util
 import mwclient.errors
 
-from wiki_interface.data import WikiContrib
+from wiki_interface.data import WikiContrib, LogEvent
 from wiki_interface.wiki import Wiki, Page
 from wiki_interface.block_utils import BlockEvent, UnblockEvent
 
@@ -151,6 +151,44 @@ class UserContributionsTest(TestCase):
             list(wiki.user_contributions('foo|bar'))
 
 
+    @patch('wiki_interface.wiki.Site')
+    def test_user_contributions_with_too_many_names(self, mock_Site):
+        mock_Site().usercontributions.side_effect = [
+            [{'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
+              'user': 'bob',
+              'ns': 0,
+              'title': 'p1',
+              'comment': 'c1'}],
+            [{'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
+              'user': 'alice',
+              'ns': 0,
+              'title': 'p2',
+              'comment': 'c2'}],
+        ]
+        wiki = Wiki()
+
+        # This is a hack.  In theory, we should paramaterize the test
+        # to work with any value of MAX_UCUSER.  In practice, doing so
+        # is just more effort (and complicated test code) than is
+        # worth it.  At least this future-proofs us a bit.
+        self.assertEqual(wiki.MAX_UCUSER, 50)
+
+        user_names = [str(i) for i in range(55)]
+        contributions = list(wiki.user_contributions(user_names))
+
+        self.assertEqual(mock_Site().usercontributions.call_args_list,
+                         [call('0|1|2|3|4|5|6|7|8|9'
+                               '|10|11|12|13|14|15|16|17|18|19'
+                               '|20|21|22|23|24|25|26|27|28|29'
+                               '|30|31|32|33|34|35|36|37|38|39'
+                               '|40|41|42|43|44|45|46|47|48|49', show=''),
+                          call('50|51|52|53|54', show=''),
+                         ])
+        self.assertEqual(contributions, [
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'bob', 0, 'p1', 'c1'),
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'alice', 0, 'p2', 'c2')])
+
+
 class DeletedUserContributionsTest(TestCase):
     # pylint: disable=invalid-name
 
@@ -208,19 +246,21 @@ class DeletedUserContributionsTest(TestCase):
 class GetUserBlocksTest(TestCase):
     # pylint: disable=invalid-name
 
+    @patch('wiki_interface.wiki.logger')
     @patch('wiki_interface.wiki.Site')
-    def test_get_user_blocks_with_no_blocks(self, mock_Site):
+    def test_get_user_blocks_with_no_blocks(self, mock_Site, mock_logger):
         mock_Site().logevents.return_value = iter([])
         wiki = Wiki()
 
         user_blocks = wiki.get_user_blocks('fred')
 
         self.assertEqual(user_blocks, [])
+        mock_logger.error.assert_not_called()
 
 
-
+    @patch('wiki_interface.wiki.logger')
     @patch('wiki_interface.wiki.Site')
-    def test_get_user_blocks_with_multiple_events(self, mock_Site):
+    def test_get_user_blocks_with_multiple_events(self, mock_Site, mock_logger):
         jan_1 = '2020-01-01T00:00:00Z'
         feb_1 = '2020-02-01T00:00:00Z'
         mar_1 = '2020-03-01T00:00:00Z'
@@ -251,10 +291,12 @@ class GetUserBlocksTest(TestCase):
         self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
                                        BlockEvent('fred', isoparse(mar_1), isoparse(apr_1)),
                                        UnblockEvent('fred', isoparse(may_1))])
+        mock_logger.error.assert_not_called()
 
 
+    @patch('wiki_interface.wiki.logger')
     @patch('wiki_interface.wiki.Site')
-    def test_get_user_blocks_with_reblock(self, mock_Site):
+    def test_get_user_blocks_with_reblock(self, mock_Site, mock_logger):
         jan_1 = '2020-01-01T00:00:00Z'
         jan_2 = '2020-01-02T00:00:00Z'
         feb_1 = '2020-02-01T00:00:00Z'
@@ -279,6 +321,63 @@ class GetUserBlocksTest(TestCase):
         self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
                                        BlockEvent('fred', isoparse(jan_2), isoparse(mar_1),
                                                   is_reblock=True)])
+        mock_logger.error.assert_not_called()
+
+
+    @patch('wiki_interface.wiki.logger')
+    @patch('wiki_interface.wiki.Site')
+    def test_get_user_blocks_with_unknown_action(self, mock_Site, mock_logger):
+        jan_1 = '2020-01-01T00:00:00Z'
+        feb_1 = '2020-02-01T00:00:00Z'
+        mar_1 = '2020-03-01T00:00:00Z'
+        apr_1 = '2020-04-01T00:00:00Z'
+
+        mock_Site().logevents.return_value = iter([
+            {'title': 'User:fred',
+             'timestamp': mwclient.util.parse_timestamp(jan_1),
+             'params': {'expiry': feb_1},
+             'type': 'block',
+             'action': 'wugga-wugga'},
+            {'title': 'User:fred',
+             'timestamp': mwclient.util.parse_timestamp(mar_1),
+             'params': {'expiry': apr_1},
+             'type': 'block',
+             'action': 'block'},
+        ])
+        wiki = Wiki()
+
+        user_blocks = wiki.get_user_blocks('fred')
+
+        self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(mar_1), isoparse(apr_1))])
+        mock_logger.error.assert_called_once()
+
+
+class GetUserLogsTest(TestCase):
+    # pylint: disable=invalid-name
+
+    @patch('wiki_interface.wiki.Site')
+    def test_get_user_log_events(self, mock_Site):
+        mock_Site().logevents.return_value = iter([
+            {
+                'title': 'Fred-sock',
+                'params': {'userid': 37950265},
+                'type': 'newusers',
+                'action': 'create2',
+                'user': 'Fred',
+                'timestamp': (2019, 11, 29, 0, 0, 0, 0, 0, 0),
+                'comment': 'testing',
+            }
+        ])
+        wiki = Wiki()
+
+        log_events = list(wiki.get_user_log_events('Fred'))
+        self.assertEqual(log_events, [LogEvent(
+            datetime(2019, 11, 29, tzinfo=timezone.utc),
+            'Fred',
+            'Fred-sock',
+            'newusers',
+            'create2',
+            'testing')])
 
 
 class GetPageTest(TestCase):
@@ -335,3 +434,19 @@ class PageTest(TestCase):
         self.assertEqual(revisions, [
             WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 0, 'blah', 'c1'),
             WikiContrib(datetime(2020, 7, 29, tzinfo=timezone.utc), 'fred', 0, 'blah', 'c2')])
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_revisions_with_hidden_comment(self, mock_Site):
+        mock_Site().pages.__getitem__().revisions.return_value = [
+            {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0), 'user': 'fred', 'commenthidden': ''}]
+        mock_Site().pages.__getitem__().name = 'blah'
+        mock_Site().pages.__getitem__().namespace = 0
+        wiki = Wiki()
+
+        revisions = list(wiki.page('blah').revisions())
+
+        self.assertIsInstance(revisions[0], WikiContrib)
+        self.assertEqual(revisions, [
+            WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 0, 'blah', None)
+        ])

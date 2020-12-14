@@ -19,7 +19,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 from wiki_interface import Wiki
-from wiki_interface.block_utils import UserBlockHistory
+from wiki_interface.block_utils import BlockEvent, UnblockEvent, UserBlockHistory
 from spi.forms import CaseNameForm, SockSelectForm, UserInfoForm
 from spi.spi_utils import SpiIpInfo, SpiCase, get_current_case_names
 
@@ -178,6 +178,11 @@ class SockSelectView(View):
                                  self.get_encoded_users(request))
                 return redirect(url)
 
+            if 'timeline-button' in request.POST:
+                url = '%s?%s' % (reverse("spi-timeline", args=[case_name]),
+                                 self.get_encoded_users(request))
+                return redirect(url)
+
             logger.error("Unknown button!")
 
         logger.debug("post: not valid")
@@ -313,6 +318,104 @@ class TimecardView(View):
                    'users': user_names,
                    'data': data}
         return render(request, 'spi/timecard.dtl', context)
+
+
+@dataclass(frozen=True, order=True)
+class TimelineEvent:
+    """Most of the fields are self-explanatory.
+
+    Description is a human-friendly (but short) phrase, details
+    provides additional (optional) information.  For a log entry,
+    these might be the type and action fields from the log event.
+
+    """
+    timestamp: datetime
+    user_name: str
+    description: str
+    details: str
+    title: str
+    comment: str
+
+
+class TimelineView(LoginRequiredMixin, View):
+    def get(self, request, case_name):
+        wiki = Wiki(request)
+        user_names = request.GET.getlist('users')
+        logger.debug("user_names = %s", user_names)
+
+        streams = []
+        for user in user_names:
+            streams.append(self.get_contribs_for_user(wiki, user))
+            streams.append(self.get_blocks_for_user(wiki, user))
+            streams.append(self.get_log_events_for_user(wiki, user))
+
+        events = list(heapq.merge(*streams, reverse=True))
+        context = {'case_name': case_name,
+                   'user_names': user_names,
+                   'events': events}
+        return render(request, 'spi/timeline.dtl', context)
+
+
+    @staticmethod
+    def get_contribs_for_user(wiki, user_name):
+        """Returns an interable over TimelineEvents.
+
+        """
+
+        def to_timeline(contrib):
+            return TimelineEvent(contrib.timestamp,
+                                 contrib.user_name,
+                                 'edit',
+                                 '' if contrib.is_live else 'deleted',
+                                 contrib.title,
+                                 contrib.comment)
+
+        active = (to_timeline(c) for c in wiki.user_contributions(user_name))
+        deleted = (to_timeline(c) for c in wiki.deleted_user_contributions(user_name))
+        return heapq.merge(active, deleted, reverse=True)
+
+
+    @staticmethod
+    def get_blocks_for_user(wiki, user_name):
+        """Returns an interable over TimelineEvents.
+
+        """
+        for block in wiki.get_user_blocks(user_name):
+            if isinstance(block, BlockEvent):
+                yield TimelineEvent(block.timestamp,
+                                    block.target,
+                                    'block',
+                                    'reblock' if block.is_reblock else '',
+                                    block.expiry or 'indef',
+                                    '')
+            elif isinstance(block, UnblockEvent):
+                yield TimelineEvent(block.timestamp,
+                                    block.target,
+                                    'unblock',
+                                    '',
+                                    '',
+                                    '')
+            else:
+                yield TimelineEvent(block.timestamp,
+                                    block.target,
+                                    'block',
+                                    'unknown',
+                                    '',
+                                    '')
+
+    @staticmethod
+    def get_log_events_for_user(wiki, user_name):
+        """Returns an iterable over TimelineEvents.
+
+        """
+        for event in wiki.get_user_log_events(user_name):
+            yield TimelineEvent(event.timestamp,
+                                event.user_name,
+                                event.type,
+                                event.action,
+                                event.title,
+                                event.comment)
+
 
 
 @dataclass(frozen=True)

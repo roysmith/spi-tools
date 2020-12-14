@@ -3,28 +3,28 @@
 {% load tools_tags %}
 
 {% block content %}
-<h1><small>Consolidated activity for {{ user_name }}</small></h1>
-<pre>
+  <h1><small>Consolidated activity for {{ user_name }}</small></h1>
+  <pre>
 Deleted edits are in <del>strikeout</del> style (elided for non-admins)
 Groups of similarly colored rows are individual days
-</pre>
-<table class="table table-hover table-sm small">
-  {% for date_group, timestamp, activity_type, page, comment in daily_activities %}
-  <tr class="table-{{ date_group }}">
-    <td class="align-top">
-      <div class="text-nowrap">{{ timestamp|date:"Y-m-d" }} {{ timestamp|time:"H:i:s" }}</div>
-    </td>
-    <td class="align-top">
-      <div>
-        {% if activity_type == "edit" %}
-        {{ page|page_link }}
-        {% elif activity_type == "deleted" %}
-        <del>{{ page|page_link }}<</del>
-        {% endif %}
-      </div>
-      <div class="font-italic">({{ comment }})</div>
-    </td>
-  </tr>
-  {% endfor %}
-</table>
+  </pre>
+  <table class="table table-hover table-sm small">
+    {% for date_group, timestamp, activity_type, page, comment in daily_activities %}
+      <tr class="table-{{ date_group }}">
+	<td class="align-top">
+	  <div class="text-nowrap">{{ timestamp|date:"Y-m-d" }} {{ timestamp|time:"H:i:s" }}</div>
+	</td>
+	<td class="align-top">
+	  <div>
+            {% if activity_type == "edit" %}
+              {{ page|page_link }}
+            {% elif activity_type == "deleted" %}
+              <del>{{ page|page_link }}</del>
+            {% endif %}
+	  </div>
+	  <div class="font-italic">({{ comment }})</div>
+	</td>
+      </tr>
+    {% endfor %}
+  </table>
 {% endblock %}

@@ -79,8 +79,13 @@ class LogRecordSocketReceiver(socketserver.ThreadingTCPServer):
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('host', help='hostname to listen on')
-    parser.add_argument('port', type=int, help='port to listen on')
+    parser.add_argument('--host',
+                        default='tools-sgebastion-08.tools.eqiad.wmflabs',
+                        help='hostname to listen on')
+    parser.add_argument('--port',
+                        type=int,
+                        default=23001,
+                        help='port to listen on')
     args = parser.parse_args()
 
     logging.basicConfig(
