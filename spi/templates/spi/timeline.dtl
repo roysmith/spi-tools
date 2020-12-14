@@ -17,15 +17,21 @@
 	    <div class="text-nowrap">{{ event.timestamp|date:"Y-m-d" }} {{ event.timestamp|time:"H:i:s" }}</div>
 	  </td>
 	  <td class="align-top">
+	    <div class="text-nowrap">{{ event.description }}</div>
+	    <div class="text-nowrap">{{ event.details }}</div>
+	  </td>
+	  <td class="align-top">
 	    <div class="text-nowrap">{{ event.user_name }}</div>
 	  </td>
 	  <td class="align-top">
 	    <div>
-              {% if event.type == "edit" %}
-		{{ event.title|page_link }}
-              {% elif event.type == "deleted" %}
-		<del>{{ event.title|page_link }}</del>
-              {% endif %}
+              {% if event.description == "edit" %}
+		{% if event.details == "deleted" %}
+		  <del>{{ event.title|page_link }}</del>
+		{% else %}
+		  {{ event.title|page_link }}
+		{% endif %}
+	      {% endif %}
 	    </div>
 	    <div class="font-italic">({{ event.comment }})</div>
 	  </td>

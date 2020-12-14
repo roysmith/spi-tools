@@ -21,7 +21,7 @@ import mwclient
 from dateutil.parser import isoparse
 from more_itertools import always_iterable, chunked
 
-from wiki_interface.data import WikiContrib
+from wiki_interface.data import WikiContrib, LogEvent
 from wiki_interface.block_utils import BlockEvent, UnblockEvent
 from wiki_interface.time_utils import struct_to_datetime
 
@@ -189,6 +189,23 @@ class Wiki:
                 logger.error('Ignoring block due to unknown block action in %s', block)
         return events
 
+
+
+    def get_user_log_events(self, user_name):
+        """Get the user's log events, i.e. where the user is the performer.
+        Things that happened *to* the user are accessed through other
+        calls, such as get_user_blocks().
+
+        Returns an iterable over LogEvents.
+
+        """
+        for e in self.site.logevents(user=user_name):
+            yield LogEvent(struct_to_datetime(e['timestamp']),
+                           e['user'],
+                           e['title'],
+                           e['type'],
+                           e['action'],
+                           e['comment'])
 
     def page(self, title):
         return Page(self, title)

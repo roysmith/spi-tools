@@ -19,3 +19,13 @@ class WikiContrib:
     title: str
     comment: str
     is_live: bool = True
+
+
+@dataclass(frozen=True)
+class LogEvent:
+    timestamp: datetime.datetime
+    user_name: str
+    title: str
+    type: str
+    action: str
+    comment: str

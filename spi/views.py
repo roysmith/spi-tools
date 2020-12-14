@@ -322,9 +322,17 @@ class TimecardView(View):
 
 @dataclass(frozen=True, order=True)
 class TimelineEvent:
+    """Most of the fields are self-explanatory.
+
+    Description is a human-friendly (but short) phrase, details
+    provides additional (optional) information.  For a log entry,
+    these might be the type and action fields from the log event.
+
+    """
     timestamp: datetime
     user_name: str
-    type: str
+    description: str
+    details: str
     title: str
     comment: str
 
@@ -339,6 +347,7 @@ class TimelineView(LoginRequiredMixin, View):
         for user in user_names:
             streams.append(self.get_contribs_for_user(wiki, user))
             streams.append(self.get_blocks_for_user(wiki, user))
+            streams.append(self.get_log_events_for_user(wiki, user))
 
         events = list(heapq.merge(*streams, reverse=True))
         context = {'case_name': case_name,
@@ -356,7 +365,8 @@ class TimelineView(LoginRequiredMixin, View):
         def to_timeline(contrib):
             return TimelineEvent(contrib.timestamp,
                                  contrib.user_name,
-                                 'edit' if contrib.is_live else 'deleted',
+                                 'edit',
+                                 '' if contrib.is_live else 'deleted',
                                  contrib.title,
                                  contrib.comment)
 
@@ -374,7 +384,8 @@ class TimelineView(LoginRequiredMixin, View):
             if isinstance(block, BlockEvent):
                 yield TimelineEvent(block.timestamp,
                                     block.target,
-                                    'reblock' if block.is_reblock else 'block',
+                                    'block',
+                                    'reblock' if block.is_reblock else '',
                                     block.expiry or 'indef',
                                     '')
             elif isinstance(block, UnblockEvent):
@@ -382,13 +393,29 @@ class TimelineView(LoginRequiredMixin, View):
                                     block.target,
                                     'unblock',
                                     '',
+                                    '',
                                     '')
             else:
                 yield TimelineEvent(block.timestamp,
                                     block.target,
-                                    'unknown block event',
+                                    'block',
+                                    'unknown',
                                     '',
                                     '')
+
+    @staticmethod
+    def get_log_events_for_user(wiki, user_name):
+        """Returns an iterable over TimelineEvents.
+
+        """
+        for event in wiki.get_user_log_events(user_name):
+            yield TimelineEvent(event.timestamp,
+                                event.user_name,
+                                event.type,
+                                event.action,
+                                event.title,
+                                event.comment)
+
 
 
 @dataclass(frozen=True)

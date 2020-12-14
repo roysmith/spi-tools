@@ -8,7 +8,7 @@ from django.test import Client
 from django.contrib.auth import get_user_model
 
 
-from wiki_interface.data import WikiContrib
+from wiki_interface.data import WikiContrib, LogEvent
 from wiki_interface.block_utils import BlockEvent
 from spi.views import SockSelectView, UserSummary, TimelineEvent
 from spi.spi_utils import SpiUserInfo
@@ -191,14 +191,19 @@ class TimelineViewTest(TestCase):
             WikiContrib(datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', False)]
         mock_Wiki().get_user_blocks.return_value = [
             BlockEvent('Wilma', datetime(2020, 2, 1))]
+        mock_Wiki().get_user_log_events.return_value = [
+            LogEvent(datetime(2019, 11, 29), 'Fred', 'Fred-sock', 'newusers', 'create2', 'testing')
+        ]
+        user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
-
+        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
         response = client.get('/spi/timeline/Foo', {'users': ['u1']})
 
         # pylint: disable=line-too-long
-        self.assertEqual(response.context['events'],
-                         [TimelineEvent(datetime(2020, 2, 1), 'Wilma', 'block', 'indef', ''),
-                          TimelineEvent(datetime(2020, 1, 3), 'Fred', 'edit', 'Title', 'comment'),
-                          TimelineEvent(datetime(2020, 1, 2), 'Fred', 'deleted', 'Title', 'comment'),
-                          TimelineEvent(datetime(2020, 1, 1), 'Fred', 'edit', 'Title', 'comment'),
-                         ])
+        self.assertEqual(response.context['events'], [
+            TimelineEvent(datetime(2020, 2, 1), 'Wilma', 'block', '', 'indef', ''),
+            TimelineEvent(datetime(2020, 1, 3), 'Fred', 'edit', '', 'Title', 'comment'),
+            TimelineEvent(datetime(2020, 1, 2), 'Fred', 'edit', 'deleted', 'Title', 'comment'),
+            TimelineEvent(datetime(2020, 1, 1), 'Fred', 'edit', '', 'Title', 'comment'),
+            TimelineEvent(datetime(2019, 11, 29), 'Fred', 'newusers', 'create2', 'Fred-sock', 'testing'),
+        ])

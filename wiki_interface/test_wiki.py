@@ -1,4 +1,6 @@
+from collections import OrderedDict
 from datetime import datetime, timezone
+from time import struct_time
 from unittest import TestCase
 from unittest.mock import call, patch, Mock
 
@@ -8,7 +10,7 @@ from django.http import HttpRequest
 import mwclient.util
 import mwclient.errors
 
-from wiki_interface.data import WikiContrib
+from wiki_interface.data import WikiContrib, LogEvent
 from wiki_interface.wiki import Wiki, Page
 from wiki_interface.block_utils import BlockEvent, UnblockEvent
 
@@ -350,6 +352,33 @@ class GetUserBlocksTest(TestCase):
 
         self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(mar_1), isoparse(apr_1))])
         mock_logger.error.assert_called_once()
+
+
+class GetUserLogsTest(TestCase):
+    @patch('wiki_interface.wiki.Site')
+    def test_get_user_log_events(self, mock_Site):
+        mock_Site().logevents.return_value = iter([
+            {
+                'title': 'Fred-sock',
+                'params': {'userid': 37950265},
+                'type': 'newusers',
+                'action': 'create2',
+                'user': 'Fred',
+                'timestamp': (2019, 11, 29, 0, 0, 0, 0, 0, 0),
+                'comment': 'testing',
+            }
+        ])
+        wiki = Wiki()
+
+        log_events = list(wiki.get_user_log_events('Fred'))
+        self.assertEqual(log_events, [LogEvent(
+            datetime(2019, 11, 29, tzinfo=timezone.utc),
+            'Fred',
+            'Fred-sock',
+            'newusers',
+            'create2',
+            'testing')
+        ])
 
 
 class GetPageTest(TestCase):
