@@ -315,3 +315,18 @@ class GetCurrentCaseNamesTest(TestCase):
         names = get_current_case_names(wiki)
 
         self.assertEqual(set(names), {'Rajumitwa878', 'AntiRacistSwede', 'Trumanshow69'})
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_case_name_with_slash(self, mock_Site):
+        mock_Site().pages.__getitem__().text.return_value = '''
+        {{SPIstatusheader}}
+        {{SPIstatusentry|Rajumitwa878|--|--|--|--|--|--}}
+        {{SPIstatusentry|AntiRacistSwede|--|--|--|--|--|--}}
+        {{SPIstatusentry|2605:E000:1F00:D3F1:0:0:0:0/64|--|--|--|--|--|--}}
+        '''
+
+        wiki = Wiki()
+        names = get_current_case_names(wiki)
+
+        self.assertEqual(set(names), {'Rajumitwa878', 'AntiRacistSwede'})
