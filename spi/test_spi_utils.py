@@ -6,7 +6,7 @@ import mwparserfromhell
 
 from wiki_interface import Wiki
 from spi.spi_utils import (SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo,
-                           ArchiveError, get_current_case_names)
+                           ArchiveError, get_current_case_names, find_active_case_template)
 
 
 def make_code(text):
@@ -296,9 +296,10 @@ class GetCurrentCaseNamesTest(TestCase):
         mock_Site().pages.__getitem__().text.return_value = ''
 
         wiki = Wiki()
-        names = get_current_case_names(wiki)
+        names = get_current_case_names(wiki, 'whatever')
 
         self.assertEqual(names, [])
+        mock_Site().pages.__getitem__().text.assert_called_once_with()
 
 
     @patch('wiki_interface.wiki.Site')
@@ -312,9 +313,10 @@ class GetCurrentCaseNamesTest(TestCase):
         '''
 
         wiki = Wiki()
-        names = get_current_case_names(wiki)
+        names = get_current_case_names(wiki, 'whatever')
 
         self.assertEqual(set(names), {'Rajumitwa878', 'AntiRacistSwede', 'Trumanshow69'})
+        mock_Site().pages.__getitem__().text.assert_called_once_with()
 
 
     @patch('wiki_interface.wiki.Site')
@@ -327,6 +329,55 @@ class GetCurrentCaseNamesTest(TestCase):
         '''
 
         wiki = Wiki()
-        names = get_current_case_names(wiki)
+        names = get_current_case_names(wiki, 'whatever')
 
         self.assertEqual(set(names), {'Rajumitwa878', 'AntiRacistSwede'})
+        mock_Site().pages.__getitem__().text.assert_called_once_with()
+
+
+class FindActiveCaseTemplateTest(TestCase):
+    # pylint: disable=invalid-name
+
+    @patch('wiki_interface.wiki.Site')
+    def test_overview(self, mock_Site):
+        mock_Site().pages.__getitem__().text.return_value = '''
+        <h2> Cases currently listed at SPI </h2>
+        {{purge box}}
+        {{Wikipedia:Sockpuppet investigations/Cases/Overview}}
+        <!-- This can be used as a backup: {{User:AmandaNP/SPI case list}} -->
+        '''
+
+        wiki = Wiki()
+        template = find_active_case_template(wiki)
+        self.assertEqual(template, 'Wikipedia:Sockpuppet investigations/Cases/Overview')
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_amanda(self, mock_Site):
+        mock_Site().pages.__getitem__().text.return_value = '''
+        <h2> Cases currently listed at SPI </h2>
+        {{purge box}}
+        <!-- Switching to backup. {{Wikipedia:Sockpuppet investigations/Cases/Overview}}-->
+        {{User:AmandaNP/SPI case list}}
+        |}
+        '''
+
+        wiki = Wiki()
+        template = find_active_case_template(wiki)
+        self.assertEqual(template, 'User:AmandaNP/SPI case list')
+
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_None(self, mock_Site):
+        mock_Site().pages.__getitem__().text.return_value = '''
+        <h2> Cases currently listed at SPI </h2>
+        {{purge box}}
+        <!-- Switching to backup. {{Wikipedia:Sockpuppet investigations/Cases/Overview}}-->
+        <!-- {{User:AmandaNP/SPI case list}} -->
+        |}
+        '''
+
+        wiki = Wiki()
+        template = find_active_case_template(wiki)
+        self.assertIsNone(template)

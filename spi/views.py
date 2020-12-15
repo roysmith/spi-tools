@@ -21,7 +21,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from wiki_interface import Wiki
 from wiki_interface.block_utils import BlockEvent, UnblockEvent, UserBlockHistory
 from spi.forms import CaseNameForm, SockSelectForm, UserInfoForm
-from spi.spi_utils import SpiIpInfo, SpiCase, get_current_case_names
+from spi.spi_utils import SpiIpInfo, SpiCase, get_current_case_names, find_active_case_template
 
 
 logger = logging.getLogger('spi.views')
@@ -92,7 +92,8 @@ class IndexView(View):
         """
         wiki = Wiki()
         # Leading empty element needed by select2.js placeholder.
-        names = [''] + get_current_case_names(wiki)
+        transcluded_template = find_active_case_template(wiki)
+        names = [''] + get_current_case_names(wiki, transcluded_template)
         if case_name and case_name not in names:
             names.append(case_name)
         names.sort()
