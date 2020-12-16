@@ -223,5 +223,10 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+        'urllib3': {
+            'handlers': ['file', 'bastion'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
     },
 }
