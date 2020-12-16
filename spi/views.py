@@ -344,17 +344,22 @@ class TimelineView(LoginRequiredMixin, View):
         user_names = request.GET.getlist('users')
         logger.debug("user_names = %s", user_names)
 
-        streams = []
-        for user in user_names:
-            streams.append(self.get_contribs_for_user(wiki, user))
-            streams.append(self.get_blocks_for_user(wiki, user))
-            streams.append(self.get_log_events_for_user(wiki, user))
-
+        streams = [self.get_event_stream_for_user(wiki, user) for user in user_names]
         events = list(heapq.merge(*streams, reverse=True))
         context = {'case_name': case_name,
                    'user_names': user_names,
                    'events': events}
         return render(request, 'spi/timeline.dtl', context)
+
+
+    def get_event_stream_for_user(self, wiki, user):
+        """Returns an iterable over TimelineEvents.
+
+        """
+        user_streams = [self.get_contribs_for_user(wiki, user),
+                        self.get_blocks_for_user(wiki, user),
+                        self.get_log_events_for_user(wiki, user)]
+        return heapq.merge(*user_streams, reverse=True)
 
 
     @staticmethod
