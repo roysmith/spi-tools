@@ -10,8 +10,7 @@ from django.contrib.auth import get_user_model
 
 from wiki_interface.data import WikiContrib, LogEvent
 from wiki_interface.block_utils import BlockEvent
-from spi.views import SockSelectView, UserSummary, TimelineEvent
-from spi.spi_utils import SpiUserInfo
+from spi.views import SockSelectView, UserSummary, TimelineEvent, ValidatedUser
 
 
 class IndexViewTest(TestCase):
@@ -82,12 +81,16 @@ class SockSelectViewTest(TestCase):
 
     def test_build_context(self):
         case_name = "Foo"
-        user_infos = [SpiUserInfo("User1", "20 June 2020"),
-                      SpiUserInfo("User2", "21 June 2020")]
+        user_infos = [ValidatedUser("User1", "20 June 2020", True),
+                      ValidatedUser("User2", "21 June 2020", True),
+                      ValidatedUser("User3", "21 June 2020", False),
+                      ]
 
         context = SockSelectView.build_context(case_name, user_infos)
 
         self.assertEqual(context['case_name'], "Foo")
+        self.assertEqual(context['invalid_users'],
+                         [ValidatedUser("User3", "21 June 2020", False)])
         expected_items = {('User1', 'User1', '20 June 2020'),
                           ('User2', 'User2', '21 June 2020')}
         items = {(field.label, name, date)
@@ -97,13 +100,14 @@ class SockSelectViewTest(TestCase):
 
     def test_build_context_deduplicates_users(self):
         case_name = "Foo"
-        user_infos = [SpiUserInfo("User1", "20 June 2020"),
-                      SpiUserInfo("User1", "20 June 2020"),
-                      SpiUserInfo("User2", "21 June 2020")]
+        user_infos = [ValidatedUser("User1", "20 June 2020", True),
+                      ValidatedUser("User1", "20 June 2020", True),
+                      ValidatedUser("User2", "21 June 2020", True)]
 
         context = SockSelectView.build_context(case_name, user_infos)
 
         self.assertEqual(context['case_name'], "Foo")
+        self.assertEqual(context['invalid_users'], [])
         expected_items = {('User1', 'User1', '20 June 2020'),
                           ('User2', 'User2', '21 June 2020')}
         items = {(field.label, name, date)

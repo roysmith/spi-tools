@@ -123,15 +123,34 @@ class IpAnalysisView(View):
         return render(request, 'spi/ip-analysis.dtl', context)
 
 
-def get_sock_names(wiki, master_name, use_archive=True):
-    """Returns a iterable over SpiUserInfos.
+@dataclass(frozen=True, order=True)
+class ValidatedUser:
+    username: str
+    date: str
+    valid: bool
+
+
+def _get_sock_names(wiki, master_name, use_archive=True, include_invalid=False):
+    """Returns a iterable over ValidatedUsers
 
     If use_archive is true, both the current case and any existing
     archive is used.  Otherwise, just the current case.
 
+    Discovered usernames are checked for validity.  See
+    Wiki.is_valid_username() for what it means to be valid.  By
+    default, invalid names are silently dropped.  If include_invalid
+    is true, they are included, but marked with valid=False.
+
     """
     case = SpiCase.get_case(wiki, master_name, use_archive)
-    return case.find_all_users()
+    for user_info in case.find_all_users():
+        name = user_info.username
+        valid = wiki.is_valid_username(name)
+        user = ValidatedUser(name, user_info.date, valid)
+        if not valid:
+            logger.warning('invalid username (%s) in case "%s"', user, master_name)
+        if valid or include_invalid:
+            yield user
 
 
 class SockInfoView(View):
@@ -139,7 +158,7 @@ class SockInfoView(View):
         wiki = Wiki()
         socks = []
         use_archive = int(request.GET.get('archive', 1))
-        for sock in get_sock_names(wiki, case_name, use_archive):
+        for sock in _get_sock_names(wiki, case_name, use_archive):
             socks.append(sock)
         summaries = list({self.make_user_summary(wiki, sock) for sock in socks})
         # This is a hack to make users with no registration time sort to the
@@ -160,7 +179,7 @@ class SockSelectView(View):
     def get(self, request, case_name):
         wiki = Wiki()
         use_archive = int(request.GET.get('archive', 1))
-        user_infos = list(get_sock_names(wiki, case_name, use_archive))
+        user_infos = list(_get_sock_names(wiki, case_name, use_archive, include_invalid=True))
         return render(request,
                       'spi/sock-select.dtl',
                       self.build_context(case_name, user_infos))
@@ -208,12 +227,16 @@ class SockSelectView(View):
 
     @staticmethod
     def build_context(case_name, user_infos):
+        logger.info(user_infos)
         users_by_name = {user.username: user for user in user_infos}
-        names = list({user.username for user in user_infos})
+        names = list({user.username for user in user_infos if user.valid})
+        invalid_users = [user for user in user_infos if not user.valid]
         dates = [users_by_name[name].date for name in names]
         form = SockSelectForm.build(names)
         return {'case_name': case_name,
-                'form_info': zip(form, names, dates)}
+                'form_info': zip(form, names, dates),
+                'invalid_users': invalid_users,
+                }
 
 
 class UserInfoView(View):
@@ -442,7 +465,7 @@ class G5View(View):
     def get(self, request, case_name):
         wiki = Wiki()
         use_archive = int(request.GET.get('archive', 1))
-        sock_names = [s.username for s in get_sock_names(wiki, case_name, use_archive)]
+        sock_names = [s.username for s in _get_sock_names(wiki, case_name, use_archive)]
 
         history = UserBlockHistory(wiki.get_user_blocks(case_name))
 

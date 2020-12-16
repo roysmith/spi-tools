@@ -2,6 +2,18 @@
 
 {% block content %}
   <h1><small>Sock interactions for {{ case_name }}</small></h1>
+
+  {% if invalid_users %}
+    <div class="alert alert-info" role="alert">
+      Note: The following invalid username(s) were found (and ignored) in the SPI report:
+      <ul>
+	{% for user in invalid_users %}
+	  <li>{{ user.username }} ({{ user.date }})</li>
+	{% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
   <form action="" method="post">
     {% csrf_token %}
     <p>
