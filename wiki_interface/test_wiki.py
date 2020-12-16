@@ -450,3 +450,36 @@ class PageTest(TestCase):
         self.assertEqual(revisions, [
             WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 0, 'blah', None)
         ])
+
+
+class IsValidUsernameTest(TestCase):
+    #pylint: disable=invalid-name
+
+    @patch('wiki_interface.wiki.Site')
+    def test_with_valid_name(self, mock_Site):
+        mock_Site().usercontributions.return_value = []
+        wiki = Wiki()
+
+        self.assertTrue(wiki.is_valid_username('foo'))
+        mock_Site().usercontributions.assert_called_once_with('foo', limit=1)
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_with_invalid_name(self, mock_Site):
+        mock_Site().usercontributions.side_effect = mwclient.errors.APIError('baduser',
+                                                                             'blah',
+                                                                             None)
+        wiki = Wiki()
+
+        self.assertFalse(wiki.is_valid_username('foo'))
+        mock_Site().usercontributions.assert_called_once_with('foo', limit=1)
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_with_unexpected_exception(self, mock_Site):
+        mock_Site().usercontributions.side_effect = RuntimeError('blah')
+        wiki = Wiki()
+
+        with self.assertRaises(RuntimeError):
+            wiki.is_valid_username('foo')
+        mock_Site().usercontributions.assert_called_once_with('foo', limit=1)

@@ -19,7 +19,7 @@ from mwclient.listing import List
 from mwclient.errors import APIError
 import mwclient
 from dateutil.parser import isoparse
-from more_itertools import always_iterable, chunked
+from more_itertools import always_iterable, chunked, consume
 
 from wiki_interface.data import WikiContrib, LogEvent
 from wiki_interface.block_utils import BlockEvent, UnblockEvent
@@ -211,6 +211,24 @@ class Wiki:
 
     def page(self, title):
         return Page(self, title)
+
+
+    def is_valid_username(self, user_name):
+        """Test a username for validity.  Valid in this context means properly
+        formed, i.e. the underlying API doesn't return a 'baduser'
+        error.  It is possible (common, even), for a username to be
+        valid but not exist on a particular wiki.
+
+        Returns True for valid usernames, False for invalid usernames.
+
+        """
+        try:
+            consume(self.site.usercontributions(user_name, limit=1))
+            return True
+        except APIError as ex:
+            if ex.code == 'baduser':
+                return False
+            raise
 
 
 @dataclass
