@@ -11,6 +11,7 @@ mwclient.Site directly.
 """
 import logging
 from dataclasses import dataclass
+from itertools import islice
 
 import django.contrib.auth
 from django.conf import settings
@@ -223,7 +224,7 @@ class Wiki:
 
         """
         try:
-            consume(self.site.usercontributions(user_name, limit=1))
+            consume(islice(self.site.usercontributions(user_name, limit=1), 0, 1))
             return True
         except APIError as ex:
             if ex.code == 'baduser':
