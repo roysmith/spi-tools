@@ -130,7 +130,7 @@ class ValidatedUser:
     valid: bool
 
 
-def _get_sock_names(wiki, master_name, use_archive=True, include_invalid=False):
+def get_sock_names(wiki, master_name, use_archive=True, include_invalid=False):
     """Returns a iterable over ValidatedUsers
 
     If use_archive is true, both the current case and any existing
@@ -158,7 +158,7 @@ class SockInfoView(View):
         wiki = Wiki()
         socks = []
         use_archive = int(request.GET.get('archive', 1))
-        for sock in _get_sock_names(wiki, case_name, use_archive):
+        for sock in get_sock_names(wiki, case_name, use_archive):
             socks.append(sock)
         summaries = list({self.make_user_summary(wiki, sock) for sock in socks})
         # This is a hack to make users with no registration time sort to the
@@ -179,7 +179,7 @@ class SockSelectView(View):
     def get(self, request, case_name):
         wiki = Wiki()
         use_archive = int(request.GET.get('archive', 1))
-        user_infos = list(_get_sock_names(wiki, case_name, use_archive, include_invalid=True))
+        user_infos = list(get_sock_names(wiki, case_name, use_archive, include_invalid=True))
         return render(request,
                       'spi/sock-select.dtl',
                       self.build_context(case_name, user_infos))
@@ -465,7 +465,7 @@ class G5View(View):
     def get(self, request, case_name):
         wiki = Wiki()
         use_archive = int(request.GET.get('archive', 1))
-        sock_names = [s.username for s in _get_sock_names(wiki, case_name, use_archive)]
+        sock_names = [s.username for s in get_sock_names(wiki, case_name, use_archive)]
 
         history = UserBlockHistory(wiki.get_user_blocks(case_name))
 
