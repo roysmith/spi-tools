@@ -233,9 +233,14 @@ class SockSelectView(View):
         invalid_users = [user for user in user_infos if not user.valid]
         dates = [users_by_name[name].date for name in names]
         form = SockSelectForm.build(names)
+
+        all_date_strings = set(user.date for user in user_infos if user.date)
+        keyed_dates = [(datetime.datetime.strptime(d, '%d %B %Y'), d) for d in all_date_strings]
+
         return {'case_name': case_name,
                 'form_info': zip(form, names, dates),
                 'invalid_users': invalid_users,
+                'dates': [v for (k, v) in sorted(keyed_dates)],
                 }
 
 

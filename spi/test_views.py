@@ -3,6 +3,8 @@ import textwrap
 from datetime import datetime
 import json
 
+from lxml import etree
+
 from django.test import TestCase
 from django.test import Client
 from django.contrib.auth import get_user_model
@@ -131,6 +133,61 @@ class SockSelectViewTest(TestCase):
         response = client.get('/spi/sock-select/Foo/')
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'spi/sock-select.dtl')
+
+
+    @patch('spi.views.get_sock_names')
+    def test_context_includes_unique_dates(self, mock_get_sock_names):
+        mock_get_sock_names.return_value = [
+            ValidatedUser("User1", "20 June 2020", True),
+            ValidatedUser("User2", "21 June 2020", True),
+            ValidatedUser("User3", "21 June 2020", True),
+        ]
+        client = Client()
+
+        response = client.get('/spi/sock-select/Foo/')
+
+        self.assertEqual(response.context['dates'], ['20 June 2020', '21 June 2020'])
+
+
+    @patch('spi.views.get_sock_names')
+    def test_context_dates_are_sorted_corretly(self, mock_get_sock_names):
+        mock_get_sock_names.return_value = [
+            ValidatedUser("User", "08 October 2020", True),
+            ValidatedUser("User", "10 December 2019", True),
+            ValidatedUser("User", "12 December 2019", True),
+            ValidatedUser("User", "12 July 2020", True),
+            ValidatedUser("User", "15 December 2020", True),
+            ValidatedUser("User", "15 May 2020", True),
+        ]
+        client = Client()
+
+        response = client.get('/spi/sock-select/Foo/')
+
+        self.assertEqual(response.context['dates'],
+                         ['10 December 2019',
+                          '12 December 2019',
+                          '15 May 2020',
+                          '12 July 2020',
+                          '08 October 2020',
+                          '15 December 2020',
+                         ])
+
+
+    @patch('spi.views.get_sock_names')
+    def test_html_date_classes(self, mock_get_sock_names):
+        mock_get_sock_names.return_value = [
+            ValidatedUser("User1", "20 June 2020", True),
+            ValidatedUser("User2", "21 June 2020", True),
+            ValidatedUser("User3", "21 June 2020", True),
+            ValidatedUser("User4", "21 June 2020", True),
+        ]
+        client = Client()
+
+        response = client.get('/spi/sock-select/Foo/')
+
+        tree = etree.HTML(response.content)
+        self.assertEqual(len(tree.cssselect('td#spi-date-20June2020 > input[type=checkbox]')), 1)
+        self.assertEqual(len(tree.cssselect('td#spi-date-21June2020 > input[type=checkbox]')), 3)
 
 
 class UserSummaryTest(TestCase):

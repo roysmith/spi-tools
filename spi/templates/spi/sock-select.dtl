@@ -17,10 +17,31 @@
   <form action="" method="post">
     {% csrf_token %}
     <p>
-      <button type="button" class="btn btn-primary" id="check-all" href="javascript:void(0)">Check all</button>
-      <button type="button" class="btn btn-primary" id="uncheck-all" href="javascript:void(0)">Uncheck all</button>
+      <table>
+	<tr>
+	  <td align="center">All</td>
+	  <td align="center" class="px-1">
+	    <button type="button" class="btn btn-primary btn-sm" id="check-all" href="javascript:void(0)">Check</button>
+	  </td>
+	  <td align="center" class="px-1">
+	    <button type="button" class="btn btn-primary btn-sm" id="uncheck-all" href="javascript:void(0)">Uncheck</button>
+	  </td>
+	</tr>
+	{% for date in dates %}
+	  <tr>
+	    <td align="center">{{ date }}</td>
+	    <td align="center" class="px-1">
+	      <button type="button" class="btn btn-primary btn-sm button-check-date" data-date="{{ date|cut:" " }}" href="javascript:void(0)">Check</button>
+	    </td>
+	    <td align="center" class="px-1">
+	      <button type="button" class="btn btn-primary btn-sm button-uncheck-date" data-date="{{ date|cut:" " }}" href="javascript:void(0)">Uncheck</button>
+	    </td>
+	  </tr>
+	{% endfor %}
+      </table>
     </p>
-    <p><input type="submit" name="interaction-analyzer-button" value="Interaction analyser">
+    <p>
+      <input type="submit" name="interaction-analyzer-button" value="Interaction analyser">
       <input type="submit" name="timecard-button" value="Timecard comparison">
       <input type="submit" name="timeline-button" value="Consolidated timeline">
     </p>
@@ -28,13 +49,11 @@
       <tr>
 	<th>Use?</th>
 	<th>Username</th>
-	<th>SPI report date</th>
       </tr>
       {% for field, name, date in form_info %}
 	<tr>
-	  <td>{{ field }}</td>
-	  <td><label class="mb-0" for="{{ field.id_for_label }}">{{ field.label }}</label></td>
-	  <td>{{ date }}</td>
+	  <td class="spi-date" id="spi-date-{{ date|cut:" " }}">{{ field }}</td>
+	  <td><label class="mb-0 for="{{ field.id_for_label }}">{{ field.label }}</label></td>
 	</tr>
       {% endfor %}
     </table>
