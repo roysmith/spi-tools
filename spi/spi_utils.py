@@ -219,7 +219,10 @@ class SpiIpInfo:
 
 
 def get_current_case_names(wiki, template_name):
-    """Return an list of the currently active SPI case names as strings.
+    """Return a list of the currently active SPI case names as strings.
+
+    It is possible for the source template to have duplicates.  Only
+    the unique names are returned.
 
     Cases with '/' in them are disallowed.  See
     https://github.com/roysmith/spi-tools/issues/133 for details.
@@ -228,7 +231,7 @@ def get_current_case_names(wiki, template_name):
     overview = wiki.page(template_name).text()
     wikicode = parse(overview)
     templates = wikicode.filter_templates(matches=lambda n: n.name.matches('SPIstatusentry'))
-    raw_names = (str(t.get(1)) for t in templates)
+    raw_names = {str(t.get(1)) for t in templates}
     return [name for name in raw_names if '/' not in name]
 
 

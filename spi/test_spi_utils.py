@@ -315,7 +315,7 @@ class GetCurrentCaseNamesTest(TestCase):
         wiki = Wiki()
         names = get_current_case_names(wiki, 'whatever')
 
-        self.assertEqual(set(names), {'Rajumitwa878', 'AntiRacistSwede', 'Trumanshow69'})
+        self.assertCountEqual(names, ['Rajumitwa878', 'AntiRacistSwede', 'Trumanshow69'])
         mock_Site().pages.__getitem__().text.assert_called_once_with()
 
 
