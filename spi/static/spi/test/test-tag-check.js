@@ -2,7 +2,7 @@
 
 $.ajax({
     async: false,
-    url: "tag-check.js",
+    url: "../tag-check.js",
     dataType: "script"
 });
 
