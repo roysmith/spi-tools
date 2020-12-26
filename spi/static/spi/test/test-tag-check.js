@@ -67,4 +67,13 @@ QUnit.module('tag-check', function() {
         const template = findSpiTemplate(parsoidText);
         assert.ok(template);
     });
+
+
+    QUnit.test('template not in <table> (#138)', async function(assert) {
+        const parsoidText = await $.get('data/User:Bert&Ernie70.995545527.parsoid.html');
+        const $html = $($.parseHTML(parsoidText));
+        const template = findSpiTemplate(parsoidText);
+        assert.equal(template,
+                     '{"parts":[{"template":{"target":{"wt":"sockpuppet\\n","href":"./Template:Sockpuppet"},"params":{"1":{"wt":"ANNA E PARK"},"2":{"wt":"blocked"},"locked":{"wt":"no"},"notblocked":{"wt":"no"},"altmaster":{"wt":""},"altmaster-status":{"wt":""}},"i":0}}]}');
+    });
 });

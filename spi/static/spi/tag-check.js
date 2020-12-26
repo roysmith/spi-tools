@@ -46,7 +46,7 @@ async function getParseTree(pageTitle) {
 //
 function findSpiTemplate(page) {
     const $html = $($.parseHTML(page));
-    const template = $html.find("table").filter(function() {
+    const template = $html.find('[typeof="mw:Transclusion"]').filter(function() {
         try {
             const data = JSON.parse($(this).attr('data-mw'));
             return data["parts"][0]["template"]["target"]["wt"].match(/[sS]ock/);
