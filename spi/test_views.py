@@ -78,6 +78,22 @@ class IndexViewTest(TestCase):
         self.assertEqual(data, expected_data)
 
 
+    @patch('spi.views.get_current_case_names')
+    def test_cases_names_with_spaces_are_deduplicated(self, mock_get_current_case_names):
+        mock_get_current_case_names.return_value = ['Adhithya Kiran Chekavar']
+        client = Client()
+
+        response = client.get('/spi/?caseName=Adhithya%20Kiran%20Chekavar')
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.context['choices'])
+        from pprint import pprint
+        pprint(data)
+        expected_data = [{'id': '', 'text': ''},
+                         {'id': 'Adhithya Kiran Chekavar', 'text': 'Adhithya Kiran Chekavar', 'selected': True}]
+        self.assertEqual(data, expected_data)
+
+
 class SockSelectViewTest(TestCase):
     # pylint: disable=invalid-name
 
