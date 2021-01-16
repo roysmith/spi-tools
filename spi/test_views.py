@@ -88,7 +88,9 @@ class IndexViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.context['choices'])
         expected_data = [{'id': '', 'text': ''},
-                         {'id': 'Adhithya Kiran Chekavar', 'text': 'Adhithya Kiran Chekavar', 'selected': True}]
+                         {'id': 'Adhithya Kiran Chekavar',
+                          'text': 'Adhithya Kiran Chekavar',
+                          'selected': True}]
         self.assertEqual(data, expected_data)
 
 
