@@ -17,28 +17,20 @@
   <form action="" method="post">
     {% csrf_token %}
     <p>
-      <table>
-	<tr>
-	  <td align="center">All</td>
-	  <td align="center" class="px-1">
-	    <button type="button" class="btn btn-primary btn-sm" id="check-all" href="javascript:void(0)">Check</button>
-	  </td>
-	  <td align="center" class="px-1">
-	    <button type="button" class="btn btn-primary btn-sm" id="uncheck-all" href="javascript:void(0)">Uncheck</button>
-	  </td>
-	</tr>
-	{% for date in dates %}
-	  <tr>
-	    <td align="center">{{ date }}</td>
-	    <td align="center" class="px-1">
-	      <button type="button" class="btn btn-primary btn-sm button-check-date" data-date="{{ date|cut:" " }}" href="javascript:void(0)">Check</button>
-	    </td>
-	    <td align="center" class="px-1">
-	      <button type="button" class="btn btn-primary btn-sm button-uncheck-date" data-date="{{ date|cut:" " }}" href="javascript:void(0)">Uncheck</button>
-	    </td>
-	  </tr>
-	{% endfor %}
-      </table>
+      <button type="button" class="btn btn-primary btn-sm" id="check-all" href="javascript:void(0)">Check all</button>
+      <button type="button" class="btn btn-primary btn-sm" id="uncheck-all" href="javascript:void(0)">Uncheck all</button>
+    </p>
+    <p>
+      <div class="dropdown">
+	<button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="select-menu-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+	  Check users reported on or after date
+	</button>
+	<div class="dropdown-menu" id="date-select-menu" aria-labelledby="select-menu-button">
+	  {% for date in dates %}
+	    <button class="dropdown-item date-select" type="button" data-date="{{ date|cut:" " }}" href="javascript:void(0)">{{ date }}</button>
+	  {% endfor %}
+	</div>
+      </div>
     </p>
     <p>
       <input type="submit" name="interaction-analyzer-button" value="Interaction analyser">
@@ -52,7 +44,7 @@
       </tr>
       {% for field, name, date in form_info %}
 	<tr>
-	  <td class="spi-date" id="spi-date-{{ date|cut:" " }}">{{ field }}</td>
+	  <td class="spi-date-{{ date|cut:" " }}">{{ field }}</td>
 	  <td><label class="mb-0 for="{{ field.id_for_label }}">{{ field.label }}</label></td>
 	</tr>
       {% endfor %}

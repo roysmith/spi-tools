@@ -8,12 +8,15 @@ $(document).ready(function() {
 	$("input:checkbox").prop('checked', false);
         this.blur();
     });
-    $('.button-check-date').click(function(){
-        $("td#spi-date-" + this.dataset.date + ">input:checkbox").prop('checked', true);
-        this.blur();
-    });
-    $('.button-uncheck-date').click(function(){
-        $("td#spi-date-" + this.dataset.date + ">input:checkbox").prop('checked', false);
+    $('button.date-select').click(function(){
+        $("input:checkbox").prop('checked', false);
+        let found = false;
+        for (button of $('#date-select-menu > button.dropdown-item')) {
+            found = found || (button.dataset.date == this.dataset.date);
+            if (found) {
+                $(".spi-date-" + button.dataset.date + ">input:checkbox").prop('checked', true);
+            };
+        };
         this.blur();
     });
 });

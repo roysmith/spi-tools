@@ -200,8 +200,24 @@ class SockSelectViewTest(TestCase):
         response = client.get('/spi/sock-select/Foo/')
 
         tree = etree.HTML(response.content)
-        self.assertEqual(len(tree.cssselect('td#spi-date-20June2020 > input[type=checkbox]')), 1)
-        self.assertEqual(len(tree.cssselect('td#spi-date-21June2020 > input[type=checkbox]')), 3)
+        self.assertEqual(len(tree.cssselect('td.spi-date-20June2020 > input[type=checkbox]')), 1)
+        self.assertEqual(len(tree.cssselect('td.spi-date-21June2020 > input[type=checkbox]')), 3)
+
+
+    @patch('spi.views.get_sock_names')
+    def test_html_includes_dropdown(self, mock_get_sock_names):
+        mock_get_sock_names.return_value = [
+            ValidatedUser("User1", "20 June 2020", True),
+            ValidatedUser("User2", "21 June 2020", True),
+            ValidatedUser("User3", "21 June 2020", True),
+        ]
+        client = Client()
+
+        response = client.get('/spi/sock-select/Foo/')
+
+        tree = etree.HTML(response.content)
+        buttons = tree.cssselect('div.dropdown-menu > button.dropdown-item[type=button]')
+        self.assertEqual([b.get('data-date') for b in buttons], ['20June2020', '21June2020'])
 
 
 class UserSummaryTest(TestCase):
