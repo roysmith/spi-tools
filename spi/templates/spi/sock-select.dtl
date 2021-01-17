@@ -45,7 +45,7 @@
       {% for field, name, date in form_info %}
 	<tr>
 	  <td class="spi-date-{{ date|cut:" " }}">{{ field }}</td>
-	  <td><label class="mb-0 for="{{ field.id_for_label }}">{{ field.label }}</label></td>
+	  <td><label class="mb-0" for="{{ field.id_for_label }}">{{ field.label }}</label></td>
 	</tr>
       {% endfor %}
     </table>
