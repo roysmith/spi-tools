@@ -5,7 +5,7 @@
 
   {% if invalid_users %}
     <div class="alert alert-info" role="alert">
-      Note: The following invalid username(s) were found (and ignored) in the SPI report:
+      The following invalid username(s) were found (and ignored) in the SPI report:
       <ul>
 	{% for user in invalid_users %}
 	  <li>{{ user.username }} ({{ user.date }})</li>
