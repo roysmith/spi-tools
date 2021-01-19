@@ -4,10 +4,12 @@ $(document).ready(function() {
 	$("input:checkbox").prop('checked', true);
         this.blur();
     });
+
     $('#uncheck-all').click(function(){
 	$("input:checkbox").prop('checked', false);
         this.blur();
     });
+
     $('button.date-select').click(function(){
         $("input:checkbox").prop('checked', false);
         let found = false;
