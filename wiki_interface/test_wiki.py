@@ -5,6 +5,7 @@ from unittest.mock import call, patch, Mock
 from dateutil.parser import isoparse
 from django.conf import settings
 from django.http import HttpRequest
+import mwclient
 import mwclient.util
 import mwclient.errors
 
@@ -227,11 +228,18 @@ class DeletedUserContributionsTest(TestCase):
         }
         pages = example_response['query']['alldeletedrevisions']
         mock_List().__iter__ = Mock(return_value=iter(pages))
+        mock_List.generate_kwargs.side_effect = mwclient.listing.List.generate_kwargs
         wiki = Wiki()
 
         deleted_contributions = wiki.deleted_user_contributions('fred')
         items = list(deleted_contributions)
-        self.assertIsInstance(items[0], WikiContrib)
+
+        args, kwargs = mock_List.call_args
+        self.assertIsInstance(args[0], mwclient.Site)
+        self.assertEqual(args[1:], ('alldeletedrevisions', 'adr'))
+        self.assertEqual(kwargs, {'uselang': None,
+                                  'adruser': 'fred',
+                                  'adrprop': 'title|timestamp|comment|flags'})
         self.assertEqual(items, [
             WikiContrib(datetime(2015, 11, 25, tzinfo=timezone.utc),
                         'fred', 0, 'p1', 'c1', is_live=False),

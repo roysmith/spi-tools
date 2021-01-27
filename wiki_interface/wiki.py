@@ -134,7 +134,9 @@ class Wiki:
         user with admin rights, returns an empty iterable.
 
         """
-        kwargs = dict(List.generate_kwargs('adr', user=user_name))
+        kwargs = dict(List.generate_kwargs('adr',
+                                           user=user_name,
+                                           prop='title|timestamp|comment|flags'))
         listing = List(self.site,
                        'alldeletedrevisions',
                        'adr',
