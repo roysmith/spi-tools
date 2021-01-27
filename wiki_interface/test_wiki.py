@@ -108,16 +108,17 @@ class UserContributionsTest(TestCase):
     def test_user_contributions_with_string(self, mock_Site):
         mock_Site().usercontributions.return_value = [
             {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
-             'ns': 0, 'user': 'fred', 'title': 'p1', 'comment': 'c1'},
+             'ns': 0, 'user': 'fred', 'title': 'p1', 'comment': 'c1', 'tags': []},
             {'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0),
-             'ns': 0, 'user': 'fred', 'title': 'p2', 'comment': 'c2'}]
+             'ns': 0, 'user': 'fred', 'title': 'p2', 'comment': 'c2', 'tags': []}]
         wiki = Wiki()
 
         contributions = list(wiki.user_contributions('fred'))
 
-        mock_Site().usercontributions.assert_called_once_with('fred',
-                                                              prop='title|timestamp|comment|flags',
-                                                              show='')
+        mock_Site().usercontributions.assert_called_once_with(
+            'fred',
+            prop='title|timestamp|comment|flags|tags',
+            show='')
         self.assertIsInstance(contributions[0], WikiContrib)
         self.assertEqual(contributions, [
             WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 0, 'p1', 'c1'),
@@ -128,18 +129,19 @@ class UserContributionsTest(TestCase):
     def test_user_contributions_with_list_of_strings(self, mock_Site):
         mock_Site().usercontributions.return_value = [
             {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
-             'user': 'bob', 'ns': 0, 'title': 'p1', 'comment': 'c1'},
+             'user': 'bob', 'ns': 0, 'title': 'p1', 'comment': 'c1', 'tags': []},
             {'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0),
-             'user': 'bob', 'ns': 0, 'title': 'p2', 'comment': 'c2'},
+             'user': 'bob', 'ns': 0, 'title': 'p2', 'comment': 'c2', 'tags': []},
             {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
-             'user': 'alice', 'ns': 0, 'title': 'p3', 'comment': 'c3'}]
+             'user': 'alice', 'ns': 0, 'title': 'p3', 'comment': 'c3', 'tags': []}]
         wiki = Wiki()
 
         contributions = list(wiki.user_contributions(['bob', 'alice']))
 
-        mock_Site().usercontributions.assert_called_once_with('bob|alice',
-                                                              prop='title|timestamp|comment|flags',
-                                                              show='')
+        mock_Site().usercontributions.assert_called_once_with(
+            'bob|alice',
+            prop='title|timestamp|comment|flags|tags',
+            show='')
         self.assertIsInstance(contributions[0], WikiContrib)
         self.assertEqual(contributions, [
             WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'bob', 0, 'p1', 'c1'),
@@ -163,12 +165,14 @@ class UserContributionsTest(TestCase):
               'user': 'bob',
               'ns': 0,
               'title': 'p1',
-              'comment': 'c1'}],
+              'comment': 'c1',
+              'tags': []}],
             [{'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
               'user': 'alice',
               'ns': 0,
               'title': 'p2',
-              'comment': 'c2'}],
+              'comment': 'c2',
+              'tags': []}],
         ]
         wiki = Wiki()
 
@@ -187,15 +191,37 @@ class UserContributionsTest(TestCase):
                                '|20|21|22|23|24|25|26|27|28|29'
                                '|30|31|32|33|34|35|36|37|38|39'
                                '|40|41|42|43|44|45|46|47|48|49',
-                               prop='title|timestamp|comment|flags',
+                               prop='title|timestamp|comment|flags|tags',
                                show=''),
                           call('50|51|52|53|54',
-                               prop='title|timestamp|comment|flags',
+                               prop='title|timestamp|comment|flags|tags',
                                show=''),
                          ])
         self.assertEqual(contributions, [
             WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'bob', 0, 'p1', 'c1'),
             WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'alice', 0, 'p2', 'c2')])
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_user_contributions_returns_tags(self, mock_Site):
+        mock_Site().usercontributions.return_value = [
+            {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
+             'ns': 0,
+             'user': 'fred',
+             'title': 'p1',
+             'comment': 'c1',
+             'tags': ['t1', 't2'],
+            }]
+        wiki = Wiki()
+
+        contributions = list(wiki.user_contributions('fred'))
+
+        self.assertEqual(contributions, [WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc),
+                                                     'fred',
+                                                     0,
+                                                     'p1',
+                                                     'c1',
+                                                     tags=['t1', 't2'])])
 
 
 class DeletedUserContributionsTest(TestCase):
@@ -213,15 +239,16 @@ class DeletedUserContributionsTest(TestCase):
                             {
                                 "timestamp": "2015-11-25T00:00:00Z",
                                 "comment": "c1",
+                                "tags": ["t1"],
                             },
                             {
                                 "timestamp": "2015-11-24T00:00:00Z",
                                 "comment": "c2",
+                                "tags": ["t1", "t2"],
                             }
-
                         ],
                         "ns": 0,
-                        "title": "p1"
+                        "title": "p1",
                     }
                 ]
             }
@@ -239,12 +266,12 @@ class DeletedUserContributionsTest(TestCase):
         self.assertEqual(args[1:], ('alldeletedrevisions', 'adr'))
         self.assertEqual(kwargs, {'uselang': None,
                                   'adruser': 'fred',
-                                  'adrprop': 'title|timestamp|comment|flags'})
+                                  'adrprop': 'title|timestamp|comment|flags|tags'})
         self.assertEqual(items, [
             WikiContrib(datetime(2015, 11, 25, tzinfo=timezone.utc),
-                        'fred', 0, 'p1', 'c1', is_live=False),
+                        'fred', 0, 'p1', 'c1', is_live=False, tags=["t1"]),
             WikiContrib(datetime(2015, 11, 24, tzinfo=timezone.utc),
-                        'fred', 0, 'p1', 'c2', is_live=False)])
+                        'fred', 0, 'p1', 'c2', is_live=False, tags=["t1", "t2"])])
 
 
     @patch('wiki_interface.wiki.List')

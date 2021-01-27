@@ -2,7 +2,8 @@
 
 
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List
 
 
 @dataclass(frozen=True, order=True)
@@ -19,6 +20,7 @@ class WikiContrib:
     title: str
     comment: str
     is_live: bool = True
+    tags: List[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

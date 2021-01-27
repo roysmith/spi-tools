@@ -114,7 +114,7 @@ class Wiki:
                 raise ValueError(f'"|" in user name: {str_name}')
             all_names.append(str_name)
 
-        props = 'title|timestamp|comment|flags'
+        props = 'title|timestamp|comment|flags|tags'
         for chunk in chunked(all_names, self.MAX_UCUSER):
             for contrib in self.site.usercontributions('|'.join(chunk), show=show, prop=props):
                 logger.debug("contrib = %s", contrib)
@@ -122,7 +122,9 @@ class Wiki:
                                   contrib['user'],
                                   contrib['ns'],
                                   contrib['title'],
-                                  contrib['comment'])
+                                  contrib['comment'],
+                                  True,
+                                  contrib['tags'])
 
 
     def deleted_user_contributions(self, user_name):
@@ -136,7 +138,7 @@ class Wiki:
         """
         kwargs = dict(List.generate_kwargs('adr',
                                            user=user_name,
-                                           prop='title|timestamp|comment|flags'))
+                                           prop='title|timestamp|comment|flags|tags'))
         listing = List(self.site,
                        'alldeletedrevisions',
                        'adr',
@@ -153,8 +155,9 @@ class Wiki:
                     logger.debug("deleted revision = %s", revision)
                     timestamp = isoparse(revision['timestamp'])
                     comment = revision['comment']
+                    tags = revision['tags']
                     yield WikiContrib(
-                        timestamp, user_name, namespace, title, comment, is_live=False)
+                        timestamp, user_name, namespace, title, comment, is_live=False, tags=tags)
         except APIError as ex:
             if ex.args[0] == 'permissiondenied':
                 logger.warning('Permission denied in wiki_interface.deleted_user_contributions()')
