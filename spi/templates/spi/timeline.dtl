@@ -8,7 +8,7 @@
   Change of stripe background color indicates day boundaries.
 
   {% regroup events by timestamp.date as grouped_events %}
-  <table class="table table-hover table-sm small">
+  <table id="events" class="table table-hover table-sm small">
     {% for group in grouped_events %}
       {% cycle 'primary' 'secondary' as row_class silent %}
       {% for event in group.list %}
@@ -34,6 +34,9 @@
 	      {% endif %}
 	    </div>
 	    <div class="font-italic">({{ event.comment }})</div>
+	    {% if event.extra %}
+	      <div class="extra">{{ event.extra }}</div>
+	    {% endif %}
 	  </td>
 	</tr>
       {% endfor %}

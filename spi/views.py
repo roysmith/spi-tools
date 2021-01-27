@@ -357,6 +357,9 @@ class TimelineEvent:
     provides additional (optional) information.  For a log entry,
     these might be the type and action fields from the log event.
 
+    Extra is optional additional information specific to the type of
+    event.  Edit events, for example, use this for the tags.
+
     """
     timestamp: datetime
     user_name: str
@@ -364,6 +367,7 @@ class TimelineEvent:
     details: str
     title: str
     comment: str
+    extra: str = ''
 
 
 class TimelineView(LoginRequiredMixin, View):
@@ -402,7 +406,9 @@ class TimelineView(LoginRequiredMixin, View):
                                  'edit',
                                  '' if contrib.is_live else 'deleted',
                                  contrib.title,
-                                 contrib.comment)
+                                 contrib.comment,
+                                 ', '.join(contrib.tags if contrib.tags else ''))
+
 
         active = (to_timeline(c) for c in wiki.user_contributions(user_name))
         deleted = (to_timeline(c) for c in wiki.deleted_user_contributions(user_name))

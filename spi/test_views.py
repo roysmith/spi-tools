@@ -294,9 +294,60 @@ class TimelineViewTest(TestCase):
 
         # pylint: disable=line-too-long
         self.assertEqual(response.context['events'], [
-            TimelineEvent(datetime(2020, 2, 1), 'Wilma', 'block', '', 'indef', ''),
-            TimelineEvent(datetime(2020, 1, 3), 'Fred', 'edit', '', 'Title', 'comment'),
-            TimelineEvent(datetime(2020, 1, 2), 'Fred', 'edit', 'deleted', 'Title', 'comment'),
-            TimelineEvent(datetime(2020, 1, 1), 'Fred', 'edit', '', 'Title', 'comment'),
-            TimelineEvent(datetime(2019, 11, 29), 'Fred', 'newusers', 'create2', 'Fred-sock', 'testing'),
+            TimelineEvent(datetime(2020, 2, 1), 'Wilma', 'block', '', 'indef', '', ''),
+            TimelineEvent(datetime(2020, 1, 3), 'Fred', 'edit', '', 'Title', 'comment', ''),
+            TimelineEvent(datetime(2020, 1, 2), 'Fred', 'edit', 'deleted', 'Title', 'comment', ''),
+            TimelineEvent(datetime(2020, 1, 1), 'Fred', 'edit', '', 'Title', 'comment', ''),
+            TimelineEvent(datetime(2019, 11, 29), 'Fred', 'newusers', 'create2', 'Fred-sock', 'testing', ''),
         ])
+
+
+    @patch('spi.views.Wiki')
+    def test_edit_event_includes_tags(self, mock_Wiki):
+        mock_Wiki().user_contributions.return_value = [
+            WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', is_live=True, tags=[]),
+            WikiContrib(datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', is_live=True, tags=['tag']),
+            WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', is_live=True, tags=['tag1', 'tag2']),
+        ]
+        user_u1 = get_user_model().objects.create_user('U1')
+        client = Client()
+        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+        response = client.get('/spi/timeline/Foo', {'users': ['u1']})
+
+        # pylint: disable=line-too-long
+        self.assertEqual(response.context['events'], [
+            TimelineEvent(datetime(2020, 1, 1), 'Fred', 'edit', '', 'Title', 'comment', ''),
+            TimelineEvent(datetime(2020, 1, 2), 'Fred', 'edit', '', 'Title', 'comment', 'tag'),
+            TimelineEvent(datetime(2020, 1, 3), 'Fred', 'edit', '', 'Title', 'comment', 'tag1, tag2'),
+        ])
+
+
+    @patch('spi.views.Wiki')
+    def test_deleted_edit_event_includes_tags(self, mock_Wiki):
+        mock_Wiki().user_contributions.return_value = [
+            WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', is_live=False, tags=['tag1', 'tag2']),
+        ]
+        user_u1 = get_user_model().objects.create_user('U1')
+        client = Client()
+        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+        response = client.get('/spi/timeline/Foo', {'users': ['u1']})
+
+        # pylint: disable=line-too-long
+        self.assertEqual(response.context['events'], [
+            TimelineEvent(datetime(2020, 1, 3), 'Fred', 'edit', 'deleted', 'Title', 'comment', 'tag1, tag2'),
+        ])
+
+
+    @patch('spi.views.Wiki')
+    def test_html_includes_tags(self, mock_Wiki):
+        mock_Wiki().user_contributions.return_value = [
+            WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', tags=['my test tag']),
+        ]
+        user_u1 = get_user_model().objects.create_user('U1')
+        client = Client()
+        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+        response = client.get('/spi/timeline/Foo', {'users': ['u1']})
+
+        tree = etree.HTML(response.content)
+        extras = tree.cssselect('#events div.extra')
+        self.assertEqual([e.text for e in extras], ['my test tag'])
