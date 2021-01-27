@@ -114,8 +114,9 @@ class Wiki:
                 raise ValueError(f'"|" in user name: {str_name}')
             all_names.append(str_name)
 
+        props = 'title|timestamp|comment|flags'
         for chunk in chunked(all_names, self.MAX_UCUSER):
-            for contrib in self.site.usercontributions('|'.join(chunk), show=show):
+            for contrib in self.site.usercontributions('|'.join(chunk), show=show, prop=props):
                 logger.debug("contrib = %s", contrib)
                 yield WikiContrib(struct_to_datetime(contrib['timestamp']),
                                   contrib['user'],

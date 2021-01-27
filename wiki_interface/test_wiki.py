@@ -114,7 +114,9 @@ class UserContributionsTest(TestCase):
 
         contributions = list(wiki.user_contributions('fred'))
 
-        mock_Site().usercontributions.assert_called_once_with('fred', show='')
+        mock_Site().usercontributions.assert_called_once_with('fred',
+                                                              prop='title|timestamp|comment|flags',
+                                                              show='')
         self.assertIsInstance(contributions[0], WikiContrib)
         self.assertEqual(contributions, [
             WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 0, 'p1', 'c1'),
@@ -134,7 +136,9 @@ class UserContributionsTest(TestCase):
 
         contributions = list(wiki.user_contributions(['bob', 'alice']))
 
-        mock_Site().usercontributions.assert_called_once_with('bob|alice', show='')
+        mock_Site().usercontributions.assert_called_once_with('bob|alice',
+                                                              prop='title|timestamp|comment|flags',
+                                                              show='')
         self.assertIsInstance(contributions[0], WikiContrib)
         self.assertEqual(contributions, [
             WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'bob', 0, 'p1', 'c1'),
@@ -181,8 +185,12 @@ class UserContributionsTest(TestCase):
                                '|10|11|12|13|14|15|16|17|18|19'
                                '|20|21|22|23|24|25|26|27|28|29'
                                '|30|31|32|33|34|35|36|37|38|39'
-                               '|40|41|42|43|44|45|46|47|48|49', show=''),
-                          call('50|51|52|53|54', show=''),
+                               '|40|41|42|43|44|45|46|47|48|49',
+                               prop='title|timestamp|comment|flags',
+                               show=''),
+                          call('50|51|52|53|54',
+                               prop='title|timestamp|comment|flags',
+                               show=''),
                          ])
         self.assertEqual(contributions, [
             WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc), 'bob', 0, 'p1', 'c1'),
