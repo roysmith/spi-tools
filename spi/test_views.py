@@ -351,3 +351,45 @@ class TimelineViewTest(TestCase):
         tree = etree.HTML(response.content)
         extras = tree.cssselect('#events div.extra')
         self.assertEqual([e.text for e in extras], ['my test tag'])
+
+
+    @patch('spi.views.Wiki')
+    def test_context_includes_tag_list(self, mock_Wiki):
+        mock_Wiki().user_contributions.return_value = [
+            WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', tags=[]),
+            WikiContrib(datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', tags=['tag']),
+            WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', tags=['tag1', 'tag2', 'tag4']),
+            WikiContrib(datetime(2020, 1, 4), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag3']),
+            WikiContrib(datetime(2020, 1, 5), 'Barney', 0, 'Title', 'comment', tags=['tag1', 'tag2']),
+        ]
+        user_u1 = get_user_model().objects.create_user('U1')
+        client = Client()
+        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+        response = client.get('/spi/timeline/Foo', {'users': ['u1']})
+
+        self.assertEqual(response.context['tag_list'], ['tag', 'tag1', 'tag2', 'tag3', 'tag4'])
+
+
+    @patch('spi.views.Wiki')
+    def test_context_includes_tag_table(self, mock_Wiki):
+        def mock_user_contributions(user_name):
+            if user_name == 'Fred':
+                return [WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', tags=[]),
+                        WikiContrib(datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', tags=['tag1', 'tag2', 'tag3']),
+                        WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', tags=['tag1', 'tag2', 'tag4'])]
+            if user_name == 'Wilma':
+                return [WikiContrib(datetime(2020, 1, 4), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag3']),
+                        WikiContrib(datetime(2020, 1, 5), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag2'])]
+            return []
+
+        mock_Wiki().user_contributions.side_effect = mock_user_contributions
+
+        user_u1 = get_user_model().objects.create_user('U1')
+        client = Client()
+        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+        response = client.get('/spi/timeline/Foo', {'users': ['Fred', 'Wilma']})
+
+        self.assertEqual(response.context['tag_table'],
+                         [('Fred', [('tag1', 2), ('tag2', 2), ('tag3', 1), ('tag4', 1)]),
+                          ('Wilma', [('tag1', 2), ('tag2', 1), ('tag3', 1), ('tag4', 0)])]
+                         )

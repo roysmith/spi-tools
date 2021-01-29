@@ -376,11 +376,28 @@ class TimelineView(LoginRequiredMixin, View):
         user_names = request.GET.getlist('users')
         logger.debug("user_names = %s", user_names)
 
+        self.tag_data = {}
         streams = [self.get_event_stream_for_user(wiki, user) for user in user_names]
         events = list(heapq.merge(*streams, reverse=True))
+        # At this point, i.e. after the merge() output is consumed,
+        # self.tag_data will be valid.
+        tags = set()
+        for tag_counts in self.tag_data.values():
+            for tag in tag_counts:
+                tags.add(tag)
+        tag_list = sorted(tags)
+
+        tag_table = []
+        for user in user_names:
+            counts = [(tag, self.tag_data[user][tag]) for tag in tag_list]
+            tag_table.append((user, counts))
+
         context = {'case_name': case_name,
                    'user_names': user_names,
-                   'events': events}
+                   'events': events,
+                   'tag_list': tag_list,
+                   'tag_table': tag_table,
+                   }
         return render(request, 'spi/timeline.dtl', context)
 
 
@@ -394,25 +411,26 @@ class TimelineView(LoginRequiredMixin, View):
         return heapq.merge(*user_streams, reverse=True)
 
 
-    @staticmethod
-    def get_contribs_for_user(wiki, user_name):
+    def get_contribs_for_user(self, wiki, user_name):
         """Returns an interable over TimelineEvents.
 
+        As a side effect, updates self.tag_data.
+
         """
+        self.tag_data[user_name] = defaultdict(int)
+        active = wiki.user_contributions(user_name)
+        deleted = wiki.deleted_user_contributions(user_name)
+        for contrib in heapq.merge(active, deleted, reverse=True):
+            for tag in contrib.tags:
+                self.tag_data[user_name][tag] += 1
 
-        def to_timeline(contrib):
-            return TimelineEvent(contrib.timestamp,
-                                 contrib.user_name,
-                                 'edit',
-                                 '' if contrib.is_live else 'deleted',
-                                 contrib.title,
-                                 contrib.comment,
-                                 ', '.join(contrib.tags if contrib.tags else ''))
-
-
-        active = (to_timeline(c) for c in wiki.user_contributions(user_name))
-        deleted = (to_timeline(c) for c in wiki.deleted_user_contributions(user_name))
-        return heapq.merge(active, deleted, reverse=True)
+            yield TimelineEvent(contrib.timestamp,
+                                contrib.user_name,
+                                'edit',
+                                '' if contrib.is_live else 'deleted',
+                                contrib.title,
+                                contrib.comment,
+                                ', '.join(contrib.tags if contrib.tags else ''))
 
 
     @staticmethod
