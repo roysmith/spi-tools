@@ -140,6 +140,7 @@ class SpiCaseDay:
         templates = self.wikicode.filter_templates(
             matches=lambda n: n.name.matches(['checkuser',
                                               'user',
+                                              'checkip',
                                               'SPIarchive notice']))
         for template in templates:
             username = template.get('1').value
