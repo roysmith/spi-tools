@@ -57,7 +57,7 @@
 		  {% endif %}
 		{% endif %}
 	      </div>
-	      <div class="font-italic">({{ event.comment }})</div>
+	      <div class="font-italic" style="overflow-wrap:anywhere">({{ event.comment }})</div>
 	      {% if event.extra %}
 		<div class="extra">{{ event.extra }}</div>
 	      {% endif %}
