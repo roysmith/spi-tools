@@ -166,7 +166,7 @@ class SockSelectViewTest(TestCase):
 
 
     @patch('spi.views.get_sock_names')
-    def test_context_dates_are_sorted_corretly(self, mock_get_sock_names):
+    def test_context_dates_are_sorted_in_chronological_order(self, mock_get_sock_names):
         mock_get_sock_names.return_value = [
             ValidatedUser("User", "08 October 2020", True),
             ValidatedUser("User", "10 December 2019", True),
