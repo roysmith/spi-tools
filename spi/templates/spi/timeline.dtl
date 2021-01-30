@@ -6,7 +6,7 @@
   <h1><small>Consolidated timeline for {{case_name }}</small></h1>
   <div>
     <button class="btn btn-primary btn-sm" type="button" data-toggle="collapse" data-target="#tag-card" aria-expanded="false" aria-controls="tag-card">
-      Show/hide tag usage
+      Show/hide tag counts
     </button>
     <div class="card collapse mt-3" id="tag-card">
       <table class="table table-sm small mb-0">
