@@ -18,6 +18,6 @@ def debug(request):
             'REQUEST_START_TIME_UTC': request_start_time.isoformat(timespec="seconds"),
             'REQUEST_DURATION': request_duration,
             'SERVER_START_TIME_UTC': server_start_time.isoformat(timespec="seconds"),
-            'SERVER_UP_TIME': datetime.timedelta(seconds = int(uptime.total_seconds())),
+            'SERVER_UP_TIME': datetime.timedelta(seconds=int(uptime.total_seconds())),
             'PRODUCTION_HOST_NAME': production_host_name,
-    }
+            }
