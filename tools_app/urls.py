@@ -10,7 +10,6 @@ import debug_toolbar
 
 urlpatterns = [
     path('', spi_views.IndexView.as_view(), name='home'),
-    path('account/login', tools_app_views.login_oauth, name='login'),
     path('account/logout', tools_app_views.logout, name='logout'),
     path('oauth/', include('social_django.urls', namespace='social')),
     path('admin/', admin.site.urls),
