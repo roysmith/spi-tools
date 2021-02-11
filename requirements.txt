@@ -3,12 +3,16 @@ astroid==2.4.2
 certifi==2019.9.11
 chardet==3.0.4
 Click==7.0
+cssselect==1.1.0
 defusedxml==0.6.0
 Django==2.2.13
 django-debug-toolbar==2.2
 idna==2.8
 isort==4.3.21
+Jinja2==2.11.2
 lazy-object-proxy==1.4.3
+lxml==4.6.2
+MarkupSafe==1.1.1
 mccabe==0.6.1
 more-itertools==8.6.0
 mwclient==0.10.0
