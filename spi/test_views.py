@@ -1,18 +1,18 @@
 from unittest.mock import patch, MagicMock
 import textwrap
 from datetime import datetime
-import json
 
 from lxml import etree
 
 from django.test import TestCase
 from django.test import Client
+from django.test.signals import template_rendered
 from django.contrib.auth import get_user_model
-
+from django.shortcuts import render
 
 from wiki_interface.data import WikiContrib, LogEvent
 from wiki_interface.block_utils import BlockEvent
-from spi.views import SockSelectView, UserSummary, TimelineEvent, ValidatedUser
+from spi.views import SockSelectView, UserSummary, TimelineEvent, ValidatedUser, IndexView
 
 
 class IndexViewTest(TestCase):
@@ -27,20 +27,14 @@ class IndexViewTest(TestCase):
         response = client.post('/spi/', {'case_name': ['Fred']})
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'spi/index.dtl')
-        self.assertTrue(response.context['error'].startswith('No known button in POST'))
         self.assertRegex(response.content, b'No known button in POST')
 
 
     @patch('spi.views.get_current_case_names')
-    def test_renders_correct_case_names(self, mock_get_current_case_names):
+    def test_generates_correct_case_names(self, mock_get_current_case_names):
         mock_get_current_case_names.return_value = ['Alice', 'Bob']
-        client = Client()
 
-        response = client.get('/spi/')
-
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.context['choices'])
+        data = IndexView.generate_select2_data('')
         expected_data = [{'id': '', 'text': ''},
                          {'id': 'Alice', 'text': 'Alice'},
                          {'id': 'Bob', 'text': 'Bob'}]
@@ -50,12 +44,9 @@ class IndexViewTest(TestCase):
     @patch('spi.views.get_current_case_names')
     def test_url_case_name_is_selected(self, mock_get_current_case_names):
         mock_get_current_case_names.return_value = ['Alice', 'Bob']
-        client = Client()
 
-        response = client.get('/spi/?caseName=Bob')
+        data = IndexView.generate_select2_data('Bob')
 
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.context['choices'])
         expected_data = [{'id': '', 'text': ''},
                          {'id': 'Alice', 'text': 'Alice'},
                          {'id': 'Bob', 'text': 'Bob', 'selected': True}]
@@ -65,12 +56,8 @@ class IndexViewTest(TestCase):
     @patch('spi.views.get_current_case_names')
     def test_url_case_name_is_added_if_missing(self, mock_get_current_case_names):
         mock_get_current_case_names.return_value = ['Alice', 'Bob']
-        client = Client()
 
-        response = client.get('/spi/?caseName=Arnold')
-
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.context['choices'])
+        data = IndexView.generate_select2_data('Arnold')
         expected_data = [{'id': '', 'text': ''},
                          {'id': 'Alice', 'text': 'Alice'},
                          {'id': 'Arnold', 'text': 'Arnold', 'selected': True},
@@ -79,18 +66,18 @@ class IndexViewTest(TestCase):
 
 
     @patch('spi.views.get_current_case_names')
-    def test_cases_names_with_spaces_are_deduplicated(self, mock_get_current_case_names):
-        mock_get_current_case_names.return_value = ['Adhithya Kiran Chekavar']
-        client = Client()
-
-        response = client.get('/spi/?caseName=Adhithya%20Kiran%20Chekavar')
-
-        self.assertEqual(response.status_code, 200)
-        data = json.loads(response.context['choices'])
-        expected_data = [{'id': '', 'text': ''},
+    def test_deduplicates_case_name_with_sock_names(self, mock_get_current_case_names):
+        mock_get_current_case_names.return_value = ['Adhithya Kiran Chekavar',
+                                                    'Fred']
+        data = IndexView.generate_select2_data('Adhithya Kiran Chekavar')
+        expected_data = [{'id': '',
+                          'text': ''},
                          {'id': 'Adhithya Kiran Chekavar',
                           'text': 'Adhithya Kiran Chekavar',
-                          'selected': True}]
+                          'selected': True},
+                         {'id': 'Fred',
+                          'text': 'Fred'},
+                         ]
         self.assertEqual(data, expected_data)
 
 
@@ -148,38 +135,28 @@ class SockSelectViewTest(TestCase):
         client = Client()
         response = client.get('/spi/sock-select/Foo/')
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'spi/sock-select.dtl')
 
 
-    @patch('spi.views.get_sock_names')
-    def test_context_includes_unique_dates(self, mock_get_sock_names):
-        mock_get_sock_names.return_value = [
-            ValidatedUser("User1", "20 June 2020", True),
-            ValidatedUser("User2", "21 June 2020", True),
-            ValidatedUser("User3", "21 June 2020", True),
-        ]
-        client = Client()
+    def test_context_includes_unique_dates(self):
+        context = SockSelectView.build_context('Foo',
+                                               [ValidatedUser("User1", "20 June 2020", True),
+                                                ValidatedUser("User2", "21 June 2020", True),
+                                                ValidatedUser("User3", "21 June 2020", True),
+                                               ])
 
-        response = client.get('/spi/sock-select/Foo/')
-
-        self.assertEqual(response.context['dates'], ['20 June 2020', '21 June 2020'])
+        self.assertEqual(context['dates'], ['20 June 2020', '21 June 2020'])
 
 
-    @patch('spi.views.get_sock_names')
-    def test_context_dates_are_sorted_in_chronological_order(self, mock_get_sock_names):
-        mock_get_sock_names.return_value = [
-            ValidatedUser("User", "08 October 2020", True),
-            ValidatedUser("User", "10 December 2019", True),
-            ValidatedUser("User", "12 December 2019", True),
-            ValidatedUser("User", "12 July 2020", True),
-            ValidatedUser("User", "15 December 2020", True),
-            ValidatedUser("User", "15 May 2020", True),
-        ]
-        client = Client()
-
-        response = client.get('/spi/sock-select/Foo/')
-
-        self.assertEqual(response.context['dates'],
+    def test_context_dates_are_sorted_in_chronological_order(self):
+        context = SockSelectView.build_context('Foo',
+                                               [ValidatedUser("User", "08 October 2020", True),
+                                                ValidatedUser("User", "10 December 2019", True),
+                                                ValidatedUser("User", "12 December 2019", True),
+                                                ValidatedUser("User", "12 July 2020", True),
+                                                ValidatedUser("User", "15 December 2020", True),
+                                                ValidatedUser("User", "15 May 2020", True),
+                                                ])
+        self.assertEqual(context['dates'],
                          ['10 December 2019',
                           '12 December 2019',
                           '15 May 2020',
@@ -237,14 +214,24 @@ class UserSummaryTest(TestCase):
 class SockInfoViewTest(TestCase):
     # pylint: disable=invalid-name
 
+    @staticmethod
+    def render_patch(request, template, context):
+        template_rendered.send(sender=SockInfoViewTest, template=template, context=context)
+        return render(request, template, context)
+
+
     @patch('mwclient.Site', new_callable=MagicMock, spec=['pages', 'users'])
-    def test_get_with_empty_mw_queries_renders_one_summary(self, mock_Site):
+    @patch('spi.views.render')
+    def test_get_with_empty_mw_queries_renders_one_summary(self, mock_render, mock_Site):
         mock_site = mock_Site()
         mock_site.pages.__getitem__().text.return_value = ''
         mock_site.users().return_value = iter([{}])
+        mock_render.side_effect = self.render_patch
         client = Client()
+
         response = client.get('/spi/sock-info/Foo/')
-        self.assertTemplateUsed(response, 'spi/sock-info.dtl')
+
+        self.assertEqual(response.templates, ['spi/sock-info.jinja'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['case_name'], 'Foo')
         self.assertEqual(response.context['summaries'], [UserSummary('Foo', None)])
@@ -253,19 +240,28 @@ class SockInfoViewTest(TestCase):
 class UserActivitiesViewTest(TestCase):
     # pylint: disable=invalid-name
 
+    @staticmethod
+    def render_patch(request, template, context):
+        template_rendered.send(sender=UserActivitiesViewTest, template=template, context=context)
+        return render(request, template, context)
+
+
     @patch('spi.views.Wiki')
-    def test_mainspace_title_contains_colon(self, mock_Wiki):
+    @patch('spi.views.render')
+    def test_mainspace_title_contains_colon(self, mock_render, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
             WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Batman: xxx', 'comment')]
         mock_Wiki().deleted_user_contributions.return_value = []
         mock_Wiki().namespace_values = {'': 0, 'Draft': 2}
-
+        mock_render.side_effect = self.render_patch
         user_fred = get_user_model().objects.create_user('Fred')
         client = Client()
         client.force_login(user_fred, backend='django.contrib.auth.backends.ModelBackend')
+
         response = client.get('/spi/user-activities/Foo', {'count': 10, 'main': 1}, follow=True)
+
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'spi/user-activities.dtl')
+        self.assertEqual(response.templates, ['spi/user-activities.jinja'])
         edit_data = response.context['daily_activities'][0]
         self.assertEqual(edit_data,
                          ('primary', datetime(2020, 1, 1), 'edit', 'Batman: xxx', 'comment'))
@@ -274,8 +270,16 @@ class UserActivitiesViewTest(TestCase):
 class TimelineViewTest(TestCase):
     # pylint: disable=invalid-name
 
+
+    @staticmethod
+    def render_patch(request, template, context):
+        template_rendered.send(sender=TimelineViewTest, template=template, context=context)
+        return render(request, template, context)
+
+
     @patch('spi.views.Wiki')
-    def test_event_list(self, mock_Wiki):
+    @patch('spi.views.render')
+    def test_event_list(self, mock_render, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
             WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment'),
             WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment'),
@@ -287,6 +291,7 @@ class TimelineViewTest(TestCase):
         mock_Wiki().get_user_log_events.return_value = [
             LogEvent(datetime(2019, 11, 29), 'Fred', 'Fred-sock', 'newusers', 'create2', 'testing')
         ]
+        mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
@@ -303,12 +308,14 @@ class TimelineViewTest(TestCase):
 
 
     @patch('spi.views.Wiki')
-    def test_edit_event_includes_tags(self, mock_Wiki):
+    @patch('spi.views.render')
+    def test_edit_event_includes_tags(self, mock_render, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
             WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', is_live=True, tags=[]),
             WikiContrib(datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', is_live=True, tags=['tag']),
             WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', is_live=True, tags=['tag1', 'tag2']),
         ]
+        mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
@@ -323,10 +330,12 @@ class TimelineViewTest(TestCase):
 
 
     @patch('spi.views.Wiki')
-    def test_deleted_edit_event_includes_tags(self, mock_Wiki):
+    @patch('spi.views.render')
+    def test_deleted_edit_event_includes_tags(self, mock_render, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
             WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', is_live=False, tags=['tag1', 'tag2']),
         ]
+        mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
@@ -354,7 +363,8 @@ class TimelineViewTest(TestCase):
 
 
     @patch('spi.views.Wiki')
-    def test_context_includes_tag_list(self, mock_Wiki):
+    @patch('spi.views.render')
+    def test_context_includes_tag_list(self, mock_render, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
             WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', tags=[]),
             WikiContrib(datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', tags=['tag']),
@@ -362,16 +372,20 @@ class TimelineViewTest(TestCase):
             WikiContrib(datetime(2020, 1, 4), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag3']),
             WikiContrib(datetime(2020, 1, 5), 'Barney', 0, 'Title', 'comment', tags=['tag1', 'tag2']),
         ]
+        mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+
         response = client.get('/spi/timeline/Foo', {'users': ['u1']})
 
+        self.assertEqual(response.templates, ['spi/timeline.jinja'])
         self.assertEqual(response.context['tag_list'], ['tag', 'tag1', 'tag2', 'tag3', 'tag4'])
 
 
     @patch('spi.views.Wiki')
-    def test_context_includes_tag_table(self, mock_Wiki):
+    @patch('spi.views.render')
+    def test_context_includes_tag_table(self, mock_render, mock_Wiki):
         def mock_user_contributions(user_name):
             if user_name == 'Fred':
                 return [WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', tags=[]),
@@ -383,6 +397,7 @@ class TimelineViewTest(TestCase):
             return []
 
         mock_Wiki().user_contributions.side_effect = mock_user_contributions
+        mock_render.side_effect = self.render_patch
 
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()

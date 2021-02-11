@@ -1,0 +1,9 @@
+{% if request.user.is_authenticated %}
+{{ request.user.username }} (<a href="{{ url('logout') }}">Logout</a>)
+{% else %}
+<a href="{{ url('social:begin', args=['mediawiki']) }}">Login</a>
+{% endif %}
+
+<nav class="nav flex-column">
+  <a class="nav-link" href="{{ url('spi-index') }}">SPI</a>
+</nav>

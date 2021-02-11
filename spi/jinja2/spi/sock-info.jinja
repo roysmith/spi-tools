@@ -1,4 +1,4 @@
-{% extends "tools_app/base.dtl" %}
+{% extends "tools_app/base.jinja" %}
 
 {% block content %}
   <h1><small>Sock analysis for User:{{ case_name }}</small></h1>
@@ -7,7 +7,7 @@
     {% for s in summaries %}
       <tr>
 	<th>
-	  <a href="{% url 'spi-user-info' user_name=s.urlencoded_username %}">{{ s.username }}</a>
+	  <a href="{{ url('spi-user-info', kwargs={'user_name': s.urlencoded_username()}) }}">{{ s.username }}</a>
 	</th>
 	<th>
 	  {{ s.registration_time }}

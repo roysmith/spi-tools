@@ -1,6 +1,4 @@
-{% extends "tools_app/base.dtl" %}
-
-{% load tools_tags %}
+{% extends "tools_app/base.jinja" %}
 
 {% block content %}
   <h1><small>Consolidated activity for {{ user_name }}</small></h1>
@@ -12,7 +10,7 @@ Groups of similarly colored rows are individual days
     {% for date_group, timestamp, activity_type, page, comment in daily_activities %}
       <tr class="table-{{ date_group }}">
 	<td class="align-top">
-	  <div class="text-nowrap">{{ timestamp|date:"Y-m-d" }} {{ timestamp|time:"H:i:s" }}</div>
+	  <div class="text-nowrap">{{ timestamp }}</div>
 	</td>
 	<td class="align-top">
 	  <div>

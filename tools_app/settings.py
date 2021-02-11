@@ -101,6 +101,14 @@ TEMPLATES = [
             ],
         },
     },
+    {
+        'BACKEND': 'django.template.backends.jinja2.Jinja2',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'environment': 'tools_app.jinja2.environment',
+        },
+    },
 ]
 
 AUTHENTICATION_BACKENDS = (

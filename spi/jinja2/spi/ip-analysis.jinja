@@ -1,6 +1,4 @@
-{% extends "tools_app/base.dtl" %}
-
-{% load tools_tags %}
+{% extends "tools_app/base.jinja" %}
 
 {% block content %}
   <h1><small>IP analysis for {{ case_name|spi_link }}</small></h1>
@@ -21,6 +19,6 @@
 
 {% block page_scripts %}
   <script>
-   {% include "./ip-analysis.js" %}
+   {% include "spi/ip-analysis.js" %}
   </script>
 {% endblock %}

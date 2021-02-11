@@ -40,7 +40,7 @@ $(document).ready(function() {
 	}
     };
 
-    {% for userName, timecard in data.items %}
+    {% for userName, timecard in data.items() %}
     var ctx = $(document)[0].getElementById('chart-{{ userName }}').getContext('2d');
     var chart = new Chart(ctx, {
 	type: 'bubble',

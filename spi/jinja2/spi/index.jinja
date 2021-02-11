@@ -1,10 +1,8 @@
-{% extends "tools_app/base.dtl" %}
-
-{% load static %}
+{% extends "tools_app/base.jinja" %}
 
 {% block page_css %}
-  <link rel="stylesheet" href="{% static "spi/select2.min.css" %}">
-  <link rel="stylesheet" href="{% static "spi//select2-bootstrap4.min.css" %}">
+  <link rel="stylesheet" href="{{ static("spi/select2.min.css") }}">
+  <link rel="stylesheet" href="{{ static("spi//select2-bootstrap4.min.css") }}">
 {% endblock %}
 
 
@@ -16,7 +14,7 @@
     </div>
   {% endif %}
 
-  {% for e in form.non_field_errors %}
+  {% for e in form.non_field_errors() %}
     <div class="alert alert-danger" role="alert">
       {{ e }}
     </div>
@@ -24,7 +22,7 @@
 
   <h1><small>SPI Tools</small></h1>
   <form action="" method="post">
-    {% csrf_token %}
+    {{ csrf_input }}
     <div class="mt-3">
       {% for e in form.errors.case_name %}
 	<div class="alert alert-danger" role="alert">
@@ -44,10 +42,9 @@
 {% endblock %}
 
 {% block page_scripts %}
-  <script src="{% static "spi/select2.min.js" %}"></script>
+  <script src="{{ static("spi/select2.min.js") }}"></script>
   <script>
-   const spiToolsSelectChoices = JSON.parse("{{choices|escapejs}}");
-   {% include "./index.js" %}
+   {% include "spi/index.js" %}
   </script>
 
 {% endblock %}

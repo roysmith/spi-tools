@@ -5,6 +5,6 @@ $(document).ready(function() {
         allowClear: true,
         theme: 'bootstrap4',
         width: '35%',
-        data: spiToolsSelectChoices
+        data: {{ choices|tojson }}
     });
 });

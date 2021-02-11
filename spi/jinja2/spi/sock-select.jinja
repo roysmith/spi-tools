@@ -1,4 +1,4 @@
-{% extends "tools_app/base.dtl" %}
+{% extends "tools_app/base.jinja" %}
 
 {% block content %}
   <h1><small>Sock interactions for {{ case_name }}</small></h1>
@@ -15,7 +15,7 @@
   {% endif %}
 
   <form action="" method="post">
-    {% csrf_token %}
+    {{ csrf_input }}
     <p>
       <button type="button" class="btn btn-primary btn-sm" id="check-all" href="javascript:void(0)">Check all</button>
       <button type="button" class="btn btn-primary btn-sm" id="uncheck-all" href="javascript:void(0)">Uncheck all</button>
@@ -27,7 +27,7 @@
 	</button>
 	<div class="dropdown-menu" id="date-select-menu" aria-labelledby="select-menu-button">
 	  {% for date in dates %}
-	    <button class="dropdown-item date-select" type="button" data-date="{{ date|cut:" " }}" href="javascript:void(0)">{{ date }}</button>
+	    <button class="dropdown-item date-select" type="button" data-date="{{ date|replace(' ', '') }}" href="javascript:void(0)">{{ date }}</button>
 	  {% endfor %}
 	</div>
       </div>
@@ -44,7 +44,7 @@
       </tr>
       {% for field, name, date in form_info %}
 	<tr>
-	  <td class="spi-date-{{ date|cut:" " }}">{{ field }}</td>
+	  <td class="spi-date-{{ date|replace(' ', '') }}">{{ field }}</td>
 	  <td><label class="mb-0" for="{{ field.id_for_label }}">{{ field.label }}</label></td>
 	</tr>
       {% endfor %}
@@ -55,6 +55,6 @@
 
 {% block page_scripts %}
   <script>
-   {% include "./sock-select.js" %}
+   {% include "spi/sock-select.js" %}
   </script>
 {% endblock %}
