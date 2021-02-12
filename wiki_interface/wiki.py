@@ -122,7 +122,7 @@ class Wiki:
                                   contrib['user'],
                                   contrib['ns'],
                                   contrib['title'],
-                                  contrib['comment'],
+                                  contrib['comment'] if 'commenthidden' not in contrib else None,
                                   True,
                                   contrib['tags'])
 

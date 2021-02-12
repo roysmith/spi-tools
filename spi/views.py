@@ -428,7 +428,7 @@ class TimelineView(LoginRequiredMixin, View):
                                 'edit',
                                 '' if contrib.is_live else 'deleted',
                                 contrib.title,
-                                contrib.comment,
+                                '<comment hidden>' if contrib.comment is None else contrib.comment,
                                 ', '.join(contrib.tags if contrib.tags else ''))
 
 

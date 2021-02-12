@@ -224,6 +224,29 @@ class UserContributionsTest(TestCase):
                                                      tags=['t1', 't2'])])
 
 
+    @patch('wiki_interface.wiki.Site')
+    def test_user_contributions_handles_supressed_comment(self, mock_Site):
+        mock_Site().usercontributions.return_value = [
+            {'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
+             'ns': 0,
+             'user': 'fred',
+             'title': 'p1',
+             'commenthidden': '',
+             'tags': ['t1', 't2'],
+            }]
+        wiki = Wiki()
+
+        contributions = list(wiki.user_contributions('fred'))
+
+        self.assertEqual(contributions, [WikiContrib(datetime(2020, 7, 30, tzinfo=timezone.utc),
+                                                     'fred',
+                                                     0,
+                                                     'p1',
+                                                     None,
+                                                     tags=['t1', 't2'])])
+
+
+
 class DeletedUserContributionsTest(TestCase):
     # pylint: disable=invalid-name
 

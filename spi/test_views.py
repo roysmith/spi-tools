@@ -399,3 +399,21 @@ class TimelineViewTest(ViewTestCase):
                          [('Fred', [('tag1', 2), ('tag2', 2), ('tag3', 1), ('tag4', 1)]),
                           ('Wilma', [('tag1', 2), ('tag2', 1), ('tag3', 1), ('tag4', 0)])]
                          )
+
+
+    @patch('spi.views.Wiki')
+    @patch('spi.views.render')
+    def test_hidden_comments_render_as_hidden(self, mock_render, mock_Wiki):
+        mock_Wiki().user_contributions.return_value = [
+            WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', None, tags=[]),
+        ]
+        mock_render.side_effect = self.render_patch
+        user_u1 = get_user_model().objects.create_user('U1')
+        client = Client()
+        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+
+        response = client.get('/spi/timeline/Foo', {'users': ['u1']})
+
+        self.assertEqual(response.context['events'], [
+            TimelineEvent(datetime(2020, 1, 1), 'Fred', 'edit', '', 'Title', '<comment hidden>', ''),
+        ])
