@@ -15,7 +15,14 @@ from wiki_interface.block_utils import BlockEvent
 from spi.views import SockSelectView, UserSummary, TimelineEvent, ValidatedUser, IndexView
 
 
-class IndexViewTest(TestCase):
+class ViewTestCase(TestCase):
+    @staticmethod
+    def render_patch(request, template, context):
+        template_rendered.send(sender=None, template=template, context=context)
+        return render(request, template, context)
+
+
+class IndexViewTest(ViewTestCase):
     # pylint: disable=invalid-name
 
 
@@ -81,7 +88,7 @@ class IndexViewTest(TestCase):
         self.assertEqual(data, expected_data)
 
 
-class SockSelectViewTest(TestCase):
+class SockSelectViewTest(ViewTestCase):
     # pylint: disable=invalid-name
 
     def test_build_context(self):
@@ -199,7 +206,7 @@ class SockSelectViewTest(TestCase):
         self.assertEqual([b.get('data-date') for b in buttons], ['20June2020', '21June2020'])
 
 
-class UserSummaryTest(TestCase):
+class UserSummaryTest(ViewTestCase):
     def test_urlencoded_username(self):
         summary = UserSummary('foo', '20 July 2020')
         self.assertEqual(summary.username, 'foo')
@@ -211,13 +218,8 @@ class UserSummaryTest(TestCase):
         self.assertEqual(summary.urlencoded_username(), 'foo%2Fbar')
 
 
-class SockInfoViewTest(TestCase):
+class SockInfoViewTest(ViewTestCase):
     # pylint: disable=invalid-name
-
-    @staticmethod
-    def render_patch(request, template, context):
-        template_rendered.send(sender=SockInfoViewTest, template=template, context=context)
-        return render(request, template, context)
 
 
     @patch('mwclient.Site', new_callable=MagicMock, spec=['pages', 'users'])
@@ -237,13 +239,8 @@ class SockInfoViewTest(TestCase):
         self.assertEqual(response.context['summaries'], [UserSummary('Foo', None)])
 
 
-class UserActivitiesViewTest(TestCase):
+class UserActivitiesViewTest(ViewTestCase):
     # pylint: disable=invalid-name
-
-    @staticmethod
-    def render_patch(request, template, context):
-        template_rendered.send(sender=UserActivitiesViewTest, template=template, context=context)
-        return render(request, template, context)
 
 
     @patch('spi.views.Wiki')
@@ -267,14 +264,8 @@ class UserActivitiesViewTest(TestCase):
                          ('primary', datetime(2020, 1, 1), 'edit', 'Batman: xxx', 'comment'))
 
 
-class TimelineViewTest(TestCase):
+class TimelineViewTest(ViewTestCase):
     # pylint: disable=invalid-name
-
-
-    @staticmethod
-    def render_patch(request, template, context):
-        template_rendered.send(sender=TimelineViewTest, template=template, context=context)
-        return render(request, template, context)
 
 
     @patch('spi.views.Wiki')
