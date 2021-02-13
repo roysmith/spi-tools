@@ -474,7 +474,6 @@ class TimelineView(LoginRequiredMixin, View):
                                 '<comment hidden>' if event.comment is None else event.comment)
 
 
-
 @dataclass(frozen=True)
 class G5Summary:
     title: str
