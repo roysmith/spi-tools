@@ -376,8 +376,8 @@ class TimelineView(LoginRequiredMixin, View):
         logger.debug("user_names = %s", user_names)
 
         self.tag_data = {}
-        streams = [self.get_event_stream_for_user(wiki, user) for user in user_names]
-        events = list(heapq.merge(*streams, reverse=True))
+        per_user_streams = [self.get_event_stream_for_user(wiki, user) for user in user_names]
+        events = list(heapq.merge(*per_user_streams, reverse=True))
         # At this point, i.e. after the merge() output is consumed,
         # self.tag_data will be valid.
         tags = set()
