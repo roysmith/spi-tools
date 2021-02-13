@@ -123,10 +123,14 @@ class SpiCaseDay:
 
 
     def date(self):
+        '''Return the date of this section as a string.  Leading and
+        trailing whitespace is stripped from the sring.
+
+        '''
         headings = self.wikicode.filter_headings(matches=lambda h: h.level == 3)
         h3_count = len(headings)
         if h3_count == 1:
-            return headings[0].title
+            return headings[0].title.strip_code().strip()
         raise ArchiveError("Expected exactly 1 level-3 heading, found %d" % h3_count)
 
 
