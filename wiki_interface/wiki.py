@@ -214,7 +214,7 @@ class Wiki:
                            event['title'],
                            event['type'],
                            event['action'],
-                           event['comment'])
+                           event['comment'] if 'commenthidden' not in event else None)
 
     def page(self, title):
         return Page(self, title)

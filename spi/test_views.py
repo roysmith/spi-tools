@@ -403,7 +403,7 @@ class TimelineViewTest(ViewTestCase):
 
     @patch('spi.views.Wiki')
     @patch('spi.views.render')
-    def test_hidden_comments_render_as_hidden(self, mock_render, mock_Wiki):
+    def test_hidden_contribution_comments_render_as_hidden(self, mock_render, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
             WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', None, tags=[]),
         ]
@@ -416,4 +416,28 @@ class TimelineViewTest(ViewTestCase):
 
         self.assertEqual(response.context['events'], [
             TimelineEvent(datetime(2020, 1, 1), 'Fred', 'edit', '', 'Title', '<comment hidden>', ''),
+        ])
+
+
+    @patch('spi.views.Wiki')
+    @patch('spi.views.render')
+    def test_hidden_log_comments_render_as_hidden(self, mock_render, mock_Wiki):
+        mock_Wiki().get_user_log_events.return_value = [
+            LogEvent(datetime(2020, 1, 1),
+                     'Fred',
+                     'Title',
+                     'create',
+                     'create',
+                     None),
+            ]
+
+        mock_render.side_effect = self.render_patch
+        user_u1 = get_user_model().objects.create_user('U1')
+        client = Client()
+        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+
+        response = client.get('/spi/timeline/Foo', {'users': ['u1']})
+
+        self.assertEqual(response.context['events'], [
+            TimelineEvent(datetime(2020, 1, 1), 'Fred', 'create', 'create', 'Title', '<comment hidden>', ''),
         ])

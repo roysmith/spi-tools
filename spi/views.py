@@ -471,7 +471,7 @@ class TimelineView(LoginRequiredMixin, View):
                                 event.type,
                                 event.action,
                                 event.title,
-                                event.comment)
+                                '<comment hidden>' if event.comment is None else event.comment)
 
 
 
