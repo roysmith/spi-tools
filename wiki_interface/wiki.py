@@ -154,7 +154,7 @@ class Wiki:
                 for revision in page['revisions']:
                     logger.debug("deleted revision = %s", revision)
                     timestamp = isoparse(revision['timestamp'])
-                    comment = revision['comment']
+                    comment = revision['comment'] if 'commenthidden' not in revision else None
                     tags = revision['tags']
                     yield WikiContrib(
                         timestamp, user_name, namespace, title, comment, is_live=False, tags=tags)

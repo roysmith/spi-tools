@@ -309,6 +309,47 @@ class DeletedUserContributionsTest(TestCase):
         self.assertEqual(list(deleted_contributions), [])
 
 
+    @patch('wiki_interface.wiki.List')
+    def test_deleted_user_contributions_handles_hidden_comment(self, mock_List):
+        # See https://www.mediawiki.org/wiki/API:Alldeletedrevisions#Response
+        example_response = {
+            "query": {
+                "alldeletedrevisions": [
+                    {
+                        "pageid": 0,
+                        "revisions": [
+                            {
+                                "timestamp": "2015-11-25T00:00:00Z",
+                                "commenthidden": "",
+                                "tags": ["t1"],
+                            },
+                        ],
+                        "ns": 0,
+                        "title": "p1",
+                    }
+                ]
+            }
+        }
+        pages = example_response['query']['alldeletedrevisions']
+        mock_List().__iter__ = Mock(return_value=iter(pages))
+        mock_List.generate_kwargs.side_effect = mwclient.listing.List.generate_kwargs
+        wiki = Wiki()
+
+        deleted_contributions = wiki.deleted_user_contributions('fred')
+        items = list(deleted_contributions)
+
+        args, kwargs = mock_List.call_args
+        self.assertIsInstance(args[0], mwclient.Site)
+        self.assertEqual(args[1:], ('alldeletedrevisions', 'adr'))
+        self.assertEqual(kwargs, {'uselang': None,
+                                  'adruser': 'fred',
+                                  'adrprop': 'title|timestamp|comment|flags|tags'})
+        self.assertEqual(items, [
+            WikiContrib(datetime(2015, 11, 25, tzinfo=timezone.utc),
+                        'fred', 0, 'p1', None, is_live=False, tags=["t1"]),
+            ])
+
+
 class GetUserBlocksTest(TestCase):
     # pylint: disable=invalid-name
 
