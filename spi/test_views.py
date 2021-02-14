@@ -218,52 +218,6 @@ class UserSummaryTest(ViewTestCase):
         self.assertEqual(summary.urlencoded_username(), 'foo%2Fbar')
 
 
-class SockInfoViewTest(ViewTestCase):
-    # pylint: disable=invalid-name
-
-
-    @patch('mwclient.Site', new_callable=MagicMock, spec=['pages', 'users'])
-    @patch('spi.views.render')
-    def test_get_with_empty_mw_queries_renders_one_summary(self, mock_render, mock_Site):
-        mock_site = mock_Site()
-        mock_site.pages.__getitem__().text.return_value = ''
-        mock_site.users().return_value = iter([{}])
-        mock_render.side_effect = self.render_patch
-        client = Client()
-
-        response = client.get('/spi/sock-info/Foo/')
-
-        self.assertEqual(response.templates, ['spi/sock-info.jinja'])
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['case_name'], 'Foo')
-        self.assertEqual(response.context['summaries'], [UserSummary('Foo', None)])
-
-
-class UserActivitiesViewTest(ViewTestCase):
-    # pylint: disable=invalid-name
-
-
-    @patch('spi.views.Wiki')
-    @patch('spi.views.render')
-    def test_mainspace_title_contains_colon(self, mock_render, mock_Wiki):
-        mock_Wiki().user_contributions.return_value = [
-            WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Batman: xxx', 'comment')]
-        mock_Wiki().deleted_user_contributions.return_value = []
-        mock_Wiki().namespace_values = {'': 0, 'Draft': 2}
-        mock_render.side_effect = self.render_patch
-        user_fred = get_user_model().objects.create_user('Fred')
-        client = Client()
-        client.force_login(user_fred, backend='django.contrib.auth.backends.ModelBackend')
-
-        response = client.get('/spi/user-activities/Foo', {'count': 10, 'main': 1}, follow=True)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates, ['spi/user-activities.jinja'])
-        edit_data = response.context['daily_activities'][0]
-        self.assertEqual(edit_data,
-                         ('primary', datetime(2020, 1, 1), 'edit', 'Batman: xxx', 'comment'))
-
-
 class TimelineViewTest(ViewTestCase):
     # pylint: disable=invalid-name
 

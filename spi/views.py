@@ -64,9 +64,6 @@ class IndexView(View):
             use_archive = form.cleaned_data['use_archive']
             if 'ip-info-button' in request.POST:
                 return redirect('spi-ip-analysis', case_name)
-            if 'sock-info-button' in request.POST:
-                return redirect('%s?archive=%d' % (reverse('spi-sock-info', args=[case_name]),
-                                                   use_archive))
             if 'sock-select-button' in request.POST:
                 return redirect('%s?archive=%d' % (reverse('spi-sock-select', args=[case_name]),
                                                    use_archive))
@@ -152,28 +149,6 @@ def get_sock_names(wiki, master_name, use_archive=True, include_invalid=False):
             yield user
 
 
-class SockInfoView(View):
-    def get(self, request, case_name):
-        wiki = Wiki()
-        socks = []
-        use_archive = int(request.GET.get('archive', 1))
-        for sock in get_sock_names(wiki, case_name, use_archive):
-            socks.append(sock)
-        summaries = list({self.make_user_summary(wiki, sock) for sock in socks})
-        # This is a hack to make users with no registration time sort to the
-        # beginning of the list.  We need to do something smarter here.
-        summaries.sort(key=lambda x: x.registration_time or "")
-        context = {'case_name': case_name,
-                   'summaries': summaries}
-        return render(request, 'spi/sock-info.jinja', context)
-
-
-    @staticmethod
-    def make_user_summary(wiki, sock):
-        username = sock.username
-        return UserSummary(username, wiki.get_registration_time(username))
-
-
 class SockSelectView(View):
     def get(self, request, case_name):
         wiki = Wiki()
@@ -241,91 +216,6 @@ class SockSelectView(View):
                 'invalid_users': invalid_users,
                 'dates': [v for (k, v) in sorted(keyed_dates)],
                 }
-
-
-class UserInfoView(View):
-    def get(self, request, user_name):
-        form = UserInfoForm(initial={'count': 100,
-                                     'main': True,
-                                     'draft': True,
-                                     })
-        context = {'user_name': urllib.parse.unquote_plus(user_name),
-                   'form': form}
-        return render(request, 'spi/user-info.jinja', context)
-
-    def post(self, request, user_name):
-        form = UserInfoForm(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            url = (f'{reverse("spi-user-activities", args=[user_name])}'
-                   f'?count={data["count"]}'
-                   f'&main={int(data["main"])}'
-                   f'&draft={int(data["draft"])}'
-                   f'&other={int(data["other"])}')
-            logger.debug("Redirecting to: %s", url)
-            return redirect(url)
-        logger.debug("post: not valid")
-        context = {'user_name': user_name,
-                   'form': form}
-        return render(request, 'spi/user-info.jinja', context)
-
-
-class UserActivitiesView(LoginRequiredMixin, View):
-    def get(self, request, user_name):
-        wiki = Wiki(request)
-        user_name = urllib.parse.unquote_plus(user_name)
-        logger.debug("user_name = %s", user_name)
-        count = int(request.GET.get('count', '1'))
-        namespace_filter = functools.partial(self.check_namespaces,
-                                             wiki.namespace_values,
-                                             bool(int(request.GET.get('main', 0))),
-                                             bool(int(request.GET.get('draft', 0))),
-                                             bool(int(request.GET.get('other', 0))))
-        active = wiki.user_contributions(user_name)
-
-        deleted = wiki.deleted_user_contributions(user_name)
-        merged = heapq.merge(active, deleted, reverse=True)
-        filtered = itertools.filterfalse(namespace_filter, merged)
-        counted = list(itertools.islice(filtered, count))
-        daily_activities = self.group_by_day(counted)
-        context = {'user_name': user_name,
-                   'daily_activities': daily_activities}
-        return render(request, 'spi/user-activities.jinja', context)
-
-
-    # https://github.com/roysmith/spi-tools/issues/51
-    @staticmethod
-    def check_namespaces(namespace_values, main, draft, other, contrib):
-        if contrib.namespace == namespace_values['']:
-            return not main
-        if contrib.namespace == namespace_values['Draft']:
-            return not draft
-        return not other
-
-
-    @staticmethod
-    def group_by_day(activities):
-        """Group activities into daily chunks.  Assumes that activities is
-        sorted in chronological order.
-
-        """
-        previous_date = None
-
-        # https://getbootstrap.com/docs/4.0/content/tables/#contextual-classes
-        date_groups = ['primary', 'secondary']
-
-        daily_activities = []
-        for activity in activities:
-            this_date = activity.timestamp.date()
-            daily_activities.append((date_groups[0],
-                                     activity.timestamp,
-                                     'edit' if activity.is_live else 'deleted',
-                                     activity.title,
-                                     activity.comment))
-            if this_date != previous_date:
-                date_groups.reverse()
-                previous_date = this_date
-        return daily_activities
 
 
 class TimecardView(View):
