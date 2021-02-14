@@ -39,10 +39,10 @@
           <div class="col-10">
             <div class="card mt-5">
               <div class="card-body text-muted bg-light">
-		<p class="my-0">PID = {{ data.PID }}</p>
+		<p class="my-0">Request = {{ request.id }} @ {{ data.REQUEST_START_TIME_UTC }}</p>
 		<p class="my-0">{{ data.VERSION_ID }} (DEBUG = {{ data.DEBUG_ENABLED }})</p>
-		<p class="my-0">up since {{ data.SERVER_START_TIME_UTC }}Z ({{ data.SERVER_UP_TIME }})</p>
-		<p class="my-0">request at {{ data.REQUEST_START_TIME_UTC }}Z (took {{ data.REQUEST_DURATION }}s)</p>
+		<p class="my-0">server up {{ data.SERVER_UP_TIME }}</p>
+		<p class="my-0">request took {{ data.REQUEST_DURATION }}s</p>
               </div>
             </div>
           </div>

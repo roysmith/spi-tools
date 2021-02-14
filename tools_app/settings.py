@@ -69,6 +69,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'log_request_id.middleware.RequestIDMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -196,6 +197,7 @@ DEBUG_TOOLBAR_CONFIG = {
 
 LOG_NAME = 'django-test.log' if 'manage.py' in sys.argv[0] else 'django.log'
 LOG_LEVEL = 'DEBUG' if 'dev' in TOOL_NAME else 'INFO'
+LOG_REQUEST_ID_HEADER = "HTTP_X_REQUEST_ID"
 
 LOGGING = {
     'version': 1,
@@ -208,6 +210,7 @@ LOGGING = {
             'when': 'D',
             'backupCount': 7,
             'utc': True,
+            'filters': ['request_id'],
             'formatter': 'file_formatter',
         },
         # Hack to get real-time logging, as a work-around to T256426 and T256482.
@@ -218,9 +221,14 @@ LOGGING = {
             'port': 23001,
         },
     },
+    'filters': {
+        'request_id': {
+            '()': 'log_request_id.filters.RequestIDFilter'
+        }
+    },
     'formatters': {
         'file_formatter': {
-            'format': '%(asctime)s [%(process)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
+            'format': '%(asctime)s [%(request_id)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
         },
     },
     'loggers': {
