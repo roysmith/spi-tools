@@ -135,6 +135,12 @@ class Wiki:
         If the mwclient connection is not authenticated to a
         user with admin rights, returns an empty iterable.
 
+        The current implementation stores and sorts all the
+        WikiContribs internally.  It may be possible to avoid this
+        in-memory storage using a merge sort, but it would be messy,
+        and probably not worth the effort, as the expected number of
+        deleted contributions is small.
+
         """
         kwargs = dict(List.generate_kwargs('adr',
                                            user=user_name,
@@ -147,6 +153,7 @@ class Wiki:
 
         # See https://www.mediawiki.org/wiki/API:Alldeletedrevisions#Response; this is
         # iterating over response['query']['alldeletedrevisions'].
+        contribs = []
         try:
             for page in listing:
                 title = page['title']
@@ -156,8 +163,8 @@ class Wiki:
                     timestamp = isoparse(revision['timestamp'])
                     comment = revision['comment'] if 'commenthidden' not in revision else None
                     tags = revision['tags']
-                    yield WikiContrib(
-                        timestamp, user_name, namespace, title, comment, is_live=False, tags=tags)
+                    contribs.append(WikiContrib(
+                        timestamp, user_name, namespace, title, comment, is_live=False, tags=tags))
         except APIError as ex:
             if ex.args[0] == 'permissiondenied':
                 logger.warning('Permission denied in wiki_interface.deleted_user_contributions()')
@@ -167,9 +174,10 @@ class Wiki:
                 # and the permission is lost between chunks.  At
                 # worst, this should result in incompplete data being
                 # returned, but that's not 100% clear.
-                return
+                return []
             raise
-
+        contribs.sort(reverse=True)
+        return contribs
 
 
     def get_user_blocks(self, user_name):

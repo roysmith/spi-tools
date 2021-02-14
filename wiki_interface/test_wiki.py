@@ -251,7 +251,7 @@ class DeletedUserContributionsTest(TestCase):
     # pylint: disable=invalid-name
 
     @patch('wiki_interface.wiki.List')
-    def test_deleted_user_contributions(self, mock_List):
+    def test_deleted_user_contributions_with_single_page(self, mock_List):
         # See https://www.mediawiki.org/wiki/API:Alldeletedrevisions#Response
         example_response = {
             "query": {
@@ -295,6 +295,76 @@ class DeletedUserContributionsTest(TestCase):
                         'fred', 0, 'p1', 'c1', is_live=False, tags=["t1"]),
             WikiContrib(datetime(2015, 11, 24, tzinfo=timezone.utc),
                         'fred', 0, 'p1', 'c2', is_live=False, tags=["t1", "t2"])])
+
+
+    @patch('wiki_interface.wiki.List')
+    def test_deleted_user_contributions_with_multiple_pages(self, mock_List):
+        # See https://www.mediawiki.org/wiki/API:Alldeletedrevisions#Response
+        response = {
+            "query": {
+                "alldeletedrevisions": [
+                    {
+                        "pageid": 0,
+                        "revisions": [
+                            {
+                                "timestamp": "2015-01-02T00:00:00Z",
+                                "comment": "c01",
+                                "tags": [],
+                            },
+                            {
+                                "timestamp": "2015-01-01T00:00:00Z",
+                                "comment": "c02",
+                                "tags": [],
+                            }
+                        ],
+                        "ns": 0,
+                        "title": "p1",
+                    },
+                    {
+                        "pageid": 1,
+                        "revisions": [
+                            {
+                                "timestamp": "2016-01-01T00:00:00Z",
+                                "comment": "c11",
+                                "tags": [],
+                            },
+                            {
+                                "timestamp": "2014-01-01T00:00:00Z",
+                                "comment": "c12",
+                                "tags": [],
+                            }
+                        ],
+                        "ns": 0,
+                        "title": "p2",
+                    }
+                ]
+            }
+        }
+        pages = response['query']['alldeletedrevisions']
+        mock_List().__iter__ = Mock(return_value=iter(pages))
+        mock_List.generate_kwargs.side_effect = mwclient.listing.List.generate_kwargs
+        wiki = Wiki()
+
+        deleted_contributions = wiki.deleted_user_contributions('fred')
+        items = list(deleted_contributions)
+
+        args, kwargs = mock_List.call_args
+        self.assertIsInstance(args[0], mwclient.Site)
+        self.assertEqual(args[1:], ('alldeletedrevisions', 'adr'))
+        self.assertEqual(kwargs, {'uselang': None,
+                                  'adruser': 'fred',
+                                  'adrprop': 'title|timestamp|comment|flags|tags'})
+        expected_items = [
+            WikiContrib(datetime(2016, 1, 1, tzinfo=timezone.utc),
+                        'fred', 0, 'p2', 'c11', is_live=False, tags=[]),
+            WikiContrib(datetime(2015, 1, 2, tzinfo=timezone.utc),
+                        'fred', 0, 'p1', 'c01', is_live=False, tags=[]),
+            WikiContrib(datetime(2015, 1, 1, tzinfo=timezone.utc),
+                        'fred', 0, 'p1', 'c02', is_live=False, tags=[]),
+            WikiContrib(datetime(2014, 1, 1, tzinfo=timezone.utc),
+                        'fred', 0, 'p2', 'c12', is_live=False, tags=[]),
+            ]
+        self.assertEqual(items, expected_items)
 
 
     @patch('wiki_interface.wiki.List')
