@@ -1,4 +1,5 @@
 import datetime
+import os
 from django.conf import settings
 
 def debug(request):
@@ -20,4 +21,5 @@ def debug(request):
             'SERVER_START_TIME_UTC': server_start_time.isoformat(timespec="seconds"),
             'SERVER_UP_TIME': datetime.timedelta(seconds=int(uptime.total_seconds())),
             'PRODUCTION_HOST_NAME': production_host_name,
+            'PID': os.getpid(),
             }
