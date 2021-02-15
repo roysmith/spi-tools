@@ -228,7 +228,7 @@ LOGGING = {
     },
     'formatters': {
         'file_formatter': {
-            'format': '%(asctime)s [%(request_id)s] %(levelname)s %(module)s.%(funcName)s: %(message)s',
+            'format': '%(asctime)s [%(request_id)s] %(levelname)s %(name)s: %(message)s',
         },
     },
     'loggers': {
