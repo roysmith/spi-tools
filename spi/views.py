@@ -201,7 +201,7 @@ class SockSelectView(View):
 
     @staticmethod
     def build_context(case_name, user_infos):
-        logger.info(user_infos)
+        logger.debug(user_infos)
         users_by_name = {user.username: user for user in user_infos}
         names = list({user.username for user in user_infos if user.valid})
         invalid_users = [user for user in user_infos if not user.valid]
