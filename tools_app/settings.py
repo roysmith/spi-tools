@@ -42,6 +42,9 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = TOOL_NAME.lower().endswith('-dev')
 
+# True if running unit tests
+TESTING = 'manage.py' in sys.argv[0]
+
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'tools.wmflabs.org',
@@ -82,6 +85,24 @@ MIDDLEWARE = [
     'tools_app.middleware.RequestAugmentationMiddleware',
     'tools_app.middleware.LoggingMiddleware',
 ]
+
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache' if TESTING else 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://tools-redis.svc.eqiad.wmflabs:6379/0',
+        'TIMEOUT': 3600 * 24,
+        'KEY_PREFIX': f'{TOOL_NAME}-523353a8-0347-4c4d-b4d5-fde0f127dbe3',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SERIALIZER': "django_redis.serializers.json.JSONSerializer",
+            'IGNORE_EXCEPTIONS': True,
+        }
+    }
+}
+DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS = True
+DJANGO_REDIS_LOGGER = 'tools_app.redis'
+
 
 ROOT_URLCONF = 'tools_app.urls'
 
@@ -195,7 +216,7 @@ DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda x: False,
     }
 
-LOG_NAME = 'django-test.log' if 'manage.py' in sys.argv[0] else 'django.log'
+LOG_NAME = 'django-test.log' if TESTING else 'django.log'
 LOG_LEVEL = 'DEBUG' if 'dev' in TOOL_NAME else 'INFO'
 LOG_REQUEST_ID_HEADER = "HTTP_X_REQUEST_ID"
 
