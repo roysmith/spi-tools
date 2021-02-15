@@ -86,24 +86,34 @@ class IndexView(View):
         added (and selected).
 
         """
-        wiki = Wiki()
-        # Leading empty element needed by select2.js placeholder.
-        transcluded_template = find_active_case_template(wiki)
-        names = [''] + get_current_case_names(wiki, transcluded_template)
+        names = IndexView.get_case_names()
         if case_name and case_name not in names:
             names.append(case_name)
         names.sort()
 
-        data = []
+        # Leading empty element for select2.js placeholder.
+        data = [{'id': '',
+                 'text': ''}]
         for name in names:
-            item = {"id": name,
-                    "text": name,
-                    }
-            if case_name and name == case_name:
+            item = {'id': name,
+                    'text': name}
+            if name == case_name:
                 item['selected'] = True
             data.append(item)
 
         return data
+
+
+    @staticmethod
+    def get_case_names():
+        """Get the case names from the on-wiki SPI case listing.
+
+        Returns a list of strings.
+
+        """
+        wiki = Wiki()
+        transcluded_template = find_active_case_template(wiki)
+        return get_current_case_names(wiki, transcluded_template)
 
 
 class IpAnalysisView(View):
