@@ -15,6 +15,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 
 
 from wiki_interface import Wiki
@@ -86,7 +87,7 @@ class IndexView(View):
         added (and selected).
 
         """
-        names = IndexView.get_case_names()
+        names = cache.get_or_set('IndexView.case_names', IndexView.get_case_names, 300)
         if case_name and case_name not in names:
             names.append(case_name)
         names.sort()
