@@ -92,10 +92,9 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.dummy.DummyCache' if TESTING else 'django_redis.cache.RedisCache',
         'LOCATION': 'redis://tools-redis.svc.eqiad.wmflabs:6379/0',
         'TIMEOUT': 3600 * 24,
-        'KEY_PREFIX': f'{TOOL_NAME}-523353a8-0347-4c4d-b4d5-fde0f127dbe3',
+        'KEY_PREFIX': f'{TOOL_NAME}-932G/R6YXqgw5J4mrtfeGXOOE2ttEyE7MDxbibuNY3M=',
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'SERIALIZER': "django_redis.serializers.json.JSONSerializer",
             'IGNORE_EXCEPTIONS': True,
         }
     }
