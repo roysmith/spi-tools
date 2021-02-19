@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import patch
+from unittest.mock import patch, call, NonCallableMock
 import textwrap
 from ipaddress import IPv4Network
 import mwparserfromhell
@@ -17,6 +17,66 @@ def make_source(text, case_name='whatever'):
 
 
 class SpiCaseTest(TestCase):
+    def test_for_master_with_no_data(self):
+        wiki = NonCallableMock(Wiki)
+        wiki.page().text.side_effect = [
+            textwrap.dedent(
+                '''
+                {{SPIarchive notice|1=Fred}}
+                '''),
+            textwrap.dedent(
+                '''
+                ''')]
+        wiki.reset_mock()
+
+        case = SpiCase.for_master(wiki, 'Fred')
+
+        self.assertEqual(wiki.page.call_args_list,
+                         [call('Wikipedia:Sockpuppet investigations/Fred'),
+                          call('Wikipedia:Sockpuppet investigations/Fred/Archive'),
+                         ])
+        self.assertEqual(case.master_name(), 'Fred')
+        self.assertEqual(list(case.days()), [])
+        self.assertEqual(list(case.find_all_ips()), [])
+        self.assertEqual(list(case.find_all_users()), [SpiUserInfo('Fred', None)])
+
+
+    def test_for_master_with_multiple_days(self):
+        wiki = NonCallableMock(Wiki)
+        wiki.page().text.side_effect = [
+            textwrap.dedent(
+                '''
+                {{SPIarchive notice|1=Fred}}
+                ===21 March 2019===
+                {{checkuser|user1}}
+                {{checkuser|user2}}
+                ===22 March 2019===
+                {{checkuser|user3}}
+                {{checkuser|user4}}
+
+                '''),
+            textwrap.dedent(
+                '''
+                ''')]
+        wiki.reset_mock()
+
+        case = SpiCase.for_master(wiki, 'Fred')
+
+        self.assertEqual(wiki.page.call_args_list,
+                         [call('Wikipedia:Sockpuppet investigations/Fred'),
+                          call('Wikipedia:Sockpuppet investigations/Fred/Archive'),
+                         ])
+        self.assertEqual(case.master_name(), 'Fred')
+        self.assertEqual(list(case.find_all_ips()), [])
+        self.assertEqual(list(case.find_all_users()),
+                         [SpiUserInfo('Fred', None),
+                          SpiUserInfo('user1', '21 March 2019'),
+                          SpiUserInfo('user2', '21 March 2019'),
+                          SpiUserInfo('user3', '22 March 2019'),
+                          SpiUserInfo('user4', '22 March 2019'),
+                         ])
+
+
     def test_master_name_returns_correct_value(self):
         text = '''
         {{SPIarchive notice|1=KaranSharma0445}}

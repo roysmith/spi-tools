@@ -121,7 +121,7 @@ class IpAnalysisView(View):
     def get(self, request, case_name):
         wiki = Wiki()
         ip_data = defaultdict(list)
-        for i in SpiCase.get_case(wiki, case_name).find_all_ips():
+        for i in SpiCase.for_master(wiki, case_name).find_all_ips():
             ip_data[i.ip_address].append(i.date)
         summaries = [IpSummary(ip, sorted(ip_data[ip])) for ip in ip_data]
         summaries.sort()
