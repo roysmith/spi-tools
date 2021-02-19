@@ -35,7 +35,7 @@ class SpiCaseTest(TestCase):
                          [call('Wikipedia:Sockpuppet investigations/Fred'),
                           call('Wikipedia:Sockpuppet investigations/Fred/Archive'),
                          ])
-        self.assertEqual(case.master_name(), 'Fred')
+        self.assertEqual(case.master_name, 'Fred')
         self.assertEqual(list(case.days()), [])
         self.assertEqual(list(case.find_all_ips()), [])
         self.assertEqual(list(case.find_all_users()), [SpiUserInfo('Fred', None)])
@@ -66,7 +66,7 @@ class SpiCaseTest(TestCase):
                          [call('Wikipedia:Sockpuppet investigations/Fred'),
                           call('Wikipedia:Sockpuppet investigations/Fred/Archive'),
                          ])
-        self.assertEqual(case.master_name(), 'Fred')
+        self.assertEqual(case.master_name, 'Fred')
         self.assertEqual(list(case.find_all_ips()), [])
         self.assertEqual(list(case.find_all_users()),
                          [SpiUserInfo('Fred', None),
@@ -82,7 +82,7 @@ class SpiCaseTest(TestCase):
         {{SPIarchive notice|1=KaranSharma0445}}
         '''
         case = SpiCase(make_source(text, 'CaseName'))
-        self.assertEqual(case.master_name(), 'CaseName')
+        self.assertEqual(case.master_name, 'CaseName')
 
 
     def test_days_returns_iterable_of_case_days(self):

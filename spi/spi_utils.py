@@ -38,7 +38,7 @@ class SpiParsedDocument(SpiDocumentBase):
 @dataclass
 class SpiCase:
     parsed_docs: List[SpiParsedDocument]
-    _master_name: str
+    master_name: str
 
 
     @staticmethod
@@ -77,11 +77,7 @@ class SpiCase:
             raise ArchiveError("No sockmaster name found")
         if len(master_names) > 1:
             raise ArchiveError("Multiple sockmaster names found: %s" % master_names)
-        self._master_name = master_names.pop()
-
-
-    def master_name(self):
-        return self._master_name
+        self.master_name = master_names.pop()
 
 
     def days(self):
@@ -109,7 +105,7 @@ class SpiCase:
         The master is included as a user, with date set to None.
 
         '''
-        yield SpiUserInfo(self.master_name(), None)
+        yield SpiUserInfo(self.master_name, None)
         for day in self.days():
             for user in day.find_users():
                 yield user
