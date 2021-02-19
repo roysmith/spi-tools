@@ -26,7 +26,6 @@ class CaseNameChoiceField(forms.ChoiceField):
 
 class CaseNameForm(forms.Form):
     case_name = CaseNameChoiceField()
-    use_archive = forms.BooleanField(label='Use archive?', initial=True, required=False)
 
 
 class SockSelectForm(forms.Form):

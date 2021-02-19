@@ -62,15 +62,12 @@ class IndexView(View):
                    }
         if form.is_valid():
             case_name = form.cleaned_data['case_name']
-            use_archive = form.cleaned_data['use_archive']
             if 'ip-info-button' in request.POST:
                 return redirect('spi-ip-analysis', case_name)
             if 'sock-select-button' in request.POST:
-                return redirect('%s?archive=%d' % (reverse('spi-sock-select', args=[case_name]),
-                                                   use_archive))
+                return redirect('%s' % (reverse('spi-sock-select', args=[case_name])))
             if 'g5-button' in request.POST:
-                return redirect('%s?archive=%d' % (reverse('spi-g5', args=[case_name]),
-                                                   use_archive))
+                return redirect('%s' % (reverse('spi-g5', args=[case_name])))
             message = 'No known button in POST (%s)' % request.POST.keys()
             logger.error(message)
             context['error'] = message
@@ -137,11 +134,8 @@ class ValidatedUser:
     valid: bool
 
 
-def get_sock_names(wiki, master_name, use_archive=True, include_invalid=False):
+def get_sock_names(wiki, master_name, include_invalid=False):
     """Returns a iterable over ValidatedUsers
-
-    If use_archive is true, both the current case and any existing
-    archive is used.  Otherwise, just the current case.
 
     Discovered usernames are checked for validity.  See
     Wiki.is_valid_username() for what it means to be valid.  By
@@ -149,7 +143,7 @@ def get_sock_names(wiki, master_name, use_archive=True, include_invalid=False):
     is true, they are included, but marked with valid=False.
 
     """
-    case = SpiCase.get_case(wiki, master_name, use_archive)
+    case = SpiCase.for_master(wiki, master_name)
     for user_info in case.find_all_users():
         name = user_info.username
         valid = wiki.is_valid_username(name)
@@ -163,8 +157,7 @@ def get_sock_names(wiki, master_name, use_archive=True, include_invalid=False):
 class SockSelectView(View):
     def get(self, request, case_name):
         wiki = Wiki()
-        use_archive = int(request.GET.get('archive', 1))
-        user_infos = list(get_sock_names(wiki, case_name, use_archive, include_invalid=True))
+        user_infos = list(get_sock_names(wiki, case_name, include_invalid=True))
         return render(request,
                       'spi/sock-select.jinja',
                       self.build_context(case_name, user_infos))
@@ -392,8 +385,7 @@ class G5Score:
 class G5View(View):
     def get(self, request, case_name):
         wiki = Wiki()
-        use_archive = int(request.GET.get('archive', 1))
-        sock_names = [s.username for s in get_sock_names(wiki, case_name, use_archive)]
+        sock_names = [s.username for s in get_sock_names(wiki, case_name)]
 
         history = UserBlockHistory(wiki.get_user_blocks(case_name))
 
