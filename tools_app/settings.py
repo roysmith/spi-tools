@@ -15,6 +15,7 @@ import re
 import sys
 import datetime
 import tools_app.git
+from uuid import uuid4
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -87,12 +88,15 @@ MIDDLEWARE = [
 ]
 
 
+# This configuration uses a short timeout and invalidates every cache
+# entry on every server restart, which only makes sense for a
+# development environment.
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.dummy.DummyCache' if TESTING else 'django_redis.cache.RedisCache',
         'LOCATION': 'redis://tools-redis.svc.eqiad.wmflabs:6379/0',
-        'TIMEOUT': 3600 * 24,
-        'KEY_PREFIX': f'{TOOL_NAME}-932G/R6YXqgw5J4mrtfeGXOOE2ttEyE7MDxbibuNY3M=',
+        'TIMEOUT': 300,
+        'KEY_PREFIX': str(uuid4()),
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
             'IGNORE_EXCEPTIONS': True,
