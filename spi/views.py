@@ -133,30 +133,33 @@ class ValidatedUser:
     valid: bool
 
 
-def get_sock_names(wiki, master_name, include_invalid=False):
+def get_sock_names(wiki, master_name):
     """Returns a iterable over ValidatedUsers
 
     Discovered usernames are checked for validity.  See
-    Wiki.is_valid_username() for what it means to be valid.  By
-    default, invalid names are silently dropped.  If include_invalid
-    is true, they are included, but marked with valid=False.
+    Wiki.is_valid_username() for what it means to be valid.
 
     """
-    case = SpiCase.for_master(wiki, master_name)
-    for user_info in case.find_all_users():
-        name = user_info.username
-        valid = wiki.is_valid_username(name)
-        user = ValidatedUser(name, user_info.date, valid)
-        if not valid:
-            logger.warning('invalid username (%s) in case "%s"', user, master_name)
-        if valid or include_invalid:
-            yield user
-
+    key = f'views.get_sock_names.{master_name}'
+    users = cache.get(key)
+    if users is None:
+        case = SpiCase.for_master(wiki, master_name)
+        # Need to work out cache invalidation
+        users = []
+        for user_info in case.find_all_users():
+            name = user_info.username
+            valid = wiki.is_valid_username(name)
+            user = ValidatedUser(name, user_info.date, valid)
+            if not valid:
+                logger.warning('invalid username (%s) in case "%s"', user, master_name)
+            users.append(user)
+        cache.set(key, users, 300)
+    return users
 
 class SockSelectView(View):
     def get(self, request, case_name):
         wiki = Wiki()
-        user_infos = list(get_sock_names(wiki, case_name, include_invalid=True))
+        user_infos = list(get_sock_names(wiki, case_name))
         return render(request,
                       'spi/sock-select.jinja',
                       self.build_context(case_name, user_infos))
@@ -384,7 +387,8 @@ class G5Score:
 class G5View(View):
     def get(self, request, case_name):
         wiki = Wiki()
-        sock_names = [s.username for s in get_sock_names(wiki, case_name)]
+        socks = get_sock_names(wiki, case_name)
+        sock_names = [s.username for s in socks if s.valid]
 
         history = UserBlockHistory(wiki.get_user_blocks(case_name))
 
