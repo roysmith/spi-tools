@@ -218,7 +218,7 @@ class SpiIpInfo:
         return IPv4Network((prefix, prefix_length))
 
 
-def get_current_case_names(wiki, template_name):
+def get_current_case_names(wiki):
     """Return a list of the currently active SPI case names as strings.
 
     It is possible for the source template to have duplicates.  Only
@@ -228,6 +228,7 @@ def get_current_case_names(wiki, template_name):
     https://github.com/roysmith/spi-tools/issues/133 for details.
 
     """
+    template_name = _find_active_case_template(wiki)
     overview = wiki.page(template_name).text()
     wikicode = parse(overview)
     templates = wikicode.filter_templates(matches=lambda n: n.name.matches('SPIstatusentry'))
@@ -235,7 +236,7 @@ def get_current_case_names(wiki, template_name):
     return [name for name in raw_names if '/' not in name]
 
 
-def find_active_case_template(wiki):
+def _find_active_case_template(wiki):
     """Return the name of the curently active template listing SPI cases.
 
     Returns None if the template can't be determined.

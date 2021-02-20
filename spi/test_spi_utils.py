@@ -6,7 +6,7 @@ import mwparserfromhell
 
 from wiki_interface import Wiki
 from spi.spi_utils import (SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo,
-                           ArchiveError, get_current_case_names, find_active_case_template)
+                           ArchiveError, get_current_case_names, _find_active_case_template)
 
 
 def make_code(text):
@@ -364,18 +364,22 @@ class GetCurrentCaseNamesTest(TestCase):
     # pylint: disable=invalid-name
 
     @patch('wiki_interface.wiki.Site')
-    def test_no_entries(self, mock_Site):
+    @patch('spi.spi_utils._find_active_case_template')
+    def test_no_entries(self, mock__find_active_case_template, mock_Site):
+        mock__find_active_case_template.return_value = 'whatever'
         mock_Site().pages.__getitem__().text.return_value = ''
 
         wiki = Wiki()
-        names = get_current_case_names(wiki, 'whatever')
+        names = get_current_case_names(wiki)
 
         self.assertEqual(names, [])
         mock_Site().pages.__getitem__().text.assert_called_once_with()
 
 
     @patch('wiki_interface.wiki.Site')
-    def test_multiple_entries_with_duplicates(self, mock_Site):
+    @patch('spi.spi_utils._find_active_case_template')
+    def test_multiple_entries_with_duplicates(self, mock__find_active_case_template, mock_Site):
+        mock__find_active_case_template.return_value = 'whatever'
         mock_Site().pages.__getitem__().text.return_value = '''
         {{SPIstatusheader}}
         {{SPIstatusentry|Rajumitwa878|--|--|--|--|--|--}}
@@ -385,14 +389,16 @@ class GetCurrentCaseNamesTest(TestCase):
         '''
 
         wiki = Wiki()
-        names = get_current_case_names(wiki, 'whatever')
+        names = get_current_case_names(wiki)
 
         self.assertCountEqual(names, ['Rajumitwa878', 'AntiRacistSwede', 'Trumanshow69'])
         mock_Site().pages.__getitem__().text.assert_called_once_with()
 
 
     @patch('wiki_interface.wiki.Site')
-    def test_case_name_with_slash(self, mock_Site):
+    @patch('spi.spi_utils._find_active_case_template')
+    def test_case_name_with_slash(self, mock__find_active_case_template, mock_Site):
+        mock__find_active_case_template.return_value = 'whatever'
         mock_Site().pages.__getitem__().text.return_value = '''
         {{SPIstatusheader}}
         {{SPIstatusentry|Rajumitwa878|--|--|--|--|--|--}}
@@ -401,7 +407,7 @@ class GetCurrentCaseNamesTest(TestCase):
         '''
 
         wiki = Wiki()
-        names = get_current_case_names(wiki, 'whatever')
+        names = get_current_case_names(wiki)
 
         self.assertEqual(set(names), {'Rajumitwa878', 'AntiRacistSwede'})
         mock_Site().pages.__getitem__().text.assert_called_once_with()
@@ -420,7 +426,7 @@ class FindActiveCaseTemplateTest(TestCase):
         '''
 
         wiki = Wiki()
-        template = find_active_case_template(wiki)
+        template = _find_active_case_template(wiki)
         self.assertEqual(template, 'Wikipedia:Sockpuppet investigations/Cases/Overview')
 
 
@@ -435,7 +441,7 @@ class FindActiveCaseTemplateTest(TestCase):
         '''
 
         wiki = Wiki()
-        template = find_active_case_template(wiki)
+        template = _find_active_case_template(wiki)
         self.assertEqual(template, 'User:AmandaNP/SPI case list')
 
 
@@ -451,5 +457,5 @@ class FindActiveCaseTemplateTest(TestCase):
         '''
 
         wiki = Wiki()
-        template = find_active_case_template(wiki)
+        template = _find_active_case_template(wiki)
         self.assertIsNone(template)

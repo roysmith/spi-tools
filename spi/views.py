@@ -21,7 +21,7 @@ from django.core.cache import cache
 from wiki_interface import Wiki
 from wiki_interface.block_utils import BlockEvent, UnblockEvent, UserBlockHistory
 from spi.forms import CaseNameForm, SockSelectForm, UserInfoForm
-from spi.spi_utils import SpiIpInfo, SpiCase, get_current_case_names, find_active_case_template
+from spi.spi_utils import SpiIpInfo, SpiCase, get_current_case_names
 
 
 logger = logging.getLogger('spi.views')
@@ -110,8 +110,7 @@ class IndexView(View):
 
         """
         wiki = Wiki()
-        transcluded_template = find_active_case_template(wiki)
-        return get_current_case_names(wiki, transcluded_template)
+        return get_current_case_names(wiki)
 
 
 class IpAnalysisView(View):
