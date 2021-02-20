@@ -1,6 +1,6 @@
 from unittest import TestCase
 from unittest.mock import patch, call, NonCallableMock
-import textwrap
+from textwrap import dedent
 from ipaddress import IPv4Network
 import mwparserfromhell
 
@@ -10,21 +10,21 @@ from spi.spi_utils import (SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, Sp
 
 
 def make_code(text):
-    return mwparserfromhell.parse(textwrap.dedent(text))
+    return mwparserfromhell.parse(dedent(text))
 
 def make_source(text, case_name='whatever'):
-    return SpiSourceDocument(case_name, textwrap.dedent(text))
+    return SpiSourceDocument(case_name, dedent(text))
 
 
 class SpiCaseTest(TestCase):
     def test_for_master_with_no_data(self):
         wiki = NonCallableMock(Wiki)
         wiki.page().text.side_effect = [
-            textwrap.dedent(
+            dedent(
                 '''
                 {{SPIarchive notice|1=Fred}}
                 '''),
-            textwrap.dedent(
+            dedent(
                 '''
                 ''')]
         wiki.reset_mock()
@@ -44,7 +44,7 @@ class SpiCaseTest(TestCase):
     def test_for_master_with_multiple_days(self):
         wiki = NonCallableMock(Wiki)
         wiki.page().text.side_effect = [
-            textwrap.dedent(
+            dedent(
                 '''
                 {{SPIarchive notice|1=Fred}}
                 ===21 March 2019===
@@ -55,7 +55,7 @@ class SpiCaseTest(TestCase):
                 {{checkuser|user4}}
 
                 '''),
-            textwrap.dedent(
+            dedent(
                 '''
                 ''')]
         wiki.reset_mock()
