@@ -14,6 +14,7 @@ class WikiContrib:
     comment, the comment attribute will be the empty string.
 
     '''
+    rev_id: int
     timestamp: datetime.datetime
     user_name: str
     namespace: int

@@ -226,11 +226,11 @@ class TimelineViewTest(ViewTestCase):
     @patch('spi.views.render')
     def test_event_list(self, mock_render, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
-            WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment'),
-            WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment'),
+            WikiContrib(103, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment'),
+            WikiContrib(101, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment'),
         ]
         mock_Wiki().deleted_user_contributions.return_value = [
-            WikiContrib(datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', False)]
+            WikiContrib(102, datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', False)]
         mock_Wiki().get_user_blocks.return_value = [
             BlockEvent('Wilma', datetime(2020, 2, 1))]
         mock_Wiki().get_user_log_events.return_value = [
@@ -256,9 +256,9 @@ class TimelineViewTest(ViewTestCase):
     @patch('spi.views.render')
     def test_edit_event_includes_tags(self, mock_render, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
-            WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', is_live=True, tags=[]),
-            WikiContrib(datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', is_live=True, tags=['tag']),
-            WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', is_live=True, tags=['tag1', 'tag2']),
+            WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', is_live=True, tags=[]),
+            WikiContrib(1002, datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', is_live=True, tags=['tag']),
+            WikiContrib(1003, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', is_live=True, tags=['tag1', 'tag2']),
         ]
         mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')
@@ -278,7 +278,7 @@ class TimelineViewTest(ViewTestCase):
     @patch('spi.views.render')
     def test_deleted_edit_event_includes_tags(self, mock_render, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
-            WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', is_live=False, tags=['tag1', 'tag2']),
+            WikiContrib(1001, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', is_live=False, tags=['tag1', 'tag2']),
         ]
         mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')
@@ -295,7 +295,7 @@ class TimelineViewTest(ViewTestCase):
     @patch('spi.views.Wiki')
     def test_html_includes_tags(self, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
-            WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', tags=['my test tag']),
+            WikiContrib(1001, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', tags=['my test tag']),
         ]
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
@@ -311,11 +311,11 @@ class TimelineViewTest(ViewTestCase):
     @patch('spi.views.render')
     def test_context_includes_tag_list(self, mock_render, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
-            WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', tags=[]),
-            WikiContrib(datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', tags=['tag']),
-            WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', tags=['tag1', 'tag2', 'tag4']),
-            WikiContrib(datetime(2020, 1, 4), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag3']),
-            WikiContrib(datetime(2020, 1, 5), 'Barney', 0, 'Title', 'comment', tags=['tag1', 'tag2']),
+            WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', tags=[]),
+            WikiContrib(1002, datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', tags=['tag']),
+            WikiContrib(1003, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', tags=['tag1', 'tag2', 'tag4']),
+            WikiContrib(1004, datetime(2020, 1, 4), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag3']),
+            WikiContrib(1005, datetime(2020, 1, 5), 'Barney', 0, 'Title', 'comment', tags=['tag1', 'tag2']),
         ]
         mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')
@@ -333,12 +333,12 @@ class TimelineViewTest(ViewTestCase):
     def test_context_includes_tag_table(self, mock_render, mock_Wiki):
         def mock_user_contributions(user_name):
             if user_name == 'Fred':
-                return [WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', tags=[]),
-                        WikiContrib(datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', tags=['tag1', 'tag2', 'tag3']),
-                        WikiContrib(datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', tags=['tag1', 'tag2', 'tag4'])]
+                return [WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', tags=[]),
+                        WikiContrib(1002, datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', tags=['tag1', 'tag2', 'tag3']),
+                        WikiContrib(1003, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', tags=['tag1', 'tag2', 'tag4'])]
             if user_name == 'Wilma':
-                return [WikiContrib(datetime(2020, 1, 4), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag3']),
-                        WikiContrib(datetime(2020, 1, 5), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag2'])]
+                return [WikiContrib(2001, datetime(2020, 1, 4), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag3']),
+                        WikiContrib(2002, datetime(2020, 1, 5), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag2'])]
             return []
 
         mock_Wiki().user_contributions.side_effect = mock_user_contributions
@@ -359,7 +359,7 @@ class TimelineViewTest(ViewTestCase):
     @patch('spi.views.render')
     def test_hidden_contribution_comments_render_as_hidden(self, mock_render, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
-            WikiContrib(datetime(2020, 1, 1), 'Fred', 0, 'Title', None, tags=[]),
+            WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', None, tags=[]),
         ]
         mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')

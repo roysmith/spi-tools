@@ -114,11 +114,12 @@ class Wiki:
                 raise ValueError(f'"|" in user name: {str_name}')
             all_names.append(str_name)
 
-        props = 'title|timestamp|comment|flags|tags'
+        props = 'ids|title|timestamp|comment|flags|tags'
         for chunk in chunked(all_names, self.MAX_UCUSER):
             for contrib in self.site.usercontributions('|'.join(chunk), show=show, prop=props):
                 logger.debug("contrib = %s", contrib)
-                yield WikiContrib(struct_to_datetime(contrib['timestamp']),
+                yield WikiContrib(contrib['revid'],
+                                  struct_to_datetime(contrib['timestamp']),
                                   contrib['user'],
                                   contrib['ns'],
                                   contrib['title'],
@@ -144,7 +145,7 @@ class Wiki:
         """
         kwargs = dict(List.generate_kwargs('adr',
                                            user=user_name,
-                                           prop='title|timestamp|comment|flags|tags'))
+                                           prop='ids|title|timestamp|comment|flags|tags'))
         listing = List(self.site,
                        'alldeletedrevisions',
                        'adr',
@@ -159,12 +160,13 @@ class Wiki:
                 title = page['title']
                 namespace = page['ns']
                 for revision in page['revisions']:
+                    rev_id = revision['revid']
                     logger.debug("deleted revision = %s", revision)
                     timestamp = isoparse(revision['timestamp'])
                     comment = revision['comment'] if 'commenthidden' not in revision else None
                     tags = revision['tags']
                     contribs.append(WikiContrib(
-                        timestamp, user_name, namespace, title, comment, is_live=False, tags=tags))
+                        rev_id, timestamp, user_name, namespace, title, comment, is_live=False, tags=tags))
         except APIError as ex:
             if ex.args[0] == 'permissiondenied':
                 logger.warning('Permission denied in wiki_interface.deleted_user_contributions()')
@@ -264,7 +266,8 @@ class Page:
     def revisions(self):
         for rev in self.mw_page.revisions():
             comment = rev['comment'] if 'commenthidden' not in rev else None
-            yield WikiContrib(struct_to_datetime(rev['timestamp']),
+            yield WikiContrib(rev['revid'],
+                              struct_to_datetime(rev['timestamp']),
                               rev['user'],
                               self.mw_page.namespace,
                               self.mw_page.name,
