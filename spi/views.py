@@ -22,6 +22,7 @@ from wiki_interface import Wiki
 from wiki_interface.block_utils import BlockEvent, UnblockEvent, UserBlockHistory
 from spi.forms import CaseNameForm, SockSelectForm, UserInfoForm
 from spi.spi_utils import SpiIpInfo, SpiCase, get_current_case_names
+from spi.profiler import profile
 
 
 logger = logging.getLogger('spi.views')
