@@ -265,7 +265,7 @@ class Page:
 
     def revisions(self, *, count=None):
         revisions = self.mw_page.revisions()
-        if count:
+        if count is not None:
             revisions = islice(revisions, count)
         for rev in revisions:
             comment = rev['comment'] if 'commenthidden' not in rev else None
