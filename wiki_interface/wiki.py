@@ -263,8 +263,11 @@ class Page:
         return self.mw_page.exists
 
 
-    def revisions(self):
-        for rev in self.mw_page.revisions():
+    def revisions(self, *, count=None):
+        revisions = self.mw_page.revisions()
+        if count:
+            revisions = islice(revisions, count)
+        for rev in revisions:
             comment = rev['comment'] if 'commenthidden' not in rev else None
             yield WikiContrib(rev['revid'],
                               struct_to_datetime(rev['timestamp']),

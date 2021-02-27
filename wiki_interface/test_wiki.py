@@ -667,6 +667,21 @@ class PageTest(TestCase):
         ])
 
 
+    @patch('wiki_interface.wiki.Site')
+    def test_revisions_with_count(self, mock_Site):
+        mock_Site().pages.__getitem__().revisions.return_value = [
+            {'revid': 20200730, 'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0), 'user': 'fred', 'comment': 'c1'},
+            {'revid': 20200729, 'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0), 'user': 'fred', 'comment': 'c2'}]
+        mock_Site().pages.__getitem__().name = 'blah'
+        mock_Site().pages.__getitem__().namespace = 0
+        wiki = Wiki()
+
+        revisions = list(wiki.page('blah').revisions(count=1))
+
+        self.assertEqual(revisions,
+                         [WikiContrib(20200730, datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 0, 'blah', 'c1')])
+
+
 class IsValidUsernameTest(TestCase):
     #pylint: disable=invalid-name
 
