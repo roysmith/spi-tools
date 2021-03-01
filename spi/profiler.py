@@ -25,7 +25,7 @@ def profile(log_file):
     """
 
     if not os.path.isabs(log_file):
-        log_file = os.path.join(settings.PROFILE_LOG_BASE, log_file)
+        log_file = os.path.join(settings.PROFILE_DIR, log_file)
 
     def _outer(f):
         def _inner(*args, **kwargs):
