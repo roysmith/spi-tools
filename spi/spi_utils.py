@@ -1,9 +1,14 @@
-from dataclasses import dataclass
+from __future__ import annotations
+
+from dataclasses import dataclass, field
 from typing import List
 from ipaddress import IPv4Address, IPv4Network
+from itertools import chain
 
 from mwparserfromhell import parse
 from mwparserfromhell.wikicode import Wikicode
+
+from django.core.cache import cache
 
 
 class ArchiveError(ValueError):
@@ -35,6 +40,31 @@ class SpiParsedDocument(SpiDocumentBase):
     wikicode: Wikicode
 
 
+@dataclass(frozen=True)
+class CacheableSpiCase:
+    master_name: str
+    rev_id: int = None
+    users: List[SpiUserInfo] = field(default_factory=list)
+    ip_addresses: List[SpiIpInfo] = field(default_factory=list)
+
+
+    @staticmethod
+    def get(wiki, master_name):
+        titles = (f'Wikipedia:Sockpuppet investigations/{master_name}{suffix}' for suffix in ['', '/Archive'])
+        revisions = chain.from_iterable([wiki.page(t).revisions(count=1) for t in titles])
+        rev_id = max(r.rev_id for r in revisions)
+        key = f'spi.CacheableSpiCase.{master_name}'
+        case = cache.get(key, version=rev_id)
+        if case is None:
+            case = SpiCase.for_master(wiki, master_name)
+            case = CacheableSpiCase(master_name,
+                                    rev_id,
+                                    list(case.find_all_users()),
+                                    list(case.find_all_ips()))
+            cache.set(key, case, version=rev_id)
+        return case
+
+
 @dataclass
 class SpiCase:
     parsed_docs: List[SpiParsedDocument]
@@ -51,7 +81,6 @@ class SpiCase:
         case_title = f'Wikipedia:Sockpuppet investigations/{master_name}'
         case_doc = SpiSourceDocument(case_title, wiki.page(case_title).text())
         docs = [case_doc]
-
         archive_title = f'{case_title}/Archive'
         archive_text = wiki.page(archive_title).text()
         if archive_text:

@@ -21,7 +21,7 @@ from django.core.cache import cache
 from wiki_interface import Wiki
 from wiki_interface.block_utils import BlockEvent, UnblockEvent, UserBlockHistory
 from spi.forms import CaseNameForm, SockSelectForm, UserInfoForm
-from spi.spi_utils import SpiIpInfo, SpiCase, get_current_case_names
+from spi.spi_utils import SpiIpInfo, CacheableSpiCase, get_current_case_names
 from spi.profiler import profile
 
 
@@ -118,7 +118,7 @@ class IpAnalysisView(View):
     def get(self, request, case_name):
         wiki = Wiki()
         ip_data = defaultdict(list)
-        for i in SpiCase.for_master(wiki, case_name).find_all_ips():
+        for i in CacheableSpiCase.get(wiki, case_name).ip_address:
             ip_data[i.ip_address].append(i.date)
         summaries = [IpSummary(ip, sorted(ip_data[ip])) for ip in ip_data]
         summaries.sort()
@@ -144,10 +144,10 @@ def get_sock_names(wiki, master_name):
     key = f'views.get_sock_names.{master_name}'
     users = cache.get(key)
     if users is None:
-        case = SpiCase.for_master(wiki, master_name)
+        case = CacheableSpiCase.get(wiki, master_name)
         # Need to work out cache invalidation
         users = []
-        for user_info in case.find_all_users():
+        for user_info in case.users:
             name = user_info.username
             valid = wiki.is_valid_username(name)
             user = ValidatedUser(name, user_info.date, valid)

@@ -2,10 +2,12 @@ from unittest import TestCase
 from unittest.mock import patch, call, NonCallableMock
 from textwrap import dedent
 from ipaddress import IPv4Network
+from datetime import datetime
 import mwparserfromhell
 
 from wiki_interface import Wiki
-from spi.spi_utils import (SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo,
+from wiki_interface.data import WikiContrib
+from spi.spi_utils import (SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo, CacheableSpiCase,
                            ArchiveError, get_current_case_names, _find_active_case_template)
 
 
@@ -14,6 +16,178 @@ def make_code(text):
 
 def make_source(text, case_name='whatever'):
     return SpiSourceDocument(case_name, dedent(text))
+
+
+class CacheableSpiCaseTest(TestCase):
+    @patch('spi.spi_utils.cache')
+    def test_construct(self, cache):
+        case = CacheableSpiCase('Fred')
+
+        cache.get.assert_not_called()
+        cache.set.assert_not_called()
+        self.assertEqual(case.master_name, 'Fred')
+
+
+    @patch('spi.spi_utils.cache')
+    def test_get_with_empty_cache_and_empty_case(self, cache):
+        wiki = NonCallableMock(Wiki)
+        wiki.page().revisions.side_effect = [
+            [WikiContrib(2020_07_29, datetime(2020, 7, 29), 'user1', 4, 'Wikipedia:Sockpuppet investigations/Fred', '')],
+            [WikiContrib(2020_07_28, datetime(2020, 7, 28), 'user1', 4, 'Wikipedia:Sockpuppet investigations/Fred/Archive', '')],
+        ]
+        wiki.page().text.side_effect = [
+            dedent(
+                '''
+                {{SPIarchive notice|1=Fred}}
+                '''),
+            dedent(
+                '''
+                ''')]
+        cache.get.return_value = None
+        wiki.page.reset_mock()
+
+        case = CacheableSpiCase.get(wiki, 'Fred')
+
+        expected_case = CacheableSpiCase('Fred',
+                                         2020_07_29,
+                                         [SpiUserInfo('Fred', None)],
+                                         [])
+        self.assertEqual(wiki.page.call_args_list, [
+            call('Wikipedia:Sockpuppet investigations/Fred'),
+            call('Wikipedia:Sockpuppet investigations/Fred/Archive'),
+            call('Wikipedia:Sockpuppet investigations/Fred'),
+            call('Wikipedia:Sockpuppet investigations/Fred/Archive'),
+        ])
+        cache.get.assert_called_once_with('spi.CacheableSpiCase.Fred', version=2020_07_29)
+        cache.set.assert_called_once_with('spi.CacheableSpiCase.Fred', expected_case, version=2020_07_29)
+        self.assertEqual(case, expected_case)
+
+
+    @patch('spi.spi_utils.cache')
+    def test_rev_id_is_populated_with_latest_id_from_current_page(self, cache):
+        wiki = NonCallableMock(Wiki)
+        wiki.page().revisions.side_effect = [
+            [WikiContrib(2020_07_29, datetime(2020, 7, 29), 'user1', 4, 'Wikipedia:Sockpuppet investigations/Fred', '')],
+            [WikiContrib(2020_07_28, datetime(2020, 7, 28), 'user1', 4, 'Wikipedia:Sockpuppet investigations/Fred/Archive', '')],
+        ]
+        wiki.page().text.side_effect = [
+            dedent(
+                '''
+                {{SPIarchive notice|1=Fred}}
+                '''),
+            dedent(
+                '''
+                ''')]
+        cache.get.return_value = None
+        wiki.page.reset_mock()
+
+        case = CacheableSpiCase.get(wiki, 'Fred')
+
+        expected_case = CacheableSpiCase('Fred',
+                                         2020_07_29,
+                                         [SpiUserInfo('Fred', None)],
+                                         [])
+        self.assertEqual(wiki.page.call_args_list, [
+            call('Wikipedia:Sockpuppet investigations/Fred'),
+            call('Wikipedia:Sockpuppet investigations/Fred/Archive'),
+            call('Wikipedia:Sockpuppet investigations/Fred'),
+            call('Wikipedia:Sockpuppet investigations/Fred/Archive'),
+            ])
+        cache.get.assert_called_once_with('spi.CacheableSpiCase.Fred', version=2020_07_29)
+        cache.set.assert_called_once_with('spi.CacheableSpiCase.Fred', expected_case, version=2020_07_29)
+        self.assertEqual(case.rev_id, 2020_07_29)
+
+
+    @patch('spi.spi_utils.cache')
+    def test_rev_id_is_populated_with_latest_id_from_archive(self, cache):
+        wiki = NonCallableMock(Wiki)
+        wiki.page().revisions.side_effect = [
+            [WikiContrib(2020_07_29, datetime(2020, 7, 29), 'user1', 4, 'Wikipedia:Sockpuppet investigations/Fred', '')],
+            [WikiContrib(2020_07_30, datetime(2020, 7, 30), 'user1', 4, 'Wikipedia:Sockpuppet investigations/Fred/Archive', '')],
+        ]
+        wiki.page().text.side_effect = [
+            dedent(
+                '''
+                {{SPIarchive notice|1=Fred}}
+                '''),
+            dedent(
+                '''
+                ''')]
+        cache.get.return_value = None
+        wiki.page.reset_mock()
+
+        case = CacheableSpiCase.get(wiki, 'Fred')
+
+        expected_case = CacheableSpiCase('Fred',
+                                         2020_07_30,
+                                         [SpiUserInfo('Fred', None)],
+                                         [])
+        self.assertEqual(wiki.page.call_args_list, [
+            call('Wikipedia:Sockpuppet investigations/Fred'),
+            call('Wikipedia:Sockpuppet investigations/Fred/Archive'),
+            call('Wikipedia:Sockpuppet investigations/Fred'),
+            call('Wikipedia:Sockpuppet investigations/Fred/Archive'),
+            ])
+        cache.get.assert_called_once_with('spi.CacheableSpiCase.Fred', version=2020_07_30)
+        cache.set.assert_called_once_with('spi.CacheableSpiCase.Fred', expected_case, version=2020_07_30)
+        self.assertEqual(case.rev_id, 2020_07_30)
+
+
+    @patch('spi.spi_utils.cache')
+    def test_rev_id_is_populated_with_current_page_id_if_archive_is_missing(self, cache):
+        wiki = NonCallableMock(Wiki)
+        wiki.page().revisions.side_effect = [
+            [WikiContrib(2020_07_29, datetime(2020, 7, 29), 'user1', 4, 'Wikipedia:Sockpuppet investigations/Fred', '')],
+            [],
+        ]
+        wiki.page().text.side_effect = [
+            dedent(
+                '''
+                {{SPIarchive notice|1=Fred}}
+                '''),
+            dedent(
+                '''
+                ''')]
+        cache.get.return_value = None
+        wiki.page.reset_mock()
+
+        case = CacheableSpiCase.get(wiki, 'Fred')
+
+        expected_case = CacheableSpiCase('Fred',
+                                         2020_07_29,
+                                         [SpiUserInfo('Fred', None)],
+                                         [])
+        self.assertEqual(wiki.page.call_args_list, [
+            call('Wikipedia:Sockpuppet investigations/Fred'),
+            call('Wikipedia:Sockpuppet investigations/Fred/Archive'),
+            call('Wikipedia:Sockpuppet investigations/Fred'),
+            call('Wikipedia:Sockpuppet investigations/Fred/Archive'),
+        ])
+        cache.get.assert_called_once_with('spi.CacheableSpiCase.Fred', version=2020_07_29)
+        cache.set.assert_called_once_with('spi.CacheableSpiCase.Fred', expected_case, version=2020_07_29)
+        self.assertEqual(case.rev_id, 2020_07_29)
+
+
+    @patch('spi.spi_utils.cache')
+    def test_cached_value_is_used_if_version_matches(self, cache):
+        wiki = NonCallableMock(Wiki)
+        wiki.page().revisions.side_effect = [
+            [WikiContrib(2020_07_29, datetime(2020, 7, 29), 'user1', 4, 'Wikipedia:Sockpuppet investigations/Fred', '')],
+            [],
+        ]
+        cache.get.return_value = CacheableSpiCase('Fred', 2020_07_29)
+        wiki.page.reset_mock()
+        cache.reset_mock()
+
+        case = CacheableSpiCase.get(wiki, 'Fred')
+
+        self.assertEqual(wiki.page.call_args_list, [
+            call('Wikipedia:Sockpuppet investigations/Fred'),
+            call('Wikipedia:Sockpuppet investigations/Fred/Archive'),
+        ])
+        cache.get.assert_called_once_with('spi.CacheableSpiCase.Fred', version=2020_07_29)
+        cache.set.assert_not_called()
+        self.assertEqual(case.rev_id, 2020_07_29)
 
 
 class SpiCaseTest(TestCase):

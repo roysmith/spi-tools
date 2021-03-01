@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import textwrap
 from datetime import datetime
 
@@ -13,6 +13,7 @@ from django.shortcuts import render
 from wiki_interface.data import WikiContrib, LogEvent
 from wiki_interface.block_utils import BlockEvent
 from spi.views import SockSelectView, UserSummary, TimelineEvent, ValidatedUser, IndexView
+from spi.spi_utils import CacheableSpiCase
 
 
 class ViewTestCase(TestCase):
@@ -127,8 +128,10 @@ class SockSelectViewTest(ViewTestCase):
         self.assertEqual(items, expected_items)
 
 
+
     @patch('wiki_interface.wiki.Site')
-    def test_mismatched_quotes(self, mock_Site):
+    @patch('spi.views.CacheableSpiCase')
+    def test_mismatched_quotes(self, mock_CacheableSpiCase, mock_Site):
         mock_Site().pages.__getitem__().text.return_value = textwrap.dedent(
             """
             ===31 January 2020===
@@ -139,8 +142,11 @@ class SockSelectViewTest(ViewTestCase):
 
             ''Blah Blah
             """)
+        mock_CacheableSpiCase.get.return_value = CacheableSpiCase('Fred')
         client = Client()
+
         response = client.get('/spi/sock-select/Foo/')
+
         self.assertEqual(response.status_code, 200)
 
 
