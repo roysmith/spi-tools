@@ -56,11 +56,11 @@ class CacheableSpiCase:
         key = f'spi.CacheableSpiCase.{master_name}'
         case = cache.get(key, version=rev_id)
         if case is None:
-            case = SpiCase.for_master(wiki, master_name)
+            spi_case = SpiCase.for_master(wiki, master_name)
             case = CacheableSpiCase(master_name,
                                     rev_id,
-                                    list(case.find_all_users()),
-                                    list(case.find_all_ips()))
+                                    list(spi_case.find_all_users()),
+                                    list(spi_case.find_all_ips()))
             cache.set(key, case, version=rev_id)
         return case
 
