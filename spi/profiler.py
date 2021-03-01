@@ -1,7 +1,6 @@
 import cProfile
 import os
 import time
-import tempfile
 
 from django.conf import settings
 
@@ -27,7 +26,7 @@ def profile(log_file):
     if not os.path.isabs(log_file):
         log_file = os.path.join(settings.PROFILE_DIR, log_file)
 
-    def _outer(f):
+    def _outer(func):
         def _inner(*args, **kwargs):
             # Add a timestamp to the profile output when the callable
             # is actually called.
@@ -37,7 +36,7 @@ def profile(log_file):
 
             prof = cProfile.Profile()
             try:
-                ret = prof.runcall(f, *args, **kwargs)
+                ret = prof.runcall(func, *args, **kwargs)
             finally:
                 prof.dump_stats(final_log_file)
             return ret

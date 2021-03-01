@@ -6,7 +6,6 @@ import urllib.request
 import urllib.parse
 import datetime
 import itertools
-import functools
 import heapq
 
 import requests
@@ -20,9 +19,8 @@ from django.core.cache import cache
 
 from wiki_interface import Wiki
 from wiki_interface.block_utils import BlockEvent, UnblockEvent, UserBlockHistory
-from spi.forms import CaseNameForm, SockSelectForm, UserInfoForm
+from spi.forms import CaseNameForm, SockSelectForm
 from spi.spi_utils import SpiIpInfo, CacheableSpiCase, get_current_case_names
-from spi.profiler import profile
 
 
 logger = logging.getLogger('spi.views')
@@ -272,7 +270,7 @@ class TimelineView(LoginRequiredMixin, View):
         user_names = request.GET.getlist('users')
         logger.debug("user_names = %s", user_names)
 
-        self.tag_data = {}
+        self.tag_data = {}  # pylint: disable=attribute-defined-outside-init
         per_user_streams = [self.get_event_stream_for_user(wiki, user) for user in user_names]
         events = list(heapq.merge(*per_user_streams, reverse=True))
         # At this point, i.e. after the merge() output is consumed,
