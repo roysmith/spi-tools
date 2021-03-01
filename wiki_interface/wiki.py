@@ -33,7 +33,7 @@ logger = logging.getLogger('wiki_interface')
 class Wiki:
     """High-level wiki interface.
 
-    This knows about user credentials, so you must Create a new
+    This knows about user credentials, so you must create a new
     instance of this for every request.
 
     """
