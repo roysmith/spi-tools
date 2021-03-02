@@ -93,6 +93,9 @@ MIDDLEWARE = [
 # This configuration uses a short timeout and invalidates every cache
 # entry on every server restart, which only makes sense for a
 # development environment.
+#
+# WARNING: some keys may not be usable on non-redis backends.  See
+# https://docs.djangoproject.com/en/2.2/topics/cache/#cache-key-transformation
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.dummy.DummyCache' if TESTING else 'django_redis.cache.RedisCache',
