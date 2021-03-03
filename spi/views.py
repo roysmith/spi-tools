@@ -21,6 +21,7 @@ from wiki_interface import Wiki
 from wiki_interface.block_utils import BlockEvent, UnblockEvent, UserBlockHistory
 from spi.forms import CaseNameForm, SockSelectForm
 from spi.spi_utils import SpiIpInfo, CacheableSpiCase, get_current_case_names
+from spi.user_utils import CacheableUserContribs
 
 
 logger = logging.getLogger('spi.views')
@@ -312,7 +313,7 @@ class TimelineView(LoginRequiredMixin, View):
 
         """
         self.tag_data[user_name] = defaultdict(int)
-        active = wiki.user_contributions(user_name)
+        active = CacheableUserContribs.get(wiki, user_name).data
         deleted = wiki.deleted_user_contributions(user_name)
         for contrib in heapq.merge(active, deleted, reverse=True):
             for tag in contrib.tags:

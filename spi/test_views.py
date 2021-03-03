@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, call
 import textwrap
 from datetime import datetime
 
@@ -14,6 +14,7 @@ from wiki_interface.data import WikiContrib, LogEvent
 from wiki_interface.block_utils import BlockEvent
 from spi.views import SockSelectView, UserSummary, TimelineEvent, ValidatedUser, IndexView
 from spi.spi_utils import CacheableSpiCase
+from spi.user_utils import CacheableUserContribs
 
 
 class ViewTestCase(TestCase):
@@ -336,25 +337,30 @@ class TimelineViewTest(ViewTestCase):
 
     @patch('spi.views.Wiki')
     @patch('spi.views.render')
-    def test_context_includes_tag_table(self, mock_render, mock_Wiki):
-        def mock_user_contributions(user_name):
-            if user_name == 'Fred':
-                return [WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', tags=[]),
-                        WikiContrib(1002, datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', tags=['tag1', 'tag2', 'tag3']),
-                        WikiContrib(1003, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', tags=['tag1', 'tag2', 'tag4'])]
-            if user_name == 'Wilma':
-                return [WikiContrib(2001, datetime(2020, 1, 4), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag3']),
-                        WikiContrib(2002, datetime(2020, 1, 5), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag2'])]
-            return []
-
-        mock_Wiki().user_contributions.side_effect = mock_user_contributions
+    @patch('spi.views.CacheableUserContribs')
+    def test_context_includes_tag_table(self, mock_CacheableUserContribs, mock_render, mock_Wiki):
+        mock_CacheableUserContribs.get.side_effect = [
+            CacheableUserContribs([
+                WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', tags=[]),
+                WikiContrib(1002, datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', tags=['tag1', 'tag2', 'tag3']),
+                WikiContrib(1003, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', tags=['tag1', 'tag2', 'tag4']),
+            ]),
+            CacheableUserContribs([
+                WikiContrib(2001, datetime(2020, 1, 4), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag3']),
+                WikiContrib(2002, datetime(2020, 1, 5), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag2']),
+            ]),
+        ]
         mock_render.side_effect = self.render_patch
-
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+
         response = client.get('/spi/timeline/Foo', {'users': ['Fred', 'Wilma']})
 
+        mock_CacheableUserContribs.get.assert_has_calls([
+            call(mock_Wiki(), 'Fred'),
+            call(mock_Wiki(), 'Wilma')
+        ])
         self.assertEqual(response.context['tag_table'],
                          [('Fred', [('tag1', 2), ('tag2', 2), ('tag3', 1), ('tag4', 1)]),
                           ('Wilma', [('tag1', 2), ('tag2', 1), ('tag3', 1), ('tag4', 0)])]

@@ -118,7 +118,8 @@ class UserContributionsTest(TestCase):
         mock_Site().usercontributions.assert_called_once_with(
             'fred',
             prop='ids|title|timestamp|comment|flags|tags',
-            show='')
+            show='',
+            end=None)
         self.assertIsInstance(contributions[0], WikiContrib)
         self.assertEqual(contributions, [
             WikiContrib(20200730, datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 0, 'p1', 'c1'),
@@ -141,7 +142,8 @@ class UserContributionsTest(TestCase):
         mock_Site().usercontributions.assert_called_once_with(
             'bob|alice',
             prop='ids|title|timestamp|comment|flags|tags',
-            show='')
+            show='',
+            end=None)
         self.assertIsInstance(contributions[0], WikiContrib)
         self.assertEqual(contributions, [
             WikiContrib(20200730, datetime(2020, 7, 30, tzinfo=timezone.utc), 'bob', 0, 'p1', 'c1'),
@@ -194,10 +196,12 @@ class UserContributionsTest(TestCase):
                                '|30|31|32|33|34|35|36|37|38|39'
                                '|40|41|42|43|44|45|46|47|48|49',
                                prop='ids|title|timestamp|comment|flags|tags',
-                               show=''),
+                               show='',
+                               end=None),
                           call('50|51|52|53|54',
                                prop='ids|title|timestamp|comment|flags|tags',
-                               show=''),
+                               show='',
+                               end=None),
                          ])
         self.assertEqual(contributions, [
             WikiContrib(20200729, datetime(2020, 7, 29, tzinfo=timezone.utc), '0', 0, 'p1', 'c1'),
@@ -251,6 +255,20 @@ class UserContributionsTest(TestCase):
                                                      None,
                                                      tags=['t1', 't2'])])
 
+
+    @patch('wiki_interface.wiki.Site')
+    def test_user_contributions_accepts_end_parameter(self, mock_Site):
+        mock_Site().usercontributions.return_value = []
+        wiki = Wiki()
+
+        contributions = list(wiki.user_contributions('fred', end='2020-01-01T00:00:00'))
+
+        mock_Site().usercontributions.assert_called_once_with(
+            'fred',
+            prop='ids|title|timestamp|comment|flags|tags',
+            show='',
+            end='2020-01-01T00:00:00')
+        self.assertEqual(contributions, [])
 
 
 class DeletedUserContributionsTest(TestCase):

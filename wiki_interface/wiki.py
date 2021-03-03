@@ -92,7 +92,7 @@ class Wiki:
     # See https://www.mediawiki.org/wiki/API:Usercontribs.
     MAX_UCUSER = 50
 
-    def user_contributions(self, user_name_or_names, show=''):
+    def user_contributions(self, user_name_or_names, show='', end=None):
         """Get one or more users' live (i.e. non-deleted) edits.
 
         If user_name_or_names is a string, get the edits for that
@@ -116,7 +116,7 @@ class Wiki:
 
         props = 'ids|title|timestamp|comment|flags|tags'
         for chunk in chunked(all_names, self.MAX_UCUSER):
-            for contrib in self.site.usercontributions('|'.join(chunk), show=show, prop=props):
+            for contrib in self.site.usercontributions('|'.join(chunk), show=show, prop=props, end=end):
                 logger.debug("contrib = %s", contrib)
                 yield WikiContrib(contrib['revid'],
                                   struct_to_datetime(contrib['timestamp']),
