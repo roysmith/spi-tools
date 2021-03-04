@@ -1,11 +1,11 @@
-asgiref==3.2.3
+asgiref==3.3.1
 astroid==2.4.2
 certifi==2019.9.11
 chardet==3.0.4
 Click==7.0
 cssselect==1.1.0
 defusedxml==0.6.0
-Django==2.2.13
+Django==3.1.7
 django-debug-toolbar==2.2
 django-log-request-id==1.6.0
 django-redis==4.12.1
