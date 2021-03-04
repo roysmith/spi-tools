@@ -11,4 +11,4 @@ class ToolsAppConfig(AppConfig):
 
     def ready(self):
         if 'manage.py' not in sys.argv[0]:
-            logger.critical(f'{self.name} starting (argv = {sys.argv})')
+            logger.critical('%s starting (argv=%s)', self.name, sys.argv)

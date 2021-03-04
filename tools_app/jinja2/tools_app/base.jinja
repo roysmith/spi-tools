@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    {% include "tools_app/header.jinja"  %}
+    {% block page_css %} <!-- per-page css --> {% endblock %}
+  </head>
+  <body>
+    <div class="container">
+      {% with data = debug_data(request) %}
+	{% if data.PRODUCTION_HOST_NAME %}
+	  <div class="row mt-3">
+            <div class="alert alert-warning w-100" role="alert">
+              <div class="mx-auto">
+		This is a development server.  You should probably be using the production instance at
+		<a href="https://{{ data.PRODUCTION_HOST_NAME }}">{{ data.PRODUCTION_HOST_NAME }}</a>.
+              </div>
+            </div>
+	  </div>
+	{% endif %}
+
+	<div class="row">
+          <div class="col-2">
+            {% include "tools_app/navbar.jinja" %}
+          </div>
+          <div class="col-10">
+            {% block content %} <!-- main content --> {% endblock %}
+          </div>
+	</div>
+
+	<div class="row">
+          <div class="col-2">
+            <div class="card mt-5">
+              <div class="card-body text-muted bg-light">
+		<p class="my-0"><a href="https://github.com/roysmith/spi-tools">source code</a></p>
+		<p class="my-0"><a href="https://github.com/roysmith/spi-tools/issues/new">report a bug</a></p>
+              </div>
+            </div>
+          </div>
+          <div class="col-10">
+            <div class="card mt-5">
+              <div class="card-body text-muted bg-light">
+		<p class="my-0">Request = {{ request.id }} @ {{ data.REQUEST_START_TIME_UTC }}</p>
+		<p class="my-0">{{ data.VERSION_ID }} (DEBUG = {{ data.DEBUG_ENABLED }})</p>
+		<p class="my-0">server up {{ data.SERVER_UP_TIME }}</p>
+		<p class="my-0">request took {{ data.REQUEST_DURATION }}s</p>
+              </div>
+            </div>
+          </div>
+	</div>
+      {% endwith %}
+    </div>
+    {% include "tools_app/footer.jinja" %}
+    {% block page_scripts %} <!-- per-page javascript --> {% endblock %}
+  </body>
+</html>

@@ -8,7 +8,7 @@ class ParseOutputTest(TestCase):
                   '# branch.head dev\n',
                   '# branch.upstream origin/dev\n',
                   '# branch.ab +0 -0\n',
-        ]
+                  ]
         expected_result = 'dev (6606c459dd972a1e8907839c6775ae1cd30ce840)'
         result = git.parse_output(output)
         self.assertEqual(result, expected_result)
@@ -20,7 +20,7 @@ class ParseOutputTest(TestCase):
                   '# branch.ab +0 -0\n',
                   '? git.py\n',
                   '? test_git.p\n',
-        ]
+                  ]
         expected_result = 'dev (6606c459dd972a1e8907839c6775ae1cd30ce840+)'
         result = git.parse_output(output)
         self.assertEqual(result, expected_result)

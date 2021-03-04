@@ -12,14 +12,18 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 import re
+import sys
 import datetime
 import tools_app.git
+from uuid import uuid4
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WWW_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
 LOG_DIR = os.path.join(os.environ.get('HOME'), 'logs')
+PROFILE_DIR = LOG_DIR
+
 VERSION_ID = tools_app.git.get_info()
 SERVER_START_TIME_UTC = datetime.datetime.utcnow()
 
@@ -40,6 +44,9 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = TOOL_NAME.lower().endswith('-dev')
+
+# True if running unit tests
+TESTING = 'manage.py' in sys.argv[0]
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
@@ -68,6 +75,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'log_request_id.middleware.RequestIDMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -80,6 +88,29 @@ MIDDLEWARE = [
     'tools_app.middleware.RequestAugmentationMiddleware',
     'tools_app.middleware.LoggingMiddleware',
 ]
+
+
+# This configuration uses a short timeout and invalidates every cache
+# entry on every server restart, which only makes sense for a
+# development environment.
+#
+# WARNING: some keys may not be usable on non-redis backends.  See
+# https://docs.djangoproject.com/en/2.2/topics/cache/#cache-key-transformation
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache' if TESTING else 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://tools-redis.svc.eqiad.wmflabs:6379/0',
+        'TIMEOUT': 300,
+        'KEY_PREFIX': str(uuid4()),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'IGNORE_EXCEPTIONS': True,
+        }
+    }
+}
+DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS = True
+DJANGO_REDIS_LOGGER = 'tools_app.redis'
+
 
 ROOT_URLCONF = 'tools_app.urls'
 
@@ -99,6 +130,14 @@ TEMPLATES = [
                 'social_django.context_processors.login_redirect',
                 'tools_app.context_preprocessors.debug',
             ],
+        },
+    },
+    {
+        'BACKEND': 'django.template.backends.jinja2.Jinja2',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'environment': 'tools_app.jinja2.environment',
         },
     },
 ]
@@ -185,14 +224,23 @@ DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda x: False,
     }
 
+LOG_NAME = 'django-test.log' if TESTING else 'django.log'
+LOG_LEVEL = 'DEBUG' if 'dev' in TOOL_NAME else 'INFO'
+LOG_REQUEST_ID_HEADER = "HTTP_X_REQUEST_ID"
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
         'file': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': os.path.join(LOG_DIR, 'django.log'),
+            'level': LOG_LEVEL,
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, LOG_NAME),
+            'when': 'D',
+            'backupCount': 7,
+            'utc': True,
+            'filters': ['request_id'],
+            'formatter': 'file_formatter',
         },
         # Hack to get real-time logging, as a work-around to T256426 and T256482.
         'bastion': {
@@ -200,6 +248,16 @@ LOGGING = {
             'class': 'logging.handlers.SocketHandler',
             'host': 'tools-sgebastion-08.tools.eqiad.wmflabs',
             'port': 23001,
+        },
+    },
+    'filters': {
+        'request_id': {
+            '()': 'log_request_id.filters.RequestIDFilter'
+        }
+    },
+    'formatters': {
+        'file_formatter': {
+            'format': '%(asctime)s [%(request_id)s] %(levelname)s %(name)s: %(message)s',
         },
     },
     'loggers': {
@@ -221,6 +279,11 @@ LOGGING = {
         'tools_app': {
             'handlers': ['file', 'bastion'],
             'level': 'INFO',
+            'propagate': True,
+        },
+        'urllib3': {
+            'handlers': ['file', 'bastion'],
+            'level': 'ERROR',
             'propagate': True,
         },
     },

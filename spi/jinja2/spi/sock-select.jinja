@@ -1,0 +1,60 @@
+{% extends "tools_app/base.jinja" %}
+
+{% block content %}
+  <h1><small>Sock interactions for {{ case_name }}</small></h1>
+
+  {% if invalid_users %}
+    <div class="alert alert-info" role="alert">
+      The following invalid username(s) were found (and ignored) in the SPI report:
+      <ul>
+	{% for user in invalid_users %}
+	  <li>{{ user.username }} ({{ user.date }})</li>
+	{% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <form action="" method="post">
+    {{ csrf_input }}
+    <p>
+      <button type="button" class="btn btn-primary btn-sm" id="check-all" href="javascript:void(0)">Check all</button>
+      <button type="button" class="btn btn-primary btn-sm" id="uncheck-all" href="javascript:void(0)">Uncheck all</button>
+    </p>
+    <p>
+      <div class="dropdown">
+	<button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="select-menu-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+	  Check users reported on or after date
+	</button>
+	<div class="dropdown-menu" id="date-select-menu" aria-labelledby="select-menu-button">
+	  {% for date in dates %}
+	    <button class="dropdown-item date-select" type="button" data-date="{{ date|replace(' ', '') }}" href="javascript:void(0)">{{ date }}</button>
+	  {% endfor %}
+	</div>
+      </div>
+    </p>
+    <p>
+      <input type="submit" name="interaction-analyzer-button" value="Interaction analyser">
+      <input type="submit" name="timecard-button" value="Timecard comparison">
+      <input type="submit" name="timeline-button" value="Consolidated timeline">
+    </p>
+    <table id="sock-table" class="table table-sm table-hover">
+      <tr>
+	<th>Use?</th>
+	<th>Username</th>
+      </tr>
+      {% for field, name, date in form_info %}
+	<tr>
+	  <td class="spi-date-{{ date|replace(' ', '') }}">{{ field }}</td>
+	  <td><label class="mb-0" for="{{ field.id_for_label }}">{{ field.label }}</label></td>
+	</tr>
+      {% endfor %}
+    </table>
+  </form>
+{% endblock %}
+
+
+{% block page_scripts %}
+  <script>
+   {% include "spi/sock-select.js" %}
+  </script>
+{% endblock %}

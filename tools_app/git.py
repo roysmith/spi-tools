@@ -7,7 +7,8 @@ def get_info():
     source tree.  The exact format of the string is unspecified,
     other than being suitable for display to an end user as a
     tracking and error-reporting aid."""
-        
+
+    # pylint: disable=too-many-function-args
     output = sh.git('status', '--porcelain=v2', '-b')
     return parse_output(output)
 
@@ -21,4 +22,3 @@ def parse_output(output):
         else:
             dirty = True
     return f"{data['branch.head']} ({data['branch.oid']}{'+' if dirty else ''})"
-

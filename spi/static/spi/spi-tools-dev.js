@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Fires on page load, adds the SPI-Tools portlet.
+ * Fires on page load, adds the SPI-Tools (dev) portlet.
  *
  * pageTitle is the full title of the page this is running on,
  * i.e. "Wikipedia:Sockpuppet investigations/..."
@@ -13,14 +13,14 @@ function spiTools_addLink(pageTitle) {
         const caseName = parts[last] == 'Archive' ? parts[last - 1] : parts[last];
         mw.util.addPortletLink('p-cactions',
                                'javascript:spiTools_init("' + caseName + '")',
-                               'SPI Tools',
-                               'ca-spiTools',
-                               'Open SPI Tools');
+                               'SPI Tools (dev)',
+                               'ca-spiTools-dev',
+                               'Open SPI Tools (dev)');
     });
 };
 
 async function spiTools_init(caseName) {
-    const baseURL = 'https://spi-tools.toolforge.org/spi/?caseName=';
+    const baseURL = 'https://spi-tools-dev.toolforge.org/spi/?caseName=';
     window.open(encodeURI(baseURL + caseName));
 };
 

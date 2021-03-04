@@ -11,6 +11,7 @@ mwclient.Site directly.
 """
 import logging
 from dataclasses import dataclass
+from itertools import islice
 
 import django.contrib.auth
 from django.conf import settings
@@ -19,7 +20,7 @@ from mwclient.listing import List
 from mwclient.errors import APIError
 import mwclient
 from dateutil.parser import isoparse
-from more_itertools import always_iterable, chunked
+from more_itertools import always_iterable, chunked, consume
 
 from wiki_interface.data import WikiContrib, LogEvent
 from wiki_interface.block_utils import BlockEvent, UnblockEvent
@@ -32,7 +33,7 @@ logger = logging.getLogger('wiki_interface')
 class Wiki:
     """High-level wiki interface.
 
-    This knows about user credentials, so you must Create a new
+    This knows about user credentials, so you must create a new
     instance of this for every request.
 
     """
@@ -91,7 +92,7 @@ class Wiki:
     # See https://www.mediawiki.org/wiki/API:Usercontribs.
     MAX_UCUSER = 50
 
-    def user_contributions(self, user_name_or_names, show=''):
+    def user_contributions(self, user_name_or_names, show='', end=None):
         """Get one or more users' live (i.e. non-deleted) edits.
 
         If user_name_or_names is a string, get the edits for that
@@ -113,14 +114,18 @@ class Wiki:
                 raise ValueError(f'"|" in user name: {str_name}')
             all_names.append(str_name)
 
+        props = 'ids|title|timestamp|comment|flags|tags'
         for chunk in chunked(all_names, self.MAX_UCUSER):
-            for contrib in self.site.usercontributions('|'.join(chunk), show=show):
+            for contrib in self.site.usercontributions('|'.join(chunk), show=show, prop=props, end=end):
                 logger.debug("contrib = %s", contrib)
-                yield WikiContrib(struct_to_datetime(contrib['timestamp']),
+                yield WikiContrib(contrib['revid'],
+                                  struct_to_datetime(contrib['timestamp']),
                                   contrib['user'],
                                   contrib['ns'],
                                   contrib['title'],
-                                  contrib['comment'])
+                                  contrib['comment'] if 'commenthidden' not in contrib else None,
+                                  True,
+                                  contrib['tags'])
 
 
     def deleted_user_contributions(self, user_name):
@@ -131,8 +136,16 @@ class Wiki:
         If the mwclient connection is not authenticated to a
         user with admin rights, returns an empty iterable.
 
+        The current implementation stores and sorts all the
+        WikiContribs internally.  It may be possible to avoid this
+        in-memory storage using a merge sort, but it would be messy,
+        and probably not worth the effort, as the expected number of
+        deleted contributions is small.
+
         """
-        kwargs = dict(List.generate_kwargs('adr', user=user_name))
+        kwargs = dict(List.generate_kwargs('adr',
+                                           user=user_name,
+                                           prop='ids|title|timestamp|comment|flags|tags'))
         listing = List(self.site,
                        'alldeletedrevisions',
                        'adr',
@@ -141,16 +154,19 @@ class Wiki:
 
         # See https://www.mediawiki.org/wiki/API:Alldeletedrevisions#Response; this is
         # iterating over response['query']['alldeletedrevisions'].
+        contribs = []
         try:
             for page in listing:
                 title = page['title']
                 namespace = page['ns']
                 for revision in page['revisions']:
+                    rev_id = revision['revid']
                     logger.debug("deleted revision = %s", revision)
                     timestamp = isoparse(revision['timestamp'])
-                    comment = revision['comment']
-                    yield WikiContrib(
-                        timestamp, user_name, namespace, title, comment, is_live=False)
+                    comment = revision['comment'] if 'commenthidden' not in revision else None
+                    tags = revision['tags']
+                    contribs.append(WikiContrib(
+                        rev_id, timestamp, user_name, namespace, title, comment, is_live=False, tags=tags))
         except APIError as ex:
             if ex.args[0] == 'permissiondenied':
                 logger.warning('Permission denied in wiki_interface.deleted_user_contributions()')
@@ -160,12 +176,13 @@ class Wiki:
                 # and the permission is lost between chunks.  At
                 # worst, this should result in incompplete data being
                 # returned, but that's not 100% clear.
-                return
+                return []
             raise
+        contribs.sort(reverse=True)
+        return contribs
 
 
-
-    def get_user_blocks(self, user_name):
+    def user_blocks(self, user_name):
         """Get the user's block history.
 
         Returns a (heterogeneous) list of BlockEvents and
@@ -193,10 +210,10 @@ class Wiki:
 
 
 
-    def get_user_log_events(self, user_name):
+    def user_log_events(self, user_name):
         """Get the user's log events, i.e. where the user is the performer.
         Things that happened *to* the user are accessed through other
-        calls, such as get_user_blocks().
+        calls, such as user_blocks().
 
         Returns an iterable over LogEvents.
 
@@ -207,10 +224,28 @@ class Wiki:
                            event['title'],
                            event['type'],
                            event['action'],
-                           event['comment'])
+                           event['comment'] if 'commenthidden' not in event else None)
 
     def page(self, title):
         return Page(self, title)
+
+
+    def is_valid_username(self, user_name):
+        """Test a username for validity.  Valid in this context means properly
+        formed, i.e. the underlying API doesn't return a 'baduser'
+        error.  It is possible (common, even), for a username to be
+        valid but not exist on a particular wiki.
+
+        Returns True for valid usernames, False for invalid usernames.
+
+        """
+        try:
+            consume(islice(self.site.usercontributions(user_name, limit=1), 0, 1))
+            return True
+        except APIError as ex:
+            if ex.code == 'baduser':
+                return False
+            raise
 
 
 @dataclass
@@ -228,10 +263,14 @@ class Page:
         return self.mw_page.exists
 
 
-    def revisions(self):
-        for rev in self.mw_page.revisions():
+    def revisions(self, *, count=None):
+        revisions = self.mw_page.revisions()
+        if count is not None:
+            revisions = islice(revisions, count)
+        for rev in revisions:
             comment = rev['comment'] if 'commenthidden' not in rev else None
-            yield WikiContrib(struct_to_datetime(rev['timestamp']),
+            yield WikiContrib(rev['revid'],
+                              struct_to_datetime(rev['timestamp']),
                               rev['user'],
                               self.mw_page.namespace,
                               self.mw_page.name,

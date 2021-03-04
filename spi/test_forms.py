@@ -29,7 +29,6 @@ class CaseNameFormTest(TestCase):
     def test_validate_with_valid_case_name(self, mock_Wiki):
         mock_Wiki().page_exists.return_value = True
         data = {'case_name': 'Fred',
-                'use_archive': True,
                 }
 
         form = CaseNameForm(data)
@@ -41,7 +40,6 @@ class CaseNameFormTest(TestCase):
     def test_validate_with_invalid_case_name(self, mock_Wiki):
         mock_Wiki().page_exists.return_value = False
         data = {'case_name': 'Fred',
-                'use_archive': True,
                 }
 
         form = CaseNameForm(data)

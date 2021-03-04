@@ -2,7 +2,8 @@
 
 
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List
 
 
 @dataclass(frozen=True, order=True)
@@ -13,12 +14,14 @@ class WikiContrib:
     comment, the comment attribute will be the empty string.
 
     '''
+    rev_id: int
     timestamp: datetime.datetime
     user_name: str
     namespace: int
     title: str
     comment: str
     is_live: bool = True
+    tags: List[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

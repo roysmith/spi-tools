@@ -6,9 +6,7 @@ import urllib.request
 import urllib.parse
 import datetime
 import itertools
-import functools
 import heapq
-import json
 
 import requests
 
@@ -16,12 +14,14 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.cache import cache
 
 
 from wiki_interface import Wiki
 from wiki_interface.block_utils import BlockEvent, UnblockEvent, UserBlockHistory
-from spi.forms import CaseNameForm, SockSelectForm, UserInfoForm
-from spi.spi_utils import SpiIpInfo, SpiCase, get_current_case_names, find_active_case_template
+from spi.forms import CaseNameForm, SockSelectForm
+from spi.spi_utils import SpiIpInfo, CacheableSpiCase, get_current_case_names
+from spi.user_utils import CacheableUserContribs
 
 
 logger = logging.getLogger('spi.views')
@@ -53,7 +53,7 @@ class IndexView(View):
         context = {'form': form,
                    'choices': self.generate_select2_data(case_name=case_name),
                    }
-        return render(request, 'spi/index.dtl', context)
+        return render(request, 'spi/index.jinja', context)
 
     def post(self, request):
         form = CaseNameForm(request.POST)
@@ -62,107 +62,106 @@ class IndexView(View):
                    }
         if form.is_valid():
             case_name = form.cleaned_data['case_name']
-            use_archive = form.cleaned_data['use_archive']
             if 'ip-info-button' in request.POST:
                 return redirect('spi-ip-analysis', case_name)
-            if 'sock-info-button' in request.POST:
-                return redirect('%s?archive=%d' % (reverse('spi-sock-info', args=[case_name]),
-                                                   use_archive))
             if 'sock-select-button' in request.POST:
-                return redirect('%s?archive=%d' % (reverse('spi-sock-select', args=[case_name]),
-                                                   use_archive))
+                return redirect('%s' % (reverse('spi-sock-select', args=[case_name])))
             if 'g5-button' in request.POST:
-                return redirect('%s?archive=%d' % (reverse('spi-g5', args=[case_name]),
-                                                   use_archive))
+                return redirect('%s' % (reverse('spi-g5', args=[case_name])))
             message = 'No known button in POST (%s)' % request.POST.keys()
             logger.error(message)
             context['error'] = message
 
-        return render(request, 'spi/index.dtl', context)
+        return render(request, 'spi/index.jinja', context)
 
     @staticmethod
     def generate_select2_data(case_name=None):
-        """Return a jsonized string containing data appropriate for the
-        'data' element of a select2.js configuration object.
+        """Return data appropriate for the 'data' element of a select2.js
+        configuration object.
 
         If case_name is provided, that option has the "selected"
         attribute set.  If it doesn't exist in the default list, it is
         added (and selected).
 
         """
-        wiki = Wiki()
-        # Leading empty element needed by select2.js placeholder.
-        transcluded_template = find_active_case_template(wiki)
-        names = [''] + get_current_case_names(wiki, transcluded_template)
+        names = cache.get_or_set('IndexView.case_names', IndexView.get_case_names, 300)
         if case_name and case_name not in names:
             names.append(case_name)
         names.sort()
 
-        data = []
+        # Leading empty element for select2.js placeholder.
+        data = [{'id': '',
+                 'text': ''}]
         for name in names:
-            item = {"id": name,
-                    "text": name,
-                    }
-            if case_name and name == case_name:
+            item = {'id': name,
+                    'text': name}
+            if name == case_name:
                 item['selected'] = True
             data.append(item)
 
-        return json.dumps(data)
+        return data
+
+
+    @staticmethod
+    def get_case_names():
+        """Get the case names from the on-wiki SPI case listing.
+
+        Returns a list of strings.
+
+        """
+        wiki = Wiki()
+        return get_current_case_names(wiki)
 
 
 class IpAnalysisView(View):
     def get(self, request, case_name):
         wiki = Wiki()
         ip_data = defaultdict(list)
-        for i in SpiCase.get_case(wiki, case_name).find_all_ips():
+        for i in CacheableSpiCase.get(wiki, case_name).ip_addresses:
             ip_data[i.ip_address].append(i.date)
         summaries = [IpSummary(ip, sorted(ip_data[ip])) for ip in ip_data]
         summaries.sort()
         context = {'case_name': case_name,
                    'ip_summaries': summaries}
-        return render(request, 'spi/ip-analysis.dtl', context)
+        return render(request, 'spi/ip-analysis.jinja', context)
 
 
-def get_sock_names(wiki, master_name, use_archive=True):
-    """Returns a iterable over SpiUserInfos.
+@dataclass(frozen=True, order=True)
+class ValidatedUser:
+    username: str
+    date: str
+    valid: bool
 
-    If use_archive is true, both the current case and any existing
-    archive is used.  Otherwise, just the current case.
+
+def get_sock_names(wiki, master_name):
+    """Returns a iterable over ValidatedUsers
+
+    Discovered usernames are checked for validity.  See
+    Wiki.is_valid_username() for what it means to be valid.
 
     """
-    case = SpiCase.get_case(wiki, master_name, use_archive)
-    return case.find_all_users()
-
-
-class SockInfoView(View):
-    def get(self, request, case_name):
-        wiki = Wiki()
-        socks = []
-        use_archive = int(request.GET.get('archive', 1))
-        for sock in get_sock_names(wiki, case_name, use_archive):
-            socks.append(sock)
-        summaries = list({self.make_user_summary(wiki, sock) for sock in socks})
-        # This is a hack to make users with no registration time sort to the
-        # beginning of the list.  We need to do something smarter here.
-        summaries.sort(key=lambda x: x.registration_time or "")
-        context = {'case_name': case_name,
-                   'summaries': summaries}
-        return render(request, 'spi/sock-info.dtl', context)
-
-
-    @staticmethod
-    def make_user_summary(wiki, sock):
-        username = sock.username
-        return UserSummary(username, wiki.get_registration_time(username))
-
+    key = f'views.get_sock_names.{master_name}'
+    users = cache.get(key)
+    if users is None:
+        case = CacheableSpiCase.get(wiki, master_name)
+        # Need to work out cache invalidation
+        users = []
+        for user_info in case.users:
+            name = user_info.username
+            valid = wiki.is_valid_username(name)
+            user = ValidatedUser(name, user_info.date, valid)
+            if not valid:
+                logger.warning('invalid username (%s) in case "%s"', user, master_name)
+            users.append(user)
+        cache.set(key, users, 300)
+    return users
 
 class SockSelectView(View):
     def get(self, request, case_name):
         wiki = Wiki()
-        use_archive = int(request.GET.get('archive', 1))
-        user_infos = list(get_sock_names(wiki, case_name, use_archive))
+        user_infos = list(get_sock_names(wiki, case_name))
         return render(request,
-                      'spi/sock-select.dtl',
+                      'spi/sock-select.jinja',
                       self.build_context(case_name, user_infos))
 
     def post(self, request, case_name):
@@ -189,7 +188,7 @@ class SockSelectView(View):
         logger.debug("post: not valid")
         context = {'case_name': case_name,
                    'form': form}
-        return render(request, 'spi/sock-select.dtl', context)
+        return render(request, 'spi/sock-select.jinja', context)
 
 
     @staticmethod
@@ -208,97 +207,21 @@ class SockSelectView(View):
 
     @staticmethod
     def build_context(case_name, user_infos):
+        logger.debug(user_infos)
         users_by_name = {user.username: user for user in user_infos}
-        names = list({user.username for user in user_infos})
+        names = list({user.username for user in user_infos if user.valid})
+        invalid_users = [user for user in user_infos if not user.valid]
         dates = [users_by_name[name].date for name in names]
         form = SockSelectForm.build(names)
+
+        all_date_strings = set(user.date for user in user_infos if user.date)
+        keyed_dates = [(datetime.datetime.strptime(d, '%d %B %Y'), d) for d in all_date_strings]
+
         return {'case_name': case_name,
-                'form_info': zip(form, names, dates)}
-
-
-class UserInfoView(View):
-    def get(self, request, user_name):
-        form = UserInfoForm(initial={'count': 100,
-                                     'main': True,
-                                     'draft': True,
-                                     })
-        context = {'user_name': urllib.parse.unquote_plus(user_name),
-                   'form': form}
-        return render(request, 'spi/user-info.dtl', context)
-
-    def post(self, request, user_name):
-        form = UserInfoForm(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            url = (f'{reverse("spi-user-activities", args=[user_name])}'
-                   f'?count={data["count"]}'
-                   f'&main={int(data["main"])}'
-                   f'&draft={int(data["draft"])}'
-                   f'&other={int(data["other"])}')
-            logger.debug("Redirecting to: %s", url)
-            return redirect(url)
-        logger.debug("post: not valid")
-        context = {'user_name': user_name,
-                   'form': form}
-        return render(request, 'spi/user-info.dtl', context)
-
-
-class UserActivitiesView(LoginRequiredMixin, View):
-    def get(self, request, user_name):
-        wiki = Wiki(request)
-        user_name = urllib.parse.unquote_plus(user_name)
-        logger.debug("user_name = %s", user_name)
-        count = int(request.GET.get('count', '1'))
-        namespace_filter = functools.partial(self.check_namespaces,
-                                             wiki.namespace_values,
-                                             bool(int(request.GET.get('main', 0))),
-                                             bool(int(request.GET.get('draft', 0))),
-                                             bool(int(request.GET.get('other', 0))))
-        active = wiki.user_contributions(user_name)
-
-        deleted = wiki.deleted_user_contributions(user_name)
-        merged = heapq.merge(active, deleted, reverse=True)
-        filtered = itertools.filterfalse(namespace_filter, merged)
-        counted = list(itertools.islice(filtered, count))
-        daily_activities = self.group_by_day(counted)
-        context = {'user_name': user_name,
-                   'daily_activities': daily_activities}
-        return render(request, 'spi/user-activities.dtl', context)
-
-
-    # https://github.com/roysmith/spi-tools/issues/51
-    @staticmethod
-    def check_namespaces(namespace_values, main, draft, other, contrib):
-        if contrib.namespace == namespace_values['']:
-            return not main
-        if contrib.namespace == namespace_values['Draft']:
-            return not draft
-        return not other
-
-
-    @staticmethod
-    def group_by_day(activities):
-        """Group activities into daily chunks.  Assumes that activities is
-        sorted in chronological order.
-
-        """
-        previous_date = None
-
-        # https://getbootstrap.com/docs/4.0/content/tables/#contextual-classes
-        date_groups = ['primary', 'secondary']
-
-        daily_activities = []
-        for activity in activities:
-            this_date = activity.timestamp.date()
-            daily_activities.append((date_groups[0],
-                                     activity.timestamp,
-                                     'edit' if activity.is_live else 'deleted',
-                                     activity.title,
-                                     activity.comment))
-            if this_date != previous_date:
-                date_groups.reverse()
-                previous_date = this_date
-        return daily_activities
+                'form_info': zip(form, names, dates),
+                'invalid_users': invalid_users,
+                'dates': [v for (k, v) in sorted(keyed_dates)],
+                }
 
 
 class TimecardView(View):
@@ -318,7 +241,7 @@ class TimecardView(View):
         context = {'case_name': case_name,
                    'users': user_names,
                    'data': data}
-        return render(request, 'spi/timecard.dtl', context)
+        return render(request, 'spi/timecard.jinja', context)
 
 
 @dataclass(frozen=True, order=True)
@@ -329,6 +252,9 @@ class TimelineEvent:
     provides additional (optional) information.  For a log entry,
     these might be the type and action fields from the log event.
 
+    Extra is optional additional information specific to the type of
+    event.  Edit events, for example, use this for the tags.
+
     """
     timestamp: datetime
     user_name: str
@@ -336,6 +262,7 @@ class TimelineEvent:
     details: str
     title: str
     comment: str
+    extra: str = ''
 
 
 class TimelineView(LoginRequiredMixin, View):
@@ -344,36 +271,61 @@ class TimelineView(LoginRequiredMixin, View):
         user_names = request.GET.getlist('users')
         logger.debug("user_names = %s", user_names)
 
-        streams = []
-        for user in user_names:
-            streams.append(self.get_contribs_for_user(wiki, user))
-            streams.append(self.get_blocks_for_user(wiki, user))
-            streams.append(self.get_log_events_for_user(wiki, user))
+        self.tag_data = {}  # pylint: disable=attribute-defined-outside-init
+        per_user_streams = [self.get_event_stream_for_user(wiki, user) for user in user_names]
+        events = list(heapq.merge(*per_user_streams, reverse=True))
+        # At this point, i.e. after the merge() output is consumed,
+        # self.tag_data will be valid.
+        tags = set()
+        for tag_counts in self.tag_data.values():
+            for tag in tag_counts:
+                tags.add(tag)
+        tag_list = sorted(tags)
 
-        events = list(heapq.merge(*streams, reverse=True))
+        tag_table = []
+        for user in user_names:
+            counts = [(tag, self.tag_data[user][tag]) for tag in tag_list]
+            tag_table.append((user, counts))
+
         context = {'case_name': case_name,
                    'user_names': user_names,
-                   'events': events}
-        return render(request, 'spi/timeline.dtl', context)
+                   'events': events,
+                   'tag_list': tag_list,
+                   'tag_table': tag_table,
+                   }
+        return render(request, 'spi/timeline.jinja', context)
 
 
-    @staticmethod
-    def get_contribs_for_user(wiki, user_name):
-        """Returns an interable over TimelineEvents.
+    def get_event_stream_for_user(self, wiki, user):
+        """Returns an iterable over TimelineEvents.
 
         """
+        user_streams = [self.get_contribs_for_user(wiki, user),
+                        self.get_blocks_for_user(wiki, user),
+                        self.get_log_events_for_user(wiki, user)]
+        return heapq.merge(*user_streams, reverse=True)
 
-        def to_timeline(contrib):
-            return TimelineEvent(contrib.timestamp,
-                                 contrib.user_name,
-                                 'edit',
-                                 '' if contrib.is_live else 'deleted',
-                                 contrib.title,
-                                 contrib.comment)
 
-        active = (to_timeline(c) for c in wiki.user_contributions(user_name))
-        deleted = (to_timeline(c) for c in wiki.deleted_user_contributions(user_name))
-        return heapq.merge(active, deleted, reverse=True)
+    def get_contribs_for_user(self, wiki, user_name):
+        """Returns an interable over TimelineEvents.
+
+        As a side effect, updates self.tag_data.
+
+        """
+        self.tag_data[user_name] = defaultdict(int)
+        active = CacheableUserContribs.get(wiki, user_name).data
+        deleted = wiki.deleted_user_contributions(user_name)
+        for contrib in heapq.merge(active, deleted, reverse=True):
+            for tag in contrib.tags:
+                self.tag_data[user_name][tag] += 1
+
+            yield TimelineEvent(contrib.timestamp,
+                                contrib.user_name,
+                                'edit',
+                                '' if contrib.is_live else 'deleted',
+                                contrib.title,
+                                '<comment hidden>' if contrib.comment is None else contrib.comment,
+                                ', '.join(contrib.tags if contrib.tags else ''))
 
 
     @staticmethod
@@ -381,7 +333,7 @@ class TimelineView(LoginRequiredMixin, View):
         """Returns an interable over TimelineEvents.
 
         """
-        for block in wiki.get_user_blocks(user_name):
+        for block in wiki.user_blocks(user_name):
             if isinstance(block, BlockEvent):
                 yield TimelineEvent(block.timestamp,
                                     block.target,
@@ -409,14 +361,13 @@ class TimelineView(LoginRequiredMixin, View):
         """Returns an iterable over TimelineEvents.
 
         """
-        for event in wiki.get_user_log_events(user_name):
+        for event in wiki.user_log_events(user_name):
             yield TimelineEvent(event.timestamp,
                                 event.user_name,
                                 event.type,
                                 event.action,
                                 event.title,
-                                event.comment)
-
+                                '<comment hidden>' if event.comment is None else event.comment)
 
 
 @dataclass(frozen=True)
@@ -436,10 +387,10 @@ class G5Score:
 class G5View(View):
     def get(self, request, case_name):
         wiki = Wiki()
-        use_archive = int(request.GET.get('archive', 1))
-        sock_names = [s.username for s in get_sock_names(wiki, case_name, use_archive)]
+        socks = get_sock_names(wiki, case_name)
+        sock_names = [s.username for s in socks if s.valid]
 
-        history = UserBlockHistory(wiki.get_user_blocks(case_name))
+        history = UserBlockHistory(wiki.user_blocks(case_name))
 
         page_creations = []
         for contrib in wiki.user_contributions(sock_names, show="new"):
@@ -455,7 +406,7 @@ class G5View(View):
         context = {'case_name': case_name,
                    'page_creations': page_creations,
                    }
-        return render(request, 'spi/g5.dtl', context)
+        return render(request, 'spi/g5.jinja', context)
 
 
     @staticmethod

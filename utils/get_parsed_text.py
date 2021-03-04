@@ -12,7 +12,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('page_title')
     args = parser.parse_args()
-    response = requests.get(f'http://{SITE}/api/rest_v1/page/html/' + args.page_title)
+    url = f'http://{SITE}/api/rest_v1/page/html/' + args.page_title
+    print(url)
+    response = requests.get(url)
     text = response.text
     print(text)
 

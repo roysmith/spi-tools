@@ -1,9 +1,14 @@
-from dataclasses import dataclass
+from __future__ import annotations
+
+from dataclasses import dataclass, field
 from typing import List
 from ipaddress import IPv4Address, IPv4Network
+from itertools import chain
 
 from mwparserfromhell import parse
 from mwparserfromhell.wikicode import Wikicode
+
+from django.core.cache import cache
 
 
 class ArchiveError(ValueError):
@@ -35,26 +40,49 @@ class SpiParsedDocument(SpiDocumentBase):
     wikicode: Wikicode
 
 
-@dataclass
-class SpiCase:
-    parsed_docs: List[SpiParsedDocument]
-    _master_name: str
+@dataclass(frozen=True)
+class CacheableSpiCase:
+    master_name: str
+    rev_id: int = None
+    users: List[SpiUserInfo] = field(default_factory=list)
+    ip_addresses: List[SpiIpInfo] = field(default_factory=list)
 
 
     @staticmethod
-    def get_case(wiki, master_name, use_archive=True):
-        """Returns a SpiCase.
+    def get(wiki, master_name):
+        titles = (f'Wikipedia:Sockpuppet investigations/{master_name}{suffix}' for suffix in ['', '/Archive'])
+        revisions = chain.from_iterable([wiki.page(t).revisions(count=1) for t in titles])
+        rev_id = max(r.rev_id for r in revisions)
+        key = f'spi.CacheableSpiCase.{master_name}'
+        case = cache.get(key, version=rev_id)
+        if case is None:
+            spi_case = SpiCase.for_master(wiki, master_name)
+            case = CacheableSpiCase(master_name,
+                                    rev_id,
+                                    list(spi_case.find_all_users()),
+                                    list(spi_case.find_all_ips()))
+            cache.set(key, case, version=rev_id)
+        return case
 
-        If use_archive is true, both the active case page and any
-        existing archive is used.  Otherwise, just the active page.
+
+@dataclass
+class SpiCase:
+    parsed_docs: List[SpiParsedDocument]
+    master_name: str
+
+
+    @staticmethod
+    def for_master(wiki, master_name):
+        """Build and return an SPICase for the given sock master.
+
+        The active page and any archives are used and combined.
 
         """
-        case_title = 'Wikipedia:Sockpuppet investigations/%s' % master_name
+        case_title = f'Wikipedia:Sockpuppet investigations/{master_name}'
         case_doc = SpiSourceDocument(case_title, wiki.page(case_title).text())
         docs = [case_doc]
-
         archive_title = f'{case_title}/Archive'
-        archive_text = use_archive and wiki.page(archive_title).text()
+        archive_text = wiki.page(archive_title).text()
         if archive_text:
             archive_doc = SpiSourceDocument(archive_title, archive_text)
             docs.append(archive_doc)
@@ -78,11 +106,7 @@ class SpiCase:
             raise ArchiveError("No sockmaster name found")
         if len(master_names) > 1:
             raise ArchiveError("Multiple sockmaster names found: %s" % master_names)
-        self._master_name = master_names.pop()
-
-
-    def master_name(self):
-        return self._master_name
+        self.master_name = master_names.pop()
 
 
     def days(self):
@@ -110,7 +134,7 @@ class SpiCase:
         The master is included as a user, with date set to None.
 
         '''
-        yield SpiUserInfo(self.master_name(), None)
+        yield SpiUserInfo(self.master_name, None)
         for day in self.days():
             for user in day.find_users():
                 yield user
@@ -123,10 +147,14 @@ class SpiCaseDay:
 
 
     def date(self):
+        '''Return the date of this section as a string.  Leading and
+        trailing whitespace is stripped from the sring.
+
+        '''
         headings = self.wikicode.filter_headings(matches=lambda h: h.level == 3)
         h3_count = len(headings)
         if h3_count == 1:
-            return headings[0].title
+            return headings[0].title.strip_code().strip()
         raise ArchiveError("Expected exactly 1 level-3 heading, found %d" % h3_count)
 
 
@@ -140,6 +168,7 @@ class SpiCaseDay:
         templates = self.wikicode.filter_templates(
             matches=lambda n: n.name.matches(['checkuser',
                                               'user',
+                                              'checkip',
                                               'SPIarchive notice']))
         for template in templates:
             username = template.get('1').value
@@ -218,21 +247,25 @@ class SpiIpInfo:
         return IPv4Network((prefix, prefix_length))
 
 
-def get_current_case_names(wiki, template_name):
-    """Return an list of the currently active SPI case names as strings.
+def get_current_case_names(wiki):
+    """Return a list of the currently active SPI case names as strings.
+
+    It is possible for the source template to have duplicates.  Only
+    the unique names are returned.
 
     Cases with '/' in them are disallowed.  See
     https://github.com/roysmith/spi-tools/issues/133 for details.
 
     """
+    template_name = _find_active_case_template(wiki)
     overview = wiki.page(template_name).text()
     wikicode = parse(overview)
     templates = wikicode.filter_templates(matches=lambda n: n.name.matches('SPIstatusentry'))
-    raw_names = (str(t.get(1)) for t in templates)
+    raw_names = {str(t.get(1)) for t in templates}
     return [name for name in raw_names if '/' not in name]
 
 
-def find_active_case_template(wiki):
+def _find_active_case_template(wiki):
     """Return the name of the curently active template listing SPI cases.
 
     Returns None if the template can't be determined.

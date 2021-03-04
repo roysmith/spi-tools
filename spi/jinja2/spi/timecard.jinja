@@ -1,7 +1,7 @@
-{% extends "tools_app/base.dtl" %}
+{% extends "tools_app/base.jinja" %}
 
 {% block content %}
-  <h1><small>Timecard analysis for {{case_name }}</small></h1>
+  <h1><small>Timecard analysis for {{ case_name }}</small></h1>
   <table>
     {% for user in data %}
       <tr>
@@ -17,6 +17,6 @@
 
 {% block page_scripts %}
 <script>
-  {% include "./timecard.js" %}
+  {% include "spi/timecard.js" %}
 </script>
 {% endblock %}
