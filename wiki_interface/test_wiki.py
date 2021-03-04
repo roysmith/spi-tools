@@ -451,7 +451,7 @@ class DeletedUserContributionsTest(TestCase):
             ])
 
 
-class GetUserBlocksTest(TestCase):
+class UserBlocksTest(TestCase):
     # pylint: disable=invalid-name
 
     @patch('wiki_interface.wiki.logger')
@@ -560,7 +560,7 @@ class GetUserBlocksTest(TestCase):
         mock_logger.error.assert_called_once()
 
 
-class GetUserLogsTest(TestCase):
+class UserLogsTest(TestCase):
     # pylint: disable=invalid-name
 
     @patch('wiki_interface.wiki.Site')
