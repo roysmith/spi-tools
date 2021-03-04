@@ -182,7 +182,7 @@ class Wiki:
         return contribs
 
 
-    def get_user_blocks(self, user_name):
+    def user_blocks(self, user_name):
         """Get the user's block history.
 
         Returns a (heterogeneous) list of BlockEvents and
@@ -210,10 +210,10 @@ class Wiki:
 
 
 
-    def get_user_log_events(self, user_name):
+    def user_log_events(self, user_name):
         """Get the user's log events, i.e. where the user is the performer.
         Things that happened *to* the user are accessed through other
-        calls, such as get_user_blocks().
+        calls, such as user_blocks().
 
         Returns an iterable over LogEvents.
 

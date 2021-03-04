@@ -333,7 +333,7 @@ class TimelineView(LoginRequiredMixin, View):
         """Returns an interable over TimelineEvents.
 
         """
-        for block in wiki.get_user_blocks(user_name):
+        for block in wiki.user_blocks(user_name):
             if isinstance(block, BlockEvent):
                 yield TimelineEvent(block.timestamp,
                                     block.target,
@@ -361,7 +361,7 @@ class TimelineView(LoginRequiredMixin, View):
         """Returns an iterable over TimelineEvents.
 
         """
-        for event in wiki.get_user_log_events(user_name):
+        for event in wiki.user_log_events(user_name):
             yield TimelineEvent(event.timestamp,
                                 event.user_name,
                                 event.type,
@@ -390,7 +390,7 @@ class G5View(View):
         socks = get_sock_names(wiki, case_name)
         sock_names = [s.username for s in socks if s.valid]
 
-        history = UserBlockHistory(wiki.get_user_blocks(case_name))
+        history = UserBlockHistory(wiki.user_blocks(case_name))
 
         page_creations = []
         for contrib in wiki.user_contributions(sock_names, show="new"):

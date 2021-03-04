@@ -238,9 +238,9 @@ class TimelineViewTest(ViewTestCase):
         ]
         mock_Wiki().deleted_user_contributions.return_value = [
             WikiContrib(102, datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', False)]
-        mock_Wiki().get_user_blocks.return_value = [
+        mock_Wiki().user_blocks.return_value = [
             BlockEvent('Wilma', datetime(2020, 2, 1))]
-        mock_Wiki().get_user_log_events.return_value = [
+        mock_Wiki().user_log_events.return_value = [
             LogEvent(datetime(2019, 11, 29), 'Fred', 'Fred-sock', 'newusers', 'create2', 'testing')
         ]
         mock_render.side_effect = self.render_patch
@@ -388,7 +388,7 @@ class TimelineViewTest(ViewTestCase):
     @patch('spi.views.Wiki')
     @patch('spi.views.render')
     def test_hidden_log_comments_render_as_hidden(self, mock_render, mock_Wiki):
-        mock_Wiki().get_user_log_events.return_value = [
+        mock_Wiki().user_log_events.return_value = [
             LogEvent(datetime(2020, 1, 1),
                      'Fred',
                      'Title',

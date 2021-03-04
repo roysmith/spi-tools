@@ -456,11 +456,11 @@ class GetUserBlocksTest(TestCase):
 
     @patch('wiki_interface.wiki.logger')
     @patch('wiki_interface.wiki.Site')
-    def test_get_user_blocks_with_no_blocks(self, mock_Site, mock_logger):
+    def test_user_blocks_with_no_blocks(self, mock_Site, mock_logger):
         mock_Site().logevents.return_value = iter([])
         wiki = Wiki()
 
-        user_blocks = wiki.get_user_blocks('fred')
+        user_blocks = wiki.user_blocks('fred')
 
         self.assertEqual(user_blocks, [])
         mock_logger.error.assert_not_called()
@@ -468,7 +468,7 @@ class GetUserBlocksTest(TestCase):
 
     @patch('wiki_interface.wiki.logger')
     @patch('wiki_interface.wiki.Site')
-    def test_get_user_blocks_with_multiple_events(self, mock_Site, mock_logger):
+    def test_user_blocks_with_multiple_events(self, mock_Site, mock_logger):
         jan_1 = '2020-01-01T00:00:00Z'
         feb_1 = '2020-02-01T00:00:00Z'
         mar_1 = '2020-03-01T00:00:00Z'
@@ -494,7 +494,7 @@ class GetUserBlocksTest(TestCase):
             ])
         wiki = Wiki()
 
-        user_blocks = wiki.get_user_blocks('fred')
+        user_blocks = wiki.user_blocks('fred')
 
         self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
                                        BlockEvent('fred', isoparse(mar_1), isoparse(apr_1)),
@@ -504,7 +504,7 @@ class GetUserBlocksTest(TestCase):
 
     @patch('wiki_interface.wiki.logger')
     @patch('wiki_interface.wiki.Site')
-    def test_get_user_blocks_with_reblock(self, mock_Site, mock_logger):
+    def test_user_blocks_with_reblock(self, mock_Site, mock_logger):
         jan_1 = '2020-01-01T00:00:00Z'
         jan_2 = '2020-01-02T00:00:00Z'
         feb_1 = '2020-02-01T00:00:00Z'
@@ -524,7 +524,7 @@ class GetUserBlocksTest(TestCase):
         ])
         wiki = Wiki()
 
-        user_blocks = wiki.get_user_blocks('fred')
+        user_blocks = wiki.user_blocks('fred')
 
         self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
                                        BlockEvent('fred', isoparse(jan_2), isoparse(mar_1),
@@ -534,7 +534,7 @@ class GetUserBlocksTest(TestCase):
 
     @patch('wiki_interface.wiki.logger')
     @patch('wiki_interface.wiki.Site')
-    def test_get_user_blocks_with_unknown_action(self, mock_Site, mock_logger):
+    def test_user_blocks_with_unknown_action(self, mock_Site, mock_logger):
         jan_1 = '2020-01-01T00:00:00Z'
         feb_1 = '2020-02-01T00:00:00Z'
         mar_1 = '2020-03-01T00:00:00Z'
@@ -554,7 +554,7 @@ class GetUserBlocksTest(TestCase):
         ])
         wiki = Wiki()
 
-        user_blocks = wiki.get_user_blocks('fred')
+        user_blocks = wiki.user_blocks('fred')
 
         self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(mar_1), isoparse(apr_1))])
         mock_logger.error.assert_called_once()
@@ -564,7 +564,7 @@ class GetUserLogsTest(TestCase):
     # pylint: disable=invalid-name
 
     @patch('wiki_interface.wiki.Site')
-    def test_get_user_log_events(self, mock_Site):
+    def test_user_log_events(self, mock_Site):
         mock_Site().logevents.return_value = iter([
             {
                 'title': 'Fred-sock',
@@ -578,7 +578,7 @@ class GetUserLogsTest(TestCase):
         ])
         wiki = Wiki()
 
-        log_events = list(wiki.get_user_log_events('Fred'))
+        log_events = list(wiki.user_log_events('Fred'))
         self.assertEqual(log_events, [LogEvent(
             datetime(2019, 11, 29, tzinfo=timezone.utc),
             'Fred',
@@ -589,7 +589,7 @@ class GetUserLogsTest(TestCase):
 
 
     @patch('wiki_interface.wiki.Site')
-    def test_get_user_log_events_handles_hidden_comment(self, mock_Site):
+    def test_user_log_events_handles_hidden_comment(self, mock_Site):
         mock_Site().logevents.return_value = iter([
             {
                 'title': 'Fred-sock',
@@ -603,7 +603,7 @@ class GetUserLogsTest(TestCase):
         ])
         wiki = Wiki()
 
-        log_events = list(wiki.get_user_log_events('Fred'))
+        log_events = list(wiki.user_log_events('Fred'))
         self.assertEqual(log_events, [LogEvent(
             datetime(2019, 11, 29, tzinfo=timezone.utc),
             'Fred',
