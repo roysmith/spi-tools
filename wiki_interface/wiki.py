@@ -36,11 +36,17 @@ class Wiki:
     This knows about user credentials, so you must create a new
     instance of this for every request.
 
+    If a request is supplied, it is used for authentication, as well
+    as to capture some request metadata which can be useful in logging
+    off the main thread (i.e. by asyncio code).
+
     """
     def __init__(self, request=None):
         self.site = self._get_mw_site(request)
         self.namespaces = self.site.namespaces
         self.namespace_values = {v: k for k, v in self.namespaces.items()}
+        self.reqeust = request
+        self.request_id = request and request.META.get('HTTP_X_REQUEST_ID')
 
 
     @staticmethod
