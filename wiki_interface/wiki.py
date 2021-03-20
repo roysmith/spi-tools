@@ -12,9 +12,13 @@ mwclient.Site directly.
 import logging
 from dataclasses import dataclass
 from itertools import islice
+import asyncio
+import heapq
 
 import django.contrib.auth
 from django.conf import settings
+from asgiref.sync import sync_to_async
+
 from mwclient import Site
 from mwclient.listing import List
 from mwclient.errors import APIError
@@ -214,6 +218,21 @@ class Wiki:
                 logger.error('Ignoring block due to unknown block action in %s', block)
         return events
 
+
+    async def multi_user_blocks(self, user_names):
+        """Get the the block history for multiple users.
+
+        Returns a (heterogeneous) list of BlockEvents and
+        UnblockEvents.
+
+        Events are returned in reverse chronological order (i.e. most
+        recent first), with the events for the various users
+        intermingled.
+
+        """
+        tasks = [sync_to_async(self.user_blocks)(name) for name in user_names]
+        blocks = await asyncio.gather(*tasks)
+        return list(heapq.merge(*blocks, reverse=True))
 
 
     def user_log_events(self, user_name):
