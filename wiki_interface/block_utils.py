@@ -32,6 +32,9 @@ class BlockEvent(BaseBlockEvent):
         if self.expiry and self.expiry < self.timestamp:
             raise ValueError(f'expiry ({self.expiry}) > timestamp({self.timestamp})')
 
+    def __lt__(self, other):
+        return self.timestamp < other.timestamp
+
 
 @dataclass(frozen=True)
 class UnblockEvent(BaseBlockEvent):
