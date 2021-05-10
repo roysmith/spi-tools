@@ -251,6 +251,70 @@ class SpiCaseTest(TestCase):
                          ])
 
 
+    def test_for_master_with_multiple_days_and_mixed_new_and_old_style_headers(self):
+        wiki = NonCallableMock(Wiki)
+        wiki.page().text.side_effect = [
+            dedent(
+                '''
+                {{SPIarchive notice|1=Fred}}
+                =====<big>21 March 2019</big>=====
+                {{checkuser|user1}}
+                {{checkuser|user2}}
+                ===22 March 2019===
+                {{checkuser|user3}}
+                {{checkuser|user4}}
+
+                '''),
+            dedent(
+                '''
+                ''')]
+        wiki.reset_mock()
+
+        case = SpiCase.for_master(wiki, 'Fred')
+
+        self.assertEqual(wiki.page.call_args_list,
+                         [call('Wikipedia:Sockpuppet investigations/Fred'),
+                          call('Wikipedia:Sockpuppet investigations/Fred/Archive'),
+                         ])
+        self.assertEqual(case.master_name, 'Fred')
+        self.assertEqual(list(case.find_all_ips()), [])
+        self.assertEqual(list(case.find_all_users()),
+                         [SpiUserInfo('Fred', None),
+                          SpiUserInfo('user1', '21 March 2019'),
+                          SpiUserInfo('user2', '21 March 2019'),
+                          SpiUserInfo('user3', '22 March 2019'),
+                          SpiUserInfo('user4', '22 March 2019'),
+                         ])
+
+
+    def test_constructor_handles_old_style_headers(self):
+        text = '''
+        __TOC__
+        {{SPIarchive notice|1=Crazyalien}}
+        {{SPIpriorcases}}
+        =====<big>22 May 2011</big>=====
+        ;Suspected sockpuppets
+        '''
+        case = SpiCase(make_source(text))
+        dates = [day.date() for day in case.days()]
+        self.assertEqual(dates, ['22 May 2011'])
+
+
+    def test_constructor_handles_mix_of_new_and_old_style_headers(self):
+        text = '''
+        __TOC__
+        {{SPIarchive notice|1=Crazyalien}}
+        {{SPIpriorcases}}
+        =====<big>22 May 2011</big>=====
+        ===22 May 2020===
+        =====<big>22 May 2012</big>=====
+        ===22 May 2021===
+        '''
+        case = SpiCase(make_source(text))
+        dates = [day.date() for day in case.days()]
+        self.assertEqual(dates, ['22 May 2011', '22 May 2020', '22 May 2012', '22 May 2021'])
+
+
     def test_master_name_returns_correct_value(self):
         text = '''
         {{SPIarchive notice|1=KaranSharma0445}}

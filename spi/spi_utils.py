@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import List
 from ipaddress import IPv4Address, IPv4Network
 from itertools import chain
+import re
 
 from mwparserfromhell import parse
 from mwparserfromhell.wikicode import Wikicode
@@ -90,6 +91,8 @@ class SpiCase:
         return SpiCase(*docs)
 
 
+    MAP_53_PATTERN = re.compile(r"^=====<big>([a-zA-Z 0-9]*)</big>=====$", re.MULTILINE)
+
     def __init__(self, *sources):
         """A case can be made up of multiple source documents.  In practice,
         there will usually be two; the currently active page, and the
@@ -97,9 +100,18 @@ class SpiCase:
         yet, and in exceptional cases, there may be multiple archives.
 
         Each source is SpiSourceDocument.
+
+        To accomodate both new and old style formatting, any old-style
+        (level-5) headers are mappedto new style (level-3) headers
+        before parsing.  This is an ugly hack, but doing it correctly
+        is just too painful.
+
         """
-        self.parsed_docs = [SpiParsedDocument(s.page_title, parse(s.wikitext, skip_style_tags=True))
-                            for s in sources]
+        self.parsed_docs = []
+        for s in sources:
+            mapped_text = self.MAP_53_PATTERN.sub(r'===\1===', s.wikitext)
+            parsed_text = parse(mapped_text, skip_style_tags=True)
+            self.parsed_docs.append(SpiParsedDocument(s.page_title, parsed_text))
 
         master_names = set(doc.master_name() for doc in self.parsed_docs)
         if len(master_names) == 0:
