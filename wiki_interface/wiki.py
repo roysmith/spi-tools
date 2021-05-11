@@ -12,9 +12,13 @@ mwclient.Site directly.
 import logging
 from dataclasses import dataclass
 from itertools import islice
+import asyncio
+import heapq
 
 import django.contrib.auth
 from django.conf import settings
+from asgiref.sync import sync_to_async
+
 from mwclient import Site
 from mwclient.listing import List
 from mwclient.errors import APIError
@@ -36,11 +40,17 @@ class Wiki:
     This knows about user credentials, so you must create a new
     instance of this for every request.
 
+    If a request is supplied, it is used for authentication, as well
+    as to capture some request metadata which can be useful in logging
+    off the main thread (i.e. by asyncio code).
+
     """
     def __init__(self, request=None):
         self.site = self._get_mw_site(request)
         self.namespaces = self.site.namespaces
         self.namespace_values = {v: k for k, v in self.namespaces.items()}
+        self.reqeust = request
+        self.request_id = request and request.META.get('HTTP_X_REQUEST_ID')
 
 
     @staticmethod
@@ -209,6 +219,21 @@ class Wiki:
         return events
 
 
+    async def multi_user_blocks(self, user_names):
+        """Get the the block history for multiple users.
+
+        Returns a (heterogeneous) list of BlockEvents and
+        UnblockEvents.
+
+        Events are returned in reverse chronological order (i.e. most
+        recent first), with the events for the various users
+        intermingled.
+
+        """
+        tasks = [sync_to_async(self.user_blocks)(name) for name in user_names]
+        blocks = await asyncio.gather(*tasks)
+        return list(heapq.merge(*blocks, reverse=True))
+
 
     def user_log_events(self, user_name):
         """Get the user's log events, i.e. where the user is the performer.
@@ -221,9 +246,9 @@ class Wiki:
         for event in self.site.logevents(user=user_name):
             yield LogEvent(struct_to_datetime(event['timestamp']),
                            event['user'],
-                           event['title'],
+                           event['title'] if 'title' in event else None,
                            event['type'],
-                           event['action'],
+                           event['action'] if 'action' in event else None,
                            event['comment'] if 'commenthidden' not in event else None)
 
     def page(self, title):

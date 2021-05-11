@@ -5,6 +5,8 @@ from unittest.mock import call, patch, Mock
 from dateutil.parser import isoparse
 from django.conf import settings
 from django.http import HttpRequest
+from asgiref.sync import async_to_sync
+
 import mwclient
 import mwclient.util
 import mwclient.errors
@@ -560,6 +562,143 @@ class UserBlocksTest(TestCase):
         mock_logger.error.assert_called_once()
 
 
+class MultiUserBlocksTest(TestCase):
+    #pylint: disable=invalid-name
+
+    def test_multi_user_blocks_with_no_users_returns_empty_list(self):
+        wiki = Wiki()
+
+        blocks = async_to_sync(wiki.multi_user_blocks)([])
+
+        self.assertEqual(blocks, [])
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_multi_user_blocks_with_one_user_and_no_blocks_returns_empty_list(self, mock_Site):
+        mock_Site().logevents.return_value = []
+        wiki = Wiki()
+
+        blocks = async_to_sync(wiki.multi_user_blocks)(['fred'])
+
+        self.assertEqual(blocks, [])
+        mock_Site().logevents.assert_called_once_with(title='User:fred', type='block')
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_multi_user_blocks_with_one_user_and_multiple_blocks_returns_correct_list(self, mock_Site):
+        jan_1 = '2020-01-01T00:00:00Z'
+        feb_1 = '2020-02-01T00:00:00Z'
+        mar_1 = '2020-03-01T00:00:00Z'
+        apr_1 = '2020-04-01T00:00:00Z'
+        mock_Site().logevents.return_value = iter([
+            {'title': 'User:fred',
+             'timestamp': mwclient.util.parse_timestamp(mar_1),
+             'params': {'expiry': apr_1},
+             'type': 'block',
+             'action': 'block'},
+            {'title': 'User:fred',
+             'timestamp': mwclient.util.parse_timestamp(jan_1),
+             'params': {'expiry': feb_1},
+             'type': 'block',
+             'action': 'block'},
+            ])
+        wiki = Wiki()
+
+        blocks = async_to_sync(wiki.multi_user_blocks)(['fred'])
+
+        self.assertEqual(blocks, [
+            BlockEvent('fred', isoparse(mar_1), isoparse(apr_1)),
+            BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
+        ])
+        mock_Site().logevents.assert_called_once_with(title='User:fred', type='block')
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_multi_user_blocks_with_two_user_and_one_block_each_returns_correct_list(self, mock_Site):
+        jan_1 = '2020-01-01T00:00:00Z'
+        feb_1 = '2020-02-01T00:00:00Z'
+        mar_1 = '2020-03-01T00:00:00Z'
+        apr_1 = '2020-04-01T00:00:00Z'
+        logevents_data = {
+            'User:fred': [
+                {'title': 'User:fred',
+                 'timestamp': mwclient.util.parse_timestamp(jan_1),
+                 'params': {'expiry': feb_1},
+                 'type': 'block',
+                 'action': 'block'},
+            ],
+            'User:wilma': [
+                {'title': 'User:wilma',
+                 'timestamp': mwclient.util.parse_timestamp(mar_1),
+                 'params': {'expiry': apr_1},
+                 'type': 'block',
+                 'action': 'block'},
+            ],
+        }
+        mock_Site().logevents.side_effect = lambda title, type: logevents_data[title]
+        wiki = Wiki()
+
+        blocks = async_to_sync(wiki.multi_user_blocks)(['fred', 'wilma'])
+
+        mock_Site().logevents.assert_has_calls([call(title='User:fred', type='block'),
+                                                call(title='User:wilma', type='block')])
+        self.assertEqual(blocks, [
+            BlockEvent('wilma', isoparse(mar_1), isoparse(apr_1)),
+            BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
+        ])
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_multi_user_blocks_with_two_user_and_multiple_blocks_each_returns_correct_list(self, mock_Site):
+        jan_1 = '2020-01-01T00:00:00Z'
+        feb_1 = '2020-02-01T00:00:00Z'
+        mar_1 = '2020-03-01T00:00:00Z'
+        apr_1 = '2020-04-01T00:00:00Z'
+        may_1 = '2020-05-01T00:00:00Z'
+        jun_1 = '2020-06-01T00:00:00Z'
+        jul_1 = '2020-07-01T00:00:00Z'
+        aug_1 = '2020-08-01T00:00:00Z'
+        logevents_data = {
+            'User:fred': [
+                {'title': 'User:fred',
+                 'timestamp': mwclient.util.parse_timestamp(jul_1),
+                 'params': {'expiry': aug_1},
+                 'type': 'block',
+                 'action': 'block'},
+                {'title': 'User:fred',
+                 'timestamp': mwclient.util.parse_timestamp(jan_1),
+                 'params': {'expiry': feb_1},
+                 'type': 'block',
+                 'action': 'block'},
+            ],
+            'User:wilma': [
+                {'title': 'User:wilma',
+                 'timestamp': mwclient.util.parse_timestamp(may_1),
+                 'params': {'expiry': jun_1},
+                 'type': 'block',
+                 'action': 'block'},
+                {'title': 'User:wilma',
+                 'timestamp': mwclient.util.parse_timestamp(mar_1),
+                 'params': {'expiry': apr_1},
+                 'type': 'block',
+                 'action': 'block'},
+            ],
+        }
+        mock_Site().logevents.side_effect = lambda title, type: logevents_data[title]
+        wiki = Wiki()
+
+        blocks = async_to_sync(wiki.multi_user_blocks)(['fred', 'wilma'])
+
+        mock_Site().logevents.assert_has_calls([call(title='User:fred', type='block'),
+                                                call(title='User:wilma', type='block')])
+        self.assertEqual(blocks, [
+            BlockEvent('fred', isoparse(jul_1), isoparse(aug_1)),
+            BlockEvent('wilma', isoparse(may_1), isoparse(jun_1)),
+            BlockEvent('wilma', isoparse(mar_1), isoparse(apr_1)),
+            BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
+        ])
+
+
 class UserLogsTest(TestCase):
     # pylint: disable=invalid-name
 
@@ -610,6 +749,54 @@ class UserLogsTest(TestCase):
             'Fred-sock',
             'newusers',
             'create2',
+            None)])
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_user_log_events_handles_hidden_title(self, mock_Site):
+        mock_Site().logevents.return_value = iter([
+            {
+                'params': {'userid': 37950265},
+                'type': 'newusers',
+                'action': 'create2',
+                'user': 'Fred',
+                'timestamp': (2019, 11, 29, 0, 0, 0, 0, 0, 0),
+                'commenthidden': '',
+            }
+        ])
+        wiki = Wiki()
+
+        log_events = list(wiki.user_log_events('Fred'))
+        self.assertEqual(log_events, [LogEvent(
+            datetime(2019, 11, 29, tzinfo=timezone.utc),
+            'Fred',
+            None,
+            'newusers',
+            'create2',
+            None)])
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_user_log_events_handles_hidden_action(self, mock_Site):
+        mock_Site().logevents.return_value = iter([
+            {
+                'title': 'Fred-sock',
+                'params': {'userid': 37950265},
+                'type': 'newusers',
+                'user': 'Fred',
+                'timestamp': (2019, 11, 29, 0, 0, 0, 0, 0, 0),
+                'commenthidden': '',
+            }
+        ])
+        wiki = Wiki()
+
+        log_events = list(wiki.user_log_events('Fred'))
+        self.assertEqual(log_events, [LogEvent(
+            datetime(2019, 11, 29, tzinfo=timezone.utc),
+            'Fred',
+            'Fred-sock',
+            'newusers',
+            None,
             None)])
 
 
