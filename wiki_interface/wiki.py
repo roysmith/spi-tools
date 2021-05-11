@@ -246,9 +246,9 @@ class Wiki:
         for event in self.site.logevents(user=user_name):
             yield LogEvent(struct_to_datetime(event['timestamp']),
                            event['user'],
-                           event['title'],
+                           event['title'] if 'title' in event else None,
                            event['type'],
-                           event['action'],
+                           event['action'] if 'action' in event else None,
                            event['comment'] if 'commenthidden' not in event else None)
 
     def page(self, title):

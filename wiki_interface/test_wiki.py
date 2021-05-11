@@ -752,6 +752,54 @@ class UserLogsTest(TestCase):
             None)])
 
 
+    @patch('wiki_interface.wiki.Site')
+    def test_user_log_events_handles_hidden_title(self, mock_Site):
+        mock_Site().logevents.return_value = iter([
+            {
+                'params': {'userid': 37950265},
+                'type': 'newusers',
+                'action': 'create2',
+                'user': 'Fred',
+                'timestamp': (2019, 11, 29, 0, 0, 0, 0, 0, 0),
+                'commenthidden': '',
+            }
+        ])
+        wiki = Wiki()
+
+        log_events = list(wiki.user_log_events('Fred'))
+        self.assertEqual(log_events, [LogEvent(
+            datetime(2019, 11, 29, tzinfo=timezone.utc),
+            'Fred',
+            None,
+            'newusers',
+            'create2',
+            None)])
+
+
+    @patch('wiki_interface.wiki.Site')
+    def test_user_log_events_handles_hidden_action(self, mock_Site):
+        mock_Site().logevents.return_value = iter([
+            {
+                'title': 'Fred-sock',
+                'params': {'userid': 37950265},
+                'type': 'newusers',
+                'user': 'Fred',
+                'timestamp': (2019, 11, 29, 0, 0, 0, 0, 0, 0),
+                'commenthidden': '',
+            }
+        ])
+        wiki = Wiki()
+
+        log_events = list(wiki.user_log_events('Fred'))
+        self.assertEqual(log_events, [LogEvent(
+            datetime(2019, 11, 29, tzinfo=timezone.utc),
+            'Fred',
+            'Fred-sock',
+            'newusers',
+            None,
+            None)])
+
+
 class GetPageTest(TestCase):
     #pylint: disable=invalid-name
 
