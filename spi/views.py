@@ -53,7 +53,7 @@ class IndexView(View):
         context = {'form': form,
                    'choices': self.generate_select2_data(case_name=case_name),
                    }
-        return render(request, 'spi/index.jinja', context)
+        return render(request, 'spi/index.html', context)
 
     def post(self, request):
         form = CaseNameForm(request.POST)
@@ -72,7 +72,7 @@ class IndexView(View):
             logger.error(message)
             context['error'] = message
 
-        return render(request, 'spi/index.jinja', context)
+        return render(request, 'spi/index.html', context)
 
     @staticmethod
     def generate_select2_data(case_name=None):
@@ -123,7 +123,7 @@ class IpAnalysisView(View):
         summaries.sort()
         context = {'case_name': case_name,
                    'ip_summaries': summaries}
-        return render(request, 'spi/ip-analysis.jinja', context)
+        return render(request, 'spi/ip-analysis.html', context)
 
 
 @dataclass(frozen=True, order=True)
@@ -161,7 +161,7 @@ class SockSelectView(View):
         wiki = Wiki()
         user_infos = list(get_sock_names(wiki, case_name))
         return render(request,
-                      'spi/sock-select.jinja',
+                      'spi/sock-select.html',
                       self.build_context(case_name, user_infos))
 
     def post(self, request, case_name):
@@ -188,7 +188,7 @@ class SockSelectView(View):
         logger.debug("post: not valid")
         context = {'case_name': case_name,
                    'form': form}
-        return render(request, 'spi/sock-select.jinja', context)
+        return render(request, 'spi/sock-select.html', context)
 
 
     @staticmethod
@@ -241,7 +241,7 @@ class TimecardView(View):
         context = {'case_name': case_name,
                    'users': user_names,
                    'data': data}
-        return render(request, 'spi/timecard.jinja', context)
+        return render(request, 'spi/timecard.html', context)
 
 
 @dataclass(frozen=True, order=True)
@@ -293,7 +293,7 @@ class TimelineView(LoginRequiredMixin, View):
                    'tag_list': tag_list,
                    'tag_table': tag_table,
                    }
-        return render(request, 'spi/timeline.jinja', context)
+        return render(request, 'spi/timeline.html', context)
 
 
     def get_event_stream_for_user(self, wiki, user):
@@ -406,7 +406,7 @@ class G5View(View):
         context = {'case_name': case_name,
                    'page_creations': page_creations,
                    }
-        return render(request, 'spi/g5.jinja', context)
+        return render(request, 'spi/g5.html', context)
 
 
     @staticmethod

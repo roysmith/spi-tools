@@ -331,7 +331,7 @@ class TimelineViewTest(ViewTestCase):
 
         response = client.get('/spi/timeline/Foo', {'users': ['u1']})
 
-        self.assertEqual(response.templates, ['spi/timeline.jinja'])
+        self.assertEqual(response.templates, ['spi/timeline.html'])
         self.assertEqual(response.context['tag_list'], ['tag', 'tag1', 'tag2', 'tag3', 'tag4'])
 
 
