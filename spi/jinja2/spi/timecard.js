@@ -41,7 +41,7 @@ $(document).ready(function() {
     };
 
     {% for userName, timecard in data.items() %}
-    var ctx = $(document)[0].getElementById('chart-{{ userName|safe }}').getContext('2d');
+    var ctx = $(document)[0].getElementById('chart-' + {{ userName|tojson }}).getContext('2d');
     var chart = new Chart(ctx, {
 	type: 'bubble',
 	options: options,
@@ -49,7 +49,7 @@ $(document).ready(function() {
 	    datasets: [{
 		backgroundColor: 'rgb(255, 99, 132)',
 		borderColor: 'rgb(255, 99, 132)',
-		label: '{{ userName|safe }}',
+		label: {{ userName|tojson }},
 		data: [
 		    {% for t in timecard %}
 		    {x: {{ t.x }}, y: {{ t.y }}, r: {{ t.r }} * 0.5 },
