@@ -213,6 +213,24 @@ class SockSelectViewTest(ViewTestCase):
         self.assertEqual([b.get('data-date') for b in buttons], ['20June2020', '21June2020'])
 
 
+    @patch('spi.views.get_sock_names')
+    def test_usernames_are_escaped_in_html(self, mock_get_sock_names):
+        mock_get_sock_names.return_value = [
+            ValidatedUser("foo&bar", "20 June 2020", True),
+        ]
+        client = Client()
+
+        response = client.get('/spi/sock-select/Foo/')
+
+        tree = etree.HTML(response.content)
+        checkbox = tree.cssselect('#sock-table > tr > td > input[type=checkbox]')[0]
+        self.assertEqual(checkbox.get('name'), 'sock_foo%26bar')
+        self.assertEqual(checkbox.get('id'), 'id_sock_foo%26bar')
+        label = tree.cssselect('#sock-table > tr > td > label')[0]
+        self.assertEqual(label.get('for'), 'id_sock_foo%26bar')
+        self.assertEqual(label.text, 'foo&bar')
+
+
 class UserSummaryTest(ViewTestCase):
     def test_urlencoded_username(self):
         summary = UserSummary('foo', '20 July 2020')
