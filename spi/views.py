@@ -7,6 +7,7 @@ import urllib.parse
 import datetime
 import itertools
 import heapq
+from pprint import pprint
 
 import requests
 
@@ -160,9 +161,23 @@ class SockSelectView(View):
     def get(self, request, case_name):
         wiki = Wiki()
         user_infos = list(get_sock_names(wiki, case_name))
-        return render(request,
-                      'spi/sock-select.html',
-                      self.build_context(case_name, user_infos))
+        logger.debug(user_infos)
+        users_by_name = {user.username: user for user in user_infos}
+        names = list({user.username for user in user_infos if user.valid})
+        invalid_users = [user for user in user_infos if not user.valid]
+        dates = [users_by_name[name].date for name in names]
+        form = SockSelectForm.build(names)
+
+        all_date_strings = set(user.date for user in user_infos if user.date)
+        keyed_dates = [(datetime.datetime.strptime(d, '%d %B %Y'), d) for d in all_date_strings]
+
+        context = {'case_name': case_name,
+                   'form_info': list(zip(form, names, dates)),
+                   'invalid_users': invalid_users,
+                   'dates': [v for (k, v) in sorted(keyed_dates)],
+        }
+        return render(request, 'spi/sock-select.html', context)
+
 
     def post(self, request, case_name):
         form = SockSelectForm(request.POST)
@@ -203,25 +218,6 @@ class SockSelectView(View):
         query_items = [('users', sock) for sock in selected_socks]
         params = urllib.parse.urlencode(query_items)
         return params
-
-
-    @staticmethod
-    def build_context(case_name, user_infos):
-        logger.debug(user_infos)
-        users_by_name = {user.username: user for user in user_infos}
-        names = list({user.username for user in user_infos if user.valid})
-        invalid_users = [user for user in user_infos if not user.valid]
-        dates = [users_by_name[name].date for name in names]
-        form = SockSelectForm.build(names)
-
-        all_date_strings = set(user.date for user in user_infos if user.date)
-        keyed_dates = [(datetime.datetime.strptime(d, '%d %B %Y'), d) for d in all_date_strings]
-
-        return {'case_name': case_name,
-                'form_info': zip(form, names, dates),
-                'invalid_users': invalid_users,
-                'dates': [v for (k, v) in sorted(keyed_dates)],
-                }
 
 
 class TimecardView(View):
