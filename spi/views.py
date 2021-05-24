@@ -7,6 +7,7 @@ import urllib.parse
 import datetime
 import itertools
 import heapq
+from pprint import pprint
 
 import requests
 
@@ -53,7 +54,7 @@ class IndexView(View):
         context = {'form': form,
                    'choices': self.generate_select2_data(case_name=case_name),
                    }
-        return render(request, 'spi/index.jinja', context)
+        return render(request, 'spi/index.html', context)
 
     def post(self, request):
         form = CaseNameForm(request.POST)
@@ -72,7 +73,7 @@ class IndexView(View):
             logger.error(message)
             context['error'] = message
 
-        return render(request, 'spi/index.jinja', context)
+        return render(request, 'spi/index.html', context)
 
     @staticmethod
     def generate_select2_data(case_name=None):
@@ -123,7 +124,7 @@ class IpAnalysisView(View):
         summaries.sort()
         context = {'case_name': case_name,
                    'ip_summaries': summaries}
-        return render(request, 'spi/ip-analysis.jinja', context)
+        return render(request, 'spi/ip-analysis.html', context)
 
 
 @dataclass(frozen=True, order=True)
@@ -160,9 +161,23 @@ class SockSelectView(View):
     def get(self, request, case_name):
         wiki = Wiki()
         user_infos = list(get_sock_names(wiki, case_name))
-        return render(request,
-                      'spi/sock-select.jinja',
-                      self.build_context(case_name, user_infos))
+        logger.debug(user_infos)
+        users_by_name = {user.username: user for user in user_infos}
+        names = list({user.username for user in user_infos if user.valid})
+        invalid_users = [user for user in user_infos if not user.valid]
+        dates = [users_by_name[name].date for name in names]
+        form = SockSelectForm.build(names)
+
+        all_date_strings = set(user.date for user in user_infos if user.date)
+        keyed_dates = [(datetime.datetime.strptime(d, '%d %B %Y'), d) for d in all_date_strings]
+
+        context = {'case_name': case_name,
+                   'form_info': list(zip(form, names, dates)),
+                   'invalid_users': invalid_users,
+                   'dates': [v for (k, v) in sorted(keyed_dates)],
+        }
+        return render(request, 'spi/sock-select.html', context)
+
 
     def post(self, request, case_name):
         form = SockSelectForm(request.POST)
@@ -188,7 +203,7 @@ class SockSelectView(View):
         logger.debug("post: not valid")
         context = {'case_name': case_name,
                    'form': form}
-        return render(request, 'spi/sock-select.jinja', context)
+        return render(request, 'spi/sock-select.html', context)
 
 
     @staticmethod
@@ -203,25 +218,6 @@ class SockSelectView(View):
         query_items = [('users', sock) for sock in selected_socks]
         params = urllib.parse.urlencode(query_items)
         return params
-
-
-    @staticmethod
-    def build_context(case_name, user_infos):
-        logger.debug(user_infos)
-        users_by_name = {user.username: user for user in user_infos}
-        names = list({user.username for user in user_infos if user.valid})
-        invalid_users = [user for user in user_infos if not user.valid]
-        dates = [users_by_name[name].date for name in names]
-        form = SockSelectForm.build(names)
-
-        all_date_strings = set(user.date for user in user_infos if user.date)
-        keyed_dates = [(datetime.datetime.strptime(d, '%d %B %Y'), d) for d in all_date_strings]
-
-        return {'case_name': case_name,
-                'form_info': zip(form, names, dates),
-                'invalid_users': invalid_users,
-                'dates': [v for (k, v) in sorted(keyed_dates)],
-                }
 
 
 class TimecardView(View):
@@ -241,7 +237,7 @@ class TimecardView(View):
         context = {'case_name': case_name,
                    'users': user_names,
                    'data': data}
-        return render(request, 'spi/timecard.jinja', context)
+        return render(request, 'spi/timecard.html', context)
 
 
 @dataclass(frozen=True, order=True)
@@ -293,7 +289,7 @@ class TimelineView(LoginRequiredMixin, View):
                    'tag_list': tag_list,
                    'tag_table': tag_table,
                    }
-        return render(request, 'spi/timeline.jinja', context)
+        return render(request, 'spi/timeline.html', context)
 
 
     def get_event_stream_for_user(self, wiki, user):
@@ -406,7 +402,7 @@ class G5View(View):
         context = {'case_name': case_name,
                    'page_creations': page_creations,
                    }
-        return render(request, 'spi/g5.jinja', context)
+        return render(request, 'spi/g5.html', context)
 
 
     @staticmethod

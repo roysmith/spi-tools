@@ -93,41 +93,42 @@ class IndexViewTest(ViewTestCase):
 class SockSelectViewTest(ViewTestCase):
     # pylint: disable=invalid-name
 
-    def test_build_context(self):
-        case_name = "Foo"
-        user_infos = [ValidatedUser("User1", "20 June 2020", True),
-                      ValidatedUser("User2", "21 June 2020", True),
-                      ValidatedUser("User3", "21 June 2020", False),
-                      ]
+    @patch('spi.views.render')
+    @patch('spi.views.get_sock_names')
+    def test_context_is_correct(self, mock_get_sock_names, mock_render):
+        mock_get_sock_names.return_value = [ValidatedUser("User1", "20 June 2020", True),
+                                            ValidatedUser("User2", "21 June 2020", True),
+                                            ValidatedUser("User3", "21 June 2020", False)]
+        mock_render.side_effect = self.render_patch
+        client = Client()
 
-        context = SockSelectView.build_context(case_name, user_infos)
+        response = client.get('/spi/sock-select/Foo/')
 
+        mock_render.assert_called_once()
+        context = response.context[0]
         self.assertEqual(context['case_name'], "Foo")
-        self.assertEqual(context['invalid_users'],
-                         [ValidatedUser("User3", "21 June 2020", False)])
-        expected_items = {('User1', 'User1', '20 June 2020'),
-                          ('User2', 'User2', '21 June 2020')}
-        items = {(field.label, name, date)
-                 for field, name, date in context['form_info']}
-        self.assertEqual(items, expected_items)
+        self.assertEqual(context['invalid_users'], [ValidatedUser("User3", "21 June 2020", False)])
+        self.assertEqual({(field.label, name, date) for field, name, date in context['form_info']},
+                         {('User1', 'User1', '20 June 2020'), ('User2', 'User2', '21 June 2020')})
 
 
-    def test_build_context_deduplicates_users(self):
-        case_name = "Foo"
-        user_infos = [ValidatedUser("User1", "20 June 2020", True),
-                      ValidatedUser("User1", "20 June 2020", True),
-                      ValidatedUser("User2", "21 June 2020", True)]
+    @patch('spi.views.render')
+    @patch('spi.views.get_sock_names')
+    def test_users_are_deduplicated(self, mock_get_sock_names, mock_render):
+        mock_get_sock_names.return_value = [ValidatedUser("User1", "20 June 2020", True),
+                                            ValidatedUser("User1", "20 June 2020", True),
+                                            ValidatedUser("User2", "21 June 2020", True)]
+        mock_render.side_effect = self.render_patch
+        client = Client()
 
-        context = SockSelectView.build_context(case_name, user_infos)
+        response = client.get('/spi/sock-select/Foo/')
 
+        mock_render.atassert_called_once()
+        context = response.context[0]
         self.assertEqual(context['case_name'], "Foo")
         self.assertEqual(context['invalid_users'], [])
-        expected_items = {('User1', 'User1', '20 June 2020'),
-                          ('User2', 'User2', '21 June 2020')}
-        items = {(field.label, name, date)
-                 for field, name, date in context['form_info']}
-        self.assertEqual(items, expected_items)
-
+        self.assertEqual({(field.label, name, date) for field, name, date in context['form_info']},
+                         {('User1', 'User1', '20 June 2020'), ('User2', 'User2', '21 June 2020')})
 
 
     @patch('wiki_interface.wiki.Site')
@@ -151,25 +152,38 @@ class SockSelectViewTest(ViewTestCase):
         self.assertEqual(response.status_code, 200)
 
 
-    def test_context_includes_unique_dates(self):
-        context = SockSelectView.build_context('Foo',
-                                               [ValidatedUser("User1", "20 June 2020", True),
-                                                ValidatedUser("User2", "21 June 2020", True),
-                                                ValidatedUser("User3", "21 June 2020", True),
-                                               ])
+    @patch('spi.views.render')
+    @patch('spi.views.get_sock_names')
+    def test_context_includes_unique_dates(self, mock_get_sock_names, mock_render):
+        mock_get_sock_names.return_value = [ValidatedUser("User1", "20 June 2020", True),
+                                            ValidatedUser("User2", "21 June 2020", True),
+                                            ValidatedUser("User3", "21 June 2020", True)]
+        mock_render.side_effect = self.render_patch
+        client = Client()
 
+        response = client.get('/spi/sock-select/Foo/')
+
+        mock_render.assert_called_once()
+        context = response.context[0]
         self.assertEqual(context['dates'], ['20 June 2020', '21 June 2020'])
 
 
-    def test_context_dates_are_sorted_in_chronological_order(self):
-        context = SockSelectView.build_context('Foo',
-                                               [ValidatedUser("User", "08 October 2020", True),
-                                                ValidatedUser("User", "10 December 2019", True),
-                                                ValidatedUser("User", "12 December 2019", True),
-                                                ValidatedUser("User", "12 July 2020", True),
-                                                ValidatedUser("User", "15 December 2020", True),
-                                                ValidatedUser("User", "15 May 2020", True),
-                                                ])
+    @patch('spi.views.render')
+    @patch('spi.views.get_sock_names')
+    def test_context_dates_are_sorted_in_chronological_order(self, mock_get_sock_names, mock_render):
+        mock_get_sock_names.return_value = [ValidatedUser("User", "08 October 2020", True),
+                                            ValidatedUser("User", "10 December 2019", True),
+                                            ValidatedUser("User", "12 December 2019", True),
+                                            ValidatedUser("User", "12 July 2020", True),
+                                            ValidatedUser("User", "15 December 2020", True),
+                                            ValidatedUser("User", "15 May 2020", True)]
+        mock_render.side_effect = self.render_patch
+        client = Client()
+
+        response = client.get('/spi/sock-select/Foo/')
+
+        mock_render.assert_called_once()
+        context = response.context[0]
         self.assertEqual(context['dates'],
                          ['10 December 2019',
                           '12 December 2019',
@@ -211,6 +225,24 @@ class SockSelectViewTest(ViewTestCase):
         tree = etree.HTML(response.content)
         buttons = tree.cssselect('div.dropdown-menu > button.dropdown-item[type=button]')
         self.assertEqual([b.get('data-date') for b in buttons], ['20June2020', '21June2020'])
+
+
+    @patch('spi.views.get_sock_names')
+    def test_usernames_are_escaped_in_html(self, mock_get_sock_names):
+        mock_get_sock_names.return_value = [
+            ValidatedUser("foo&bar", "20 June 2020", True),
+        ]
+        client = Client()
+
+        response = client.get('/spi/sock-select/Foo/')
+
+        tree = etree.HTML(response.content)
+        checkbox = tree.cssselect('#sock-table > tr > td > input[type=checkbox]')[0]
+        self.assertEqual(checkbox.get('name'), 'sock_foo%26bar')
+        self.assertEqual(checkbox.get('id'), 'id_sock_foo%26bar')
+        label = tree.cssselect('#sock-table > tr > td > label')[0]
+        self.assertEqual(label.get('for'), 'id_sock_foo%26bar')
+        self.assertEqual(label.text, 'foo&bar')
 
 
 class UserSummaryTest(ViewTestCase):
@@ -331,7 +363,7 @@ class TimelineViewTest(ViewTestCase):
 
         response = client.get('/spi/timeline/Foo', {'users': ['u1']})
 
-        self.assertEqual(response.templates, ['spi/timeline.jinja'])
+        self.assertEqual(response.templates, ['spi/timeline.html'])
         self.assertEqual(response.context['tag_list'], ['tag', 'tag1', 'tag2', 'tag3', 'tag4'])
 
 
