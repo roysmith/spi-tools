@@ -287,7 +287,8 @@ def _find_active_case_template(wiki):
     wikicode = parse(spi_page)
     template_names = [t.name for t in wikicode.filter_templates()]
     candidates = ['Wikipedia:Sockpuppet investigations/Cases/Overview',
-                  'User:AmandaNP/SPI case list']
+                  'User:AmandaNP/SPI case list',
+                  'User:Mz7/SPI case list']
     for name in candidates:
         if name in template_names:
             return name

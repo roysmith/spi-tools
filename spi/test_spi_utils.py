@@ -683,6 +683,24 @@ class FindActiveCaseTemplateTest(TestCase):
         self.assertEqual(template, 'User:AmandaNP/SPI case list')
 
 
+    @patch('wiki_interface.wiki.Site')
+    def test_mz7(self, mock_Site):
+        mock_Site().pages.__getitem__().text.return_value = '''
+        <h2> Cases currently listed at SPI </h2>
+        {{purge box}}
+        <!-- Switching to backup for the time being, main case list at {{Wikipedia:Sockpuppet investigations/Cases/Overview}} -->
+        {{User:Mz7/SPI case list}} <!-- Mz7's backup list more closely emulates the "normal" table. The original backup with some hacky table-code to get it working: 
+        {|class="wikitable sortable" width="100%"
+        !Investigation!!Status!!Filer!!Date filed!!Last user edit!!timestamp!!Last clerk/CU edit
+        {{User:AmandaNP/SPI case list}}
+        |}
+        -->
+        '''
+
+        wiki = Wiki()
+        template = _find_active_case_template(wiki)
+        self.assertEqual(template, 'User:Mz7/SPI case list')
+
 
     @patch('wiki_interface.wiki.Site')
     def test_None(self, mock_Site):
