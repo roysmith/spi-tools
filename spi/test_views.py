@@ -461,7 +461,7 @@ class PagesViewTest(ViewTestCase):
 
     @patch('spi.views.Wiki')
     @patch('spi.views.CacheableUserContribs')
-    def test_get_page_edit_counts_for_user(self, mock_CacheableUserContribs, mock_Wiki):
+    def test_get_page_data(self, mock_CacheableUserContribs, mock_Wiki):
         wiki = mock_Wiki()
         mock_CacheableUserContribs.get.side_effect = [
             CacheableUserContribs([
@@ -483,7 +483,7 @@ class PagesViewTest(ViewTestCase):
             ],
         ]
 
-        counts = PagesView.get_page_edit_counts_for_users(mock_Wiki(), ['u1', 'u2'])
+        counts = PagesView.get_page_data(mock_Wiki(), ['u1', 'u2'])
 
         self.assertEqual(counts,
                          {'Title1': 4,
@@ -495,7 +495,7 @@ class PagesViewTest(ViewTestCase):
     @patch('spi.views.Wiki')
     @patch('spi.views.render')
     @patch('spi.views.CacheableUserContribs')
-    def test_context_gets_correct_page_counts(self, mock_CacheableUserContribs, mock_render, mock_Wiki):
+    def test_context_gets_correct_page_data(self, mock_CacheableUserContribs, mock_render, mock_Wiki):
         mock_render.side_effect = self.render_patch
         mock_CacheableUserContribs.get.side_effect = [
             CacheableUserContribs([
@@ -513,7 +513,7 @@ class PagesViewTest(ViewTestCase):
         response = client.get('/spi/pages/Foo', {'users': ['u1']})
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['page_counts'],
+        self.assertEqual(response.context['page_data'],
                          {'Title1': 1,
                           'Title2': 1,
                           })

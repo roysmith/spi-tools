@@ -428,13 +428,13 @@ class PagesView(LoginRequiredMixin, View):
         logger.debug("user_names = %s", user_names)
 
         context = {'case_name': case_name,
-                   'page_counts': self.get_page_edit_counts_for_users(wiki, user_names),
+                   'page_data': self.get_page_data(wiki, user_names),
         }
         return render(request, 'spi/pages.html', context)
 
 
     @staticmethod
-    def get_page_edit_counts_for_users(wiki, user_names):
+    def get_page_data(wiki, user_names):
         """Returns a dict mapping page titles to edit counts.
 
         Both active an deleted edits are included.
