@@ -244,8 +244,12 @@ LOGGING = {
             'filters': ['request_id'],
             'formatter': 'file_formatter',
         },
-        # Hack to get real-time logging, as a work-around to T256426 and T256482.
+        # Hack to get real-time logging, as a work-around to T256426 and T256482,
+        # but disable in testing due to https://code.djangoproject.com/ticket/29186
         'bastion': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
+        } if TESTING else {
             'level': 'DEBUG',
             'class': 'logging.handlers.SocketHandler',
             'host': 'tools-sgebastion-08.tools.eqiad.wmflabs',
