@@ -1,0 +1,14 @@
+{% extends "tools_app/base.html" %}
+
+{% block content %}
+<h1><small>Page analysis for {{ case_name|spi_link }}</small></h1>
+<div class="mt-3">
+  <table id="pages" class="table table-sm">
+    <tr><th>Title</th><th>Edits</th></tr>
+    {% for title, count in page_counts.most_common() %}
+    <tr><td>{{ title }}</td><td>{{ count }}</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+{% endblock %}

@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, Counter
 from dataclasses import dataclass
 from typing import List
 import logging
@@ -195,6 +195,11 @@ class SockSelectView(View):
 
             if 'timeline-button' in request.POST:
                 url = '%s?%s' % (reverse("spi-timeline", args=[case_name]),
+                                 self.get_encoded_users(request))
+                return redirect(url)
+
+            if 'pages-button' in request.POST:
+                url = '%s?%s' % (reverse("spi-pages", args=[case_name]),
                                  self.get_encoded_users(request))
                 return redirect(url)
 
@@ -414,3 +419,30 @@ class G5View(View):
         if len(editors) == 1:
             return G5Score("likely", "only one editor")
         return G5Score("unknown")
+
+
+class PagesView(LoginRequiredMixin, View):
+    def get(self, request, case_name):
+        wiki = Wiki(request)
+        user_names = request.GET.getlist('users')
+        logger.debug("user_names = %s", user_names)
+
+        context = {'case_name': case_name,
+                   'page_counts': self.get_page_edit_counts_for_users(wiki, user_names),
+        }
+        return render(request, 'spi/pages.html', context)
+
+
+    @staticmethod
+    def get_page_edit_counts_for_users(wiki, user_names):
+        """Returns a dict mapping page titles to edit counts.
+
+        Both active an deleted edits are included.
+
+        """
+        counts = Counter()
+        for user_name in user_names:
+            counts.update(c.title for c in CacheableUserContribs.get(wiki, user_name).data)
+            counts.update(c.title for c in wiki.deleted_user_contributions(user_name))
+        return counts
+

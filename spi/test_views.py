@@ -12,7 +12,7 @@ from django.shortcuts import render
 
 from wiki_interface.data import WikiContrib, LogEvent
 from wiki_interface.block_utils import BlockEvent
-from spi.views import SockSelectView, UserSummary, TimelineEvent, ValidatedUser, IndexView
+from spi.views import SockSelectView, UserSummary, TimelineEvent, ValidatedUser, IndexView, PagesView
 from spi.spi_utils import CacheableSpiCase
 from spi.user_utils import CacheableUserContribs
 
@@ -439,3 +439,81 @@ class TimelineViewTest(ViewTestCase):
         self.assertEqual(response.context['events'], [
             TimelineEvent(datetime(2020, 1, 1), 'Fred', 'create', 'create', 'Title', '<comment hidden>', ''),
         ])
+
+
+class PagesViewTest(ViewTestCase):
+    # pylint: disable=invalid-name
+
+
+    @patch('spi.views.render')
+    @patch('spi.views.Wiki')
+    def test_get_uses_correct_template(self, mock_Wiki, mock_render):
+        mock_render.side_effect = self.render_patch
+        user_u1 = get_user_model().objects.create_user('U1')
+        client = Client()
+        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+
+        response = client.get('/spi/pages/Foo', {'users': ['u1']})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates, ['spi/pages.html'])
+
+
+    @patch('spi.views.Wiki')
+    @patch('spi.views.CacheableUserContribs')
+    def test_get_page_edit_counts_for_user(self, mock_CacheableUserContribs, mock_Wiki):
+        wiki = mock_Wiki()
+        mock_CacheableUserContribs.get.side_effect = [
+            CacheableUserContribs([
+                WikiContrib(103, datetime(2020, 1, 5), 'u1', 0, 'Title1', 'comment'),
+                WikiContrib(103, datetime(2020, 1, 3), 'u1', 0, 'Title2', 'comment'),
+                WikiContrib(103, datetime(2020, 1, 2), 'u1', 0, 'Title1', 'comment'),
+            ]),
+            CacheableUserContribs([
+                WikiContrib(103, datetime(2020, 1, 5), 'u2', 0, 'Title1', 'comment'),
+                WikiContrib(103, datetime(2020, 1, 3), 'u2', 0, 'Title2', 'comment'),
+                WikiContrib(103, datetime(2020, 1, 2), 'u2', 0, 'Title3', 'comment'),
+            ]),
+        ]
+        mock_Wiki().deleted_user_contributions.side_effect = [
+            [WikiContrib(102, datetime(2020, 2, 2), 'u1', 0, 'Title1', 'comment', False),
+            ],
+            [WikiContrib(102, datetime(2020, 2, 2), 'u1', 0, 'Title2', 'comment', False),
+             WikiContrib(102, datetime(2020, 2, 1), 'u1', 0, 'Title3', 'comment', False),
+            ],
+        ]
+
+        counts = PagesView.get_page_edit_counts_for_users(mock_Wiki(), ['u1', 'u2'])
+
+        self.assertEqual(counts,
+                         {'Title1': 4,
+                          'Title2': 3,
+                          'Title3': 2,
+                          })
+
+
+    @patch('spi.views.Wiki')
+    @patch('spi.views.render')
+    @patch('spi.views.CacheableUserContribs')
+    def test_context_gets_correct_page_counts(self, mock_CacheableUserContribs, mock_render, mock_Wiki):
+        mock_render.side_effect = self.render_patch
+        mock_CacheableUserContribs.get.side_effect = [
+            CacheableUserContribs([
+                WikiContrib(103, datetime(2020, 1, 5), 'u1', 0, 'Title1', 'comment'),
+            ]),
+        ]
+        mock_Wiki().deleted_user_contributions.side_effect = [
+            [WikiContrib(102, datetime(2020, 2, 2), 'u1', 0, 'Title2', 'comment', False),
+            ],
+        ]
+        user_u1 = get_user_model().objects.create_user('U1')
+        client = Client()
+        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+
+        response = client.get('/spi/pages/Foo', {'users': ['u1']})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['page_counts'],
+                         {'Title1': 1,
+                          'Title2': 1,
+                          })
