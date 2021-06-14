@@ -2,22 +2,51 @@
 
 {% block content %}
 <h1><small>Page analysis for {{ case_name|spi_link }}</small></h1>
+
+<p>
+  This is an experimental feature intended to make it easier to do
+  page protection as part of an SPI investigation.  Clicking the [ECP]
+  link next to each page title will open a new tab with a pre-filled
+  out page protection form.  If the options are what you want, just
+  click the "Confirm" button.  Feel free to adjust the options before
+  confirming.
+  </p>
+
+  <p>
+    "Edits" is the total number of edits (including deleted)
+    collectively made to the page by all the selected users.  "Reverts" is
+    how many of those which have been reverted.  "Editors" is the
+    number of distinct users (among the set of selected users) who
+    have edited the page.
+  </p>
+
+<p>Click a column label to sort by that column.</p>
+
 <div class="mt-3">
-  <table id="pages" class="table table-sm">
-    <tr>
-      <th>Title</th>
-      <th>Edits</th>
-      <th>Editors</th>
-      <th>Reverts</th>
-    </tr>
-    {% for title, count in page_data.edit_counts.most_common() %}
-    <tr>
-      <td>{{ title|page_link }}</td>
-      <td>{{ count }}</td>
-      <td>{{ page_data.editor_counts[title] }}</td>
-      <td>{{ page_data.reverted_counts[title] }}</td>
-    </tr>
-    {% endfor %}
+  <table id="pages"
+	 class="table table-sm"
+	 data-toggle="table">
+    <thead>
+      <tr>
+	<th data-sortable="true">Title</th>
+	<th data-sortable="true">Edits</th>
+	<th data-sortable="true">Reverts</th>
+	<th data-sortable="true">Editors</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for title, count in page_data.edit_counts.most_common() %}
+      <tr>
+	<td>
+	  <a href="//en.wikipedia.org/w/index.php?title={{ title }}&action=protect&mwProtect-level-create=autoconfirmed&mwProtect-expiry-create=1 month&mwProtect-level-edit=autoconfirmed&mwProtect-expiry-edit=1 month&mwProtect-reason=[[WP:Sockpuppet Investigations/{{ case_name }}]]" target="_blank">[ECP]</a>
+	  {{ title|page_link }}
+	</td>
+	<td>{{ count }}</td>
+	<td>{{ page_data.reverted_counts[title] }}</td>
+	<td>{{ page_data.editor_counts[title] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
   </table>
 </div>
 
