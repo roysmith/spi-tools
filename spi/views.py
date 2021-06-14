@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, Counter
 from dataclasses import dataclass
 from typing import List
 import logging
@@ -195,6 +195,11 @@ class SockSelectView(View):
 
             if 'timeline-button' in request.POST:
                 url = '%s?%s' % (reverse("spi-timeline", args=[case_name]),
+                                 self.get_encoded_users(request))
+                return redirect(url)
+
+            if 'pages-button' in request.POST:
+                url = '%s?%s' % (reverse("spi-pages", args=[case_name]),
                                  self.get_encoded_users(request))
                 return redirect(url)
 
@@ -414,3 +419,55 @@ class G5View(View):
         if len(editors) == 1:
             return G5Score("likely", "only one editor")
         return G5Score("unknown")
+
+
+class PagesView(LoginRequiredMixin, View):
+    def get(self, request, case_name):
+        wiki = Wiki(request)
+        user_names = request.GET.getlist('users')
+        logger.debug("user_names = %s", user_names)
+
+        context = {'case_name': case_name,
+                   'page_data': self.get_page_data(wiki, user_names),
+        }
+        return render(request, 'spi/pages.html', context)
+
+
+    @dataclass(frozen=True)
+    class PageData:
+        edit_counts: Counter
+        editor_counts: Counter
+        reverted_counts: Counter
+
+
+    @staticmethod
+    def get_page_data(wiki, user_names):
+        """Returns a PageData object.
+
+        The keys for each counter will be the current page titles including the
+        namespace (i.e.Talk:Foo).  The values will be:
+
+        edit_counts: Total number of edits made to the page.
+        editor_counts: Distinct editors who have edited the page
+        reverted_counts: Number of edits to this page that have been reverted.
+
+        Both active and deleted edits are included.
+
+        Only edit_counts is guaranteed to have the full set of keys
+
+
+        """
+        edit_counts = Counter()
+        editors = defaultdict(set)
+        reverted = defaultdict(int)
+        for user_name in user_names:
+            contribs = list(itertools.chain(CacheableUserContribs.get(wiki, user_name).data,
+                                            wiki.deleted_user_contributions(user_name)))
+            edit_counts.update(c.title for c in contribs)
+            for c in contribs:
+                editors[c.title].add(user_name)
+                if 'mw-reverted' in c.tags:
+                    reverted[c.title] += 1
+        editor_counts = Counter({k: len(v) for (k, v) in editors.items()})
+        reverted_counts = Counter(reverted)
+        return PagesView.PageData(edit_counts, editor_counts, reverted_counts)
