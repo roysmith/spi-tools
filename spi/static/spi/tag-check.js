@@ -1,8 +1,8 @@
 //
 // Main function.
 //
-async function checkTags() {
-    $("span.cuEntry a[href*='/User:']").each(async function() {
+async function checkTags(content) {
+    content.find("span.cuEntry a[href*='/User:']").each(async function() {
         const parseTree = await getParseTree("User:" + this.text);
         if (parseTree !== null) {
             const status = tagStatus(parseTree);
@@ -152,13 +152,13 @@ function tagStatus(parseTree) {
 // lets us import this file into QUnit for testing.
 if (typeof mw !== "undefined") {
     // Cribbed from User:Writ Keeper/Scripts/cuStaleness.js
-    mw.hook('wikipage.content').add(function () {
+    mw.hook('wikipage.content').add(function (content) {
         const titleRegex = /Wikipedia:Sockpuppet_investigations\/[^\/]+/;
         const sandboxRegex = /User:RoySmith\/sandbox/;
         //only use on a SPI page (or my sandbox for testing)
         const pageName = mw.config.get("wgPageName");
         if (titleRegex.test(pageName) || sandboxRegex.test(pageName)) {
-            checkTags();
+            checkTags(content);
         }
     });
 };
