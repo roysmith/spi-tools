@@ -1,4 +1,5 @@
 from unittest.mock import patch, call
+import unittest
 import textwrap
 from datetime import datetime
 
@@ -25,16 +26,24 @@ class ViewTestCase(TestCase):
 
 
     def setUp(self):
-        mock_render_patcher = patch('spi.views.render')
-        self.mock_render = mock_render_patcher.start()
-        self.addCleanup(mock_render_patcher.stop)
+        render_patcher = patch('spi.views.render')
+        self.mock_render = render_patcher.start()
         self.mock_render.side_effect = self.render_patch
+        self.addCleanup(render_patcher.stop)
+
+        wiki_patcher = patch('spi.views.Wiki')
+        MockWikiClass = wiki_patcher.start()
+        self.mock_wiki = MockWikiClass()
+        self.addCleanup(wiki_patcher.stop)
 
 
-class IndexViewTest(ViewTestCase):
-    # pylint: disable=invalid-name
-
-
+# For reasons that are not clear, test_unknown_button() fails (killed)
+# when inheriting from ViewTestCase.  It is obviously some interaction
+# between patching spi.forms.Wiki and pathing spi.views.Wiki, but that
+# doesn't make sense.  Breaking that one test out into a class that
+# doesn't inherit from ViewTestCase is a hack, but works around the
+# problem.
+class IndexViewFormTest(TestCase):
     @patch('spi.forms.Wiki')
     def test_unknown_button(self, mock_Wiki):
         mock_Wiki().page_exists.return_value = True
@@ -45,6 +54,9 @@ class IndexViewTest(ViewTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertRegex(response.content, b'No known button in POST')
 
+
+class IndexViewTest(ViewTestCase):
+    # pylint: disable=invalid-name
 
     @patch('spi.views.get_current_case_names')
     def test_generates_correct_case_names(self, mock_get_current_case_names):
@@ -260,17 +272,16 @@ class TimelineViewTest(ViewTestCase):
     # pylint: disable=invalid-name
 
 
-    @patch('spi.views.Wiki')
-    def test_event_list(self, mock_Wiki):
-        mock_Wiki().user_contributions.return_value = [
+    def test_event_list(self):
+        self.mock_wiki.user_contributions.return_value = [
             WikiContrib(103, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment'),
             WikiContrib(101, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment'),
         ]
-        mock_Wiki().deleted_user_contributions.return_value = [
+        self.mock_wiki.deleted_user_contributions.return_value = [
             WikiContrib(102, datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', False)]
-        mock_Wiki().user_blocks.return_value = [
+        self.mock_wiki.user_blocks.return_value = [
             BlockEvent('Wilma', datetime(2020, 2, 1))]
-        mock_Wiki().user_log_events.return_value = [
+        self.mock_wiki.user_log_events.return_value = [
             LogEvent(datetime(2019, 11, 29), 'Fred', 'Fred-sock', 'newusers', 'create2', 'testing')
         ]
         user_u1 = get_user_model().objects.create_user('U1')
@@ -288,9 +299,8 @@ class TimelineViewTest(ViewTestCase):
         ])
 
 
-    @patch('spi.views.Wiki')
-    def test_edit_event_includes_tags(self, mock_Wiki):
-        mock_Wiki().user_contributions.return_value = [
+    def test_edit_event_includes_tags(self):
+        self.mock_wiki.user_contributions.return_value = [
             WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', is_live=True, tags=[]),
             WikiContrib(1002, datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', is_live=True, tags=['tag']),
             WikiContrib(1003, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', is_live=True, tags=['tag1', 'tag2']),
@@ -308,9 +318,8 @@ class TimelineViewTest(ViewTestCase):
         ])
 
 
-    @patch('spi.views.Wiki')
-    def test_deleted_edit_event_includes_tags(self, mock_Wiki):
-        mock_Wiki().user_contributions.return_value = [
+    def test_deleted_edit_event_includes_tags(self):
+        self.mock_wiki.user_contributions.return_value = [
             WikiContrib(1001, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', is_live=False, tags=['tag1', 'tag2']),
         ]
         user_u1 = get_user_model().objects.create_user('U1')
@@ -324,9 +333,8 @@ class TimelineViewTest(ViewTestCase):
         ])
 
 
-    @patch('spi.views.Wiki')
-    def test_html_includes_tags(self, mock_Wiki):
-        mock_Wiki().user_contributions.return_value = [
+    def test_html_includes_tags(self):
+        self.mock_wiki.user_contributions.return_value = [
             WikiContrib(1001, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', tags=['my test tag']),
         ]
         user_u1 = get_user_model().objects.create_user('U1')
@@ -339,9 +347,8 @@ class TimelineViewTest(ViewTestCase):
         self.assertEqual([e.text for e in extras], ['my test tag'])
 
 
-    @patch('spi.views.Wiki')
-    def test_context_includes_tag_list(self, mock_Wiki):
-        mock_Wiki().user_contributions.return_value = [
+    def test_context_includes_tag_list(self):
+        self.mock_wiki.user_contributions.return_value = [
             WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', tags=[]),
             WikiContrib(1002, datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', tags=['tag']),
             WikiContrib(1003, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', tags=['tag1', 'tag2', 'tag4']),
@@ -358,9 +365,8 @@ class TimelineViewTest(ViewTestCase):
         self.assertEqual(response.context['tag_list'], ['tag', 'tag1', 'tag2', 'tag3', 'tag4'])
 
 
-    @patch('spi.views.Wiki')
     @patch('spi.views.CacheableUserContribs')
-    def test_context_includes_tag_table(self, mock_CacheableUserContribs, mock_Wiki):
+    def test_context_includes_tag_table(self, mock_CacheableUserContribs):
         mock_CacheableUserContribs.get.side_effect = [
             CacheableUserContribs([
                 WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', tags=[]),
@@ -379,8 +385,8 @@ class TimelineViewTest(ViewTestCase):
         response = client.get('/spi/timeline/Foo', {'users': ['Fred', 'Wilma']})
 
         mock_CacheableUserContribs.get.assert_has_calls([
-            call(mock_Wiki(), 'Fred'),
-            call(mock_Wiki(), 'Wilma')
+            call(self.mock_wiki, 'Fred'),
+            call(self.mock_wiki, 'Wilma')
         ])
         self.assertEqual(response.context['tag_table'],
                          [('Fred', [('tag1', 2), ('tag2', 2), ('tag3', 1), ('tag4', 1)]),
@@ -388,9 +394,8 @@ class TimelineViewTest(ViewTestCase):
                          )
 
 
-    @patch('spi.views.Wiki')
-    def test_hidden_contribution_comments_render_as_hidden(self, mock_Wiki):
-        mock_Wiki().user_contributions.return_value = [
+    def test_hidden_contribution_comments_render_as_hidden(self):
+        self.mock_wiki.user_contributions.return_value = [
             WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', None, tags=[]),
         ]
         user_u1 = get_user_model().objects.create_user('U1')
@@ -404,9 +409,8 @@ class TimelineViewTest(ViewTestCase):
         ])
 
 
-    @patch('spi.views.Wiki')
-    def test_hidden_log_comments_render_as_hidden(self, mock_Wiki):
-        mock_Wiki().user_log_events.return_value = [
+    def test_hidden_log_comments_render_as_hidden(self):
+        self.mock_wiki.user_log_events.return_value = [
             LogEvent(datetime(2020, 1, 1),
                      'Fred',
                      'Title',
@@ -430,8 +434,7 @@ class PagesViewTest(ViewTestCase):
     # pylint: disable=invalid-name
 
 
-    @patch('spi.views.Wiki')
-    def test_get_uses_correct_template(self, mock_Wiki):
+    def test_get_uses_correct_template(self):
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
@@ -442,10 +445,9 @@ class PagesViewTest(ViewTestCase):
         self.assertEqual(response.templates, ['spi/pages.html'])
 
 
-    @patch('spi.views.Wiki')
     @patch('spi.views.CacheableUserContribs')
-    def test_get_page_data(self, mock_CacheableUserContribs, mock_Wiki):
-        wiki = mock_Wiki()
+    def test_get_page_data(self, mock_CacheableUserContribs):
+        wiki = self.mock_wiki
         mock_CacheableUserContribs.get.side_effect = [
             CacheableUserContribs([
                 WikiContrib(103, datetime(2020, 1, 5), 'u1', 0, 'Title1', 'comment', tags=['mw-reverted']),
@@ -461,7 +463,7 @@ class PagesViewTest(ViewTestCase):
                 WikiContrib(103, datetime(2020, 1, 5), 'u3', 0, 'Title1', 'comment'),
             ]),
         ]
-        mock_Wiki().deleted_user_contributions.side_effect = [
+        self.mock_wiki.deleted_user_contributions.side_effect = [
             [WikiContrib(102, datetime(2020, 2, 2), 'u1', 0, 'Title1', 'comment', is_live=False),
             ],
             [WikiContrib(102, datetime(2020, 2, 2), 'u2', 0, 'Title2', 'comment', is_live=False),
@@ -471,7 +473,7 @@ class PagesViewTest(ViewTestCase):
             ],
         ]
 
-        page_data = PagesView.get_page_data(mock_Wiki(), ['u1', 'u2', 'u3'])
+        page_data = PagesView.get_page_data(self.mock_wiki, ['u1', 'u2', 'u3'])
 
         self.assertEqual(page_data.edit_counts['Title1'], 5)
         self.assertEqual(page_data.edit_counts,
@@ -492,11 +494,10 @@ class PagesViewTest(ViewTestCase):
                           })
 
 
-    @patch('spi.views.Wiki')
     @patch('spi.views.CacheableUserContribs')
-    def test_context_includes_page_data(self, mock_CacheableUserContribs,  mock_Wiki):
+    def test_context_includes_page_data(self, mock_CacheableUserContribs):
         mock_CacheableUserContribs.get.return_value = CacheableUserContribs([])
-        mock_Wiki().deleted_user_contributions.return_value = []
+        self.mock_wiki.deleted_user_contributions.return_value = []
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
@@ -507,16 +508,15 @@ class PagesViewTest(ViewTestCase):
         self.assertIsInstance(response.context['page_data'], PagesView.PageData)
 
 
-    @patch('spi.views.Wiki')
     @patch('spi.views.CacheableUserContribs')
-    def test_context_make_correct_back_end_calls(self, mock_CacheableUserContribs, mock_Wiki):
+    def test_context_make_correct_back_end_calls(self, mock_CacheableUserContribs):
         mock_CacheableUserContribs.get.return_value = CacheableUserContribs([])
-        mock_Wiki().deleted_user_contributions.return_value = []
+        self.mock_wiki.deleted_user_contributions.return_value = []
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
 
         response = client.get('/spi/pages/Foo', {'users': ['u1']})
 
-        mock_CacheableUserContribs.get.assert_called_once_with(mock_Wiki(), 'u1')
-        mock_Wiki().deleted_user_contributions.assert_called_once_with('u1')
+        mock_CacheableUserContribs.get.assert_called_once_with(self.mock_wiki, 'u1')
+        self.mock_wiki.deleted_user_contributions.assert_called_once_with('u1')
