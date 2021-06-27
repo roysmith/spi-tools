@@ -24,6 +24,13 @@ class ViewTestCase(TestCase):
         return render(request, template, context)
 
 
+    def setUp(self):
+        mock_render_patcher = patch('spi.views.render')
+        self.mock_render = mock_render_patcher.start()
+        self.addCleanup(mock_render_patcher.stop)
+        self.mock_render.side_effect = self.render_patch
+
+
 class IndexViewTest(ViewTestCase):
     # pylint: disable=invalid-name
 
@@ -93,18 +100,16 @@ class IndexViewTest(ViewTestCase):
 class SockSelectViewTest(ViewTestCase):
     # pylint: disable=invalid-name
 
-    @patch('spi.views.render')
     @patch('spi.views.get_sock_names')
-    def test_context_is_correct(self, mock_get_sock_names, mock_render):
+    def test_context_is_correct(self, mock_get_sock_names):
         mock_get_sock_names.return_value = [ValidatedUser("User1", "20 June 2020", True),
                                             ValidatedUser("User2", "21 June 2020", True),
                                             ValidatedUser("User3", "21 June 2020", False)]
-        mock_render.side_effect = self.render_patch
         client = Client()
 
         response = client.get('/spi/sock-select/Foo/')
 
-        mock_render.assert_called_once()
+        self.mock_render.assert_called_once()
         context = response.context[0]
         self.assertEqual(context['case_name'], "Foo")
         self.assertEqual(context['invalid_users'], [ValidatedUser("User3", "21 June 2020", False)])
@@ -112,18 +117,16 @@ class SockSelectViewTest(ViewTestCase):
                          {('User1', 'User1', '20 June 2020'), ('User2', 'User2', '21 June 2020')})
 
 
-    @patch('spi.views.render')
     @patch('spi.views.get_sock_names')
-    def test_users_are_deduplicated(self, mock_get_sock_names, mock_render):
+    def test_users_are_deduplicated(self, mock_get_sock_names):
         mock_get_sock_names.return_value = [ValidatedUser("User1", "20 June 2020", True),
                                             ValidatedUser("User1", "20 June 2020", True),
                                             ValidatedUser("User2", "21 June 2020", True)]
-        mock_render.side_effect = self.render_patch
         client = Client()
 
         response = client.get('/spi/sock-select/Foo/')
 
-        mock_render.atassert_called_once()
+        self.mock_render.atassert_called_once()
         context = response.context[0]
         self.assertEqual(context['case_name'], "Foo")
         self.assertEqual(context['invalid_users'], [])
@@ -152,37 +155,33 @@ class SockSelectViewTest(ViewTestCase):
         self.assertEqual(response.status_code, 200)
 
 
-    @patch('spi.views.render')
     @patch('spi.views.get_sock_names')
-    def test_context_includes_unique_dates(self, mock_get_sock_names, mock_render):
+    def test_context_includes_unique_dates(self, mock_get_sock_names):
         mock_get_sock_names.return_value = [ValidatedUser("User1", "20 June 2020", True),
                                             ValidatedUser("User2", "21 June 2020", True),
                                             ValidatedUser("User3", "21 June 2020", True)]
-        mock_render.side_effect = self.render_patch
         client = Client()
 
         response = client.get('/spi/sock-select/Foo/')
 
-        mock_render.assert_called_once()
+        self.mock_render.assert_called_once()
         context = response.context[0]
         self.assertEqual(context['dates'], ['20 June 2020', '21 June 2020'])
 
 
-    @patch('spi.views.render')
     @patch('spi.views.get_sock_names')
-    def test_context_dates_are_sorted_in_chronological_order(self, mock_get_sock_names, mock_render):
+    def test_context_dates_are_sorted_in_chronological_order(self, mock_get_sock_names):
         mock_get_sock_names.return_value = [ValidatedUser("User", "08 October 2020", True),
                                             ValidatedUser("User", "10 December 2019", True),
                                             ValidatedUser("User", "12 December 2019", True),
                                             ValidatedUser("User", "12 July 2020", True),
                                             ValidatedUser("User", "15 December 2020", True),
                                             ValidatedUser("User", "15 May 2020", True)]
-        mock_render.side_effect = self.render_patch
         client = Client()
 
         response = client.get('/spi/sock-select/Foo/')
 
-        mock_render.assert_called_once()
+        self.mock_render.assert_called_once()
         context = response.context[0]
         self.assertEqual(context['dates'],
                          ['10 December 2019',
@@ -262,8 +261,7 @@ class TimelineViewTest(ViewTestCase):
 
 
     @patch('spi.views.Wiki')
-    @patch('spi.views.render')
-    def test_event_list(self, mock_render, mock_Wiki):
+    def test_event_list(self, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
             WikiContrib(103, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment'),
             WikiContrib(101, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment'),
@@ -275,7 +273,6 @@ class TimelineViewTest(ViewTestCase):
         mock_Wiki().user_log_events.return_value = [
             LogEvent(datetime(2019, 11, 29), 'Fred', 'Fred-sock', 'newusers', 'create2', 'testing')
         ]
-        mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
@@ -292,14 +289,12 @@ class TimelineViewTest(ViewTestCase):
 
 
     @patch('spi.views.Wiki')
-    @patch('spi.views.render')
-    def test_edit_event_includes_tags(self, mock_render, mock_Wiki):
+    def test_edit_event_includes_tags(self, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
             WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', is_live=True, tags=[]),
             WikiContrib(1002, datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', is_live=True, tags=['tag']),
             WikiContrib(1003, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', is_live=True, tags=['tag1', 'tag2']),
         ]
-        mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
@@ -314,12 +309,10 @@ class TimelineViewTest(ViewTestCase):
 
 
     @patch('spi.views.Wiki')
-    @patch('spi.views.render')
-    def test_deleted_edit_event_includes_tags(self, mock_render, mock_Wiki):
+    def test_deleted_edit_event_includes_tags(self, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
             WikiContrib(1001, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', is_live=False, tags=['tag1', 'tag2']),
         ]
-        mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
@@ -347,8 +340,7 @@ class TimelineViewTest(ViewTestCase):
 
 
     @patch('spi.views.Wiki')
-    @patch('spi.views.render')
-    def test_context_includes_tag_list(self, mock_render, mock_Wiki):
+    def test_context_includes_tag_list(self, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
             WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', tags=[]),
             WikiContrib(1002, datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', tags=['tag']),
@@ -356,7 +348,6 @@ class TimelineViewTest(ViewTestCase):
             WikiContrib(1004, datetime(2020, 1, 4), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag3']),
             WikiContrib(1005, datetime(2020, 1, 5), 'Barney', 0, 'Title', 'comment', tags=['tag1', 'tag2']),
         ]
-        mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
@@ -368,9 +359,8 @@ class TimelineViewTest(ViewTestCase):
 
 
     @patch('spi.views.Wiki')
-    @patch('spi.views.render')
     @patch('spi.views.CacheableUserContribs')
-    def test_context_includes_tag_table(self, mock_CacheableUserContribs, mock_render, mock_Wiki):
+    def test_context_includes_tag_table(self, mock_CacheableUserContribs, mock_Wiki):
         mock_CacheableUserContribs.get.side_effect = [
             CacheableUserContribs([
                 WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', tags=[]),
@@ -382,7 +372,6 @@ class TimelineViewTest(ViewTestCase):
                 WikiContrib(2002, datetime(2020, 1, 5), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag2']),
             ]),
         ]
-        mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
@@ -400,12 +389,10 @@ class TimelineViewTest(ViewTestCase):
 
 
     @patch('spi.views.Wiki')
-    @patch('spi.views.render')
-    def test_hidden_contribution_comments_render_as_hidden(self, mock_render, mock_Wiki):
+    def test_hidden_contribution_comments_render_as_hidden(self, mock_Wiki):
         mock_Wiki().user_contributions.return_value = [
             WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', None, tags=[]),
         ]
-        mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
@@ -418,8 +405,7 @@ class TimelineViewTest(ViewTestCase):
 
 
     @patch('spi.views.Wiki')
-    @patch('spi.views.render')
-    def test_hidden_log_comments_render_as_hidden(self, mock_render, mock_Wiki):
+    def test_hidden_log_comments_render_as_hidden(self, mock_Wiki):
         mock_Wiki().user_log_events.return_value = [
             LogEvent(datetime(2020, 1, 1),
                      'Fred',
@@ -429,7 +415,6 @@ class TimelineViewTest(ViewTestCase):
                      None),
             ]
 
-        mock_render.side_effect = self.render_patch
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
@@ -445,10 +430,8 @@ class PagesViewTest(ViewTestCase):
     # pylint: disable=invalid-name
 
 
-    @patch('spi.views.render')
     @patch('spi.views.Wiki')
-    def test_get_uses_correct_template(self, mock_Wiki, mock_render):
-        mock_render.side_effect = self.render_patch
+    def test_get_uses_correct_template(self, mock_Wiki):
         user_u1 = get_user_model().objects.create_user('U1')
         client = Client()
         client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
@@ -510,10 +493,8 @@ class PagesViewTest(ViewTestCase):
 
 
     @patch('spi.views.Wiki')
-    @patch('spi.views.render')
     @patch('spi.views.CacheableUserContribs')
-    def test_context_includes_page_data(self, mock_CacheableUserContribs, mock_render, mock_Wiki):
-        mock_render.side_effect = self.render_patch
+    def test_context_includes_page_data(self, mock_CacheableUserContribs,  mock_Wiki):
         mock_CacheableUserContribs.get.return_value = CacheableUserContribs([])
         mock_Wiki().deleted_user_contributions.return_value = []
         user_u1 = get_user_model().objects.create_user('U1')
@@ -527,10 +508,8 @@ class PagesViewTest(ViewTestCase):
 
 
     @patch('spi.views.Wiki')
-    @patch('spi.views.render')
     @patch('spi.views.CacheableUserContribs')
-    def test_context_make_correct_back_end_calls(self, mock_CacheableUserContribs, mock_render, mock_Wiki):
-        mock_render.side_effect = self.render_patch
+    def test_context_make_correct_back_end_calls(self, mock_CacheableUserContribs, mock_Wiki):
         mock_CacheableUserContribs.get.return_value = CacheableUserContribs([])
         mock_Wiki().deleted_user_contributions.return_value = []
         user_u1 = get_user_model().objects.create_user('U1')
