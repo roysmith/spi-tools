@@ -25,6 +25,11 @@ class ViewTestCase(TestCase):
         return render(request, template, context)
 
 
+    def force_login(self):
+        user = get_user_model().objects.create_user('my-test-user')
+        self.client.force_login(user, backend='django.contrib.auth.backends.ModelBackend')
+
+
     def setUp(self):
         render_patcher = patch('spi.views.render', autospec=True)
         self.mock_render = render_patcher.start()
@@ -45,6 +50,9 @@ class ViewTestCase(TestCase):
         MockSiteClass.side_effect = RuntimeError
         self.addCleanup(site_patcher.stop)
 
+        self.client = Client()
+
+
 
 # For reasons that are not clear, test_unknown_button() fails (killed)
 # when inheriting from ViewTestCase.  It is obviously some interaction
@@ -56,9 +64,8 @@ class IndexViewFormTest(TestCase):
     @patch('spi.forms.Wiki')
     def test_unknown_button(self, mock_Wiki):
         mock_Wiki().page_exists.return_value = True
-        client = Client()
 
-        response = client.post('/spi/', {'case_name': ['Fred']})
+        response = self.client.post('/spi/', {'case_name': ['Fred']})
 
         self.assertEqual(response.status_code, 200)
         self.assertRegex(response.content, b'No known button in POST')
@@ -126,9 +133,8 @@ class SockSelectViewTest(ViewTestCase):
         mock_get_sock_names.return_value = [ValidatedUser("User1", "20 June 2020", True),
                                             ValidatedUser("User2", "21 June 2020", True),
                                             ValidatedUser("User3", "21 June 2020", False)]
-        client = Client()
 
-        response = client.get('/spi/sock-select/Foo/')
+        response = self.client.get('/spi/sock-select/Foo/')
 
         self.mock_render.assert_called_once()
         context = response.context[0]
@@ -143,9 +149,8 @@ class SockSelectViewTest(ViewTestCase):
         mock_get_sock_names.return_value = [ValidatedUser("User1", "20 June 2020", True),
                                             ValidatedUser("User1", "20 June 2020", True),
                                             ValidatedUser("User2", "21 June 2020", True)]
-        client = Client()
 
-        response = client.get('/spi/sock-select/Foo/')
+        response = self.client.get('/spi/sock-select/Foo/')
 
         self.mock_render.assert_called_once()
         context = response.context[0]
@@ -169,9 +174,8 @@ class SockSelectViewTest(ViewTestCase):
             ''Blah Blah
             """)
         mock_CacheableSpiCase.get.return_value = CacheableSpiCase('Fred')
-        client = Client()
 
-        response = client.get('/spi/sock-select/Foo/')
+        response = self.client.get('/spi/sock-select/Foo/')
 
         self.assertEqual(response.status_code, 200)
 
@@ -181,9 +185,8 @@ class SockSelectViewTest(ViewTestCase):
         mock_get_sock_names.return_value = [ValidatedUser("User1", "20 June 2020", True),
                                             ValidatedUser("User2", "21 June 2020", True),
                                             ValidatedUser("User3", "21 June 2020", True)]
-        client = Client()
 
-        response = client.get('/spi/sock-select/Foo/')
+        response = self.client.get('/spi/sock-select/Foo/')
 
         self.mock_render.assert_called_once()
         context = response.context[0]
@@ -198,9 +201,8 @@ class SockSelectViewTest(ViewTestCase):
                                             ValidatedUser("User", "12 July 2020", True),
                                             ValidatedUser("User", "15 December 2020", True),
                                             ValidatedUser("User", "15 May 2020", True)]
-        client = Client()
 
-        response = client.get('/spi/sock-select/Foo/')
+        response = self.client.get('/spi/sock-select/Foo/')
 
         self.mock_render.assert_called_once()
         context = response.context[0]
@@ -222,9 +224,8 @@ class SockSelectViewTest(ViewTestCase):
             ValidatedUser("User3", "21 June 2020", True),
             ValidatedUser("User4", "21 June 2020", True),
         ]
-        client = Client()
 
-        response = client.get('/spi/sock-select/Foo/')
+        response = self.client.get('/spi/sock-select/Foo/')
 
         tree = etree.HTML(response.content)
         self.assertEqual(len(tree.cssselect('td.spi-date-20June2020 > input[type=checkbox]')), 1)
@@ -238,9 +239,8 @@ class SockSelectViewTest(ViewTestCase):
             ValidatedUser("User2", "21 June 2020", True),
             ValidatedUser("User3", "21 June 2020", True),
         ]
-        client = Client()
 
-        response = client.get('/spi/sock-select/Foo/')
+        response = self.client.get('/spi/sock-select/Foo/')
 
         tree = etree.HTML(response.content)
         buttons = tree.cssselect('div.dropdown-menu > button.dropdown-item[type=button]')
@@ -252,9 +252,8 @@ class SockSelectViewTest(ViewTestCase):
         mock_get_sock_names.return_value = [
             ValidatedUser("foo&bar", "20 June 2020", True),
         ]
-        client = Client()
 
-        response = client.get('/spi/sock-select/Foo/')
+        response = self.client.get('/spi/sock-select/Foo/')
 
         tree = etree.HTML(response.content)
         checkbox = tree.cssselect('#sock-table > tr > td > input[type=checkbox]')[0]
@@ -293,10 +292,8 @@ class TimelineViewTest(ViewTestCase):
         self.mock_wiki.user_log_events.return_value = [
             LogEvent(datetime(2019, 11, 29), 'Fred', 'Fred-sock', 'newusers', 'create2', 'testing')
         ]
-        user_u1 = get_user_model().objects.create_user('U1')
-        client = Client()
-        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
-        response = client.get('/spi/timeline/Foo', {'users': ['u1']})
+        self.force_login()
+        response = self.client.get('/spi/timeline/Foo', {'users': ['u1']})
 
         # pylint: disable=line-too-long
         self.assertEqual(response.context['events'], [
@@ -314,10 +311,8 @@ class TimelineViewTest(ViewTestCase):
             WikiContrib(1002, datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', is_live=True, tags=['tag']),
             WikiContrib(1003, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', is_live=True, tags=['tag1', 'tag2']),
         ]
-        user_u1 = get_user_model().objects.create_user('U1')
-        client = Client()
-        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
-        response = client.get('/spi/timeline/Foo', {'users': ['u1']})
+        self.force_login()
+        response = self.client.get('/spi/timeline/Foo', {'users': ['u1']})
 
         # pylint: disable=line-too-long
         self.assertEqual(response.context['events'], [
@@ -331,10 +326,8 @@ class TimelineViewTest(ViewTestCase):
         self.mock_wiki.user_contributions.return_value = [
             WikiContrib(1001, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', is_live=False, tags=['tag1', 'tag2']),
         ]
-        user_u1 = get_user_model().objects.create_user('U1')
-        client = Client()
-        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
-        response = client.get('/spi/timeline/Foo', {'users': ['u1']})
+        self.force_login()
+        response = self.client.get('/spi/timeline/Foo', {'users': ['u1']})
 
         # pylint: disable=line-too-long
         self.assertEqual(response.context['events'], [
@@ -346,10 +339,8 @@ class TimelineViewTest(ViewTestCase):
         self.mock_wiki.user_contributions.return_value = [
             WikiContrib(1001, datetime(2020, 1, 3), 'Fred', 0, 'Title', 'comment', tags=['my test tag']),
         ]
-        user_u1 = get_user_model().objects.create_user('U1')
-        client = Client()
-        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
-        response = client.get('/spi/timeline/Foo', {'users': ['u1']})
+        self.force_login()
+        response = self.client.get('/spi/timeline/Foo', {'users': ['u1']})
 
         tree = etree.HTML(response.content)
         extras = tree.cssselect('#events div.extra')
@@ -364,11 +355,9 @@ class TimelineViewTest(ViewTestCase):
             WikiContrib(1004, datetime(2020, 1, 4), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag3']),
             WikiContrib(1005, datetime(2020, 1, 5), 'Barney', 0, 'Title', 'comment', tags=['tag1', 'tag2']),
         ]
-        user_u1 = get_user_model().objects.create_user('U1')
-        client = Client()
-        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+        self.force_login()
 
-        response = client.get('/spi/timeline/Foo', {'users': ['u1']})
+        response = self.client.get('/spi/timeline/Foo', {'users': ['u1']})
 
         self.assertEqual(response.templates, ['spi/timeline.html'])
         self.assertEqual(response.context['tag_list'], ['tag', 'tag1', 'tag2', 'tag3', 'tag4'])
@@ -387,11 +376,9 @@ class TimelineViewTest(ViewTestCase):
                 WikiContrib(2002, datetime(2020, 1, 5), 'Wilma', 0, 'Title', 'comment', tags=['tag1', 'tag2']),
             ]),
         ]
-        user_u1 = get_user_model().objects.create_user('U1')
-        client = Client()
-        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+        self.force_login()
 
-        response = client.get('/spi/timeline/Foo', {'users': ['Fred', 'Wilma']})
+        response = self.client.get('/spi/timeline/Foo', {'users': ['Fred', 'Wilma']})
 
         mock_CacheableUserContribs.get.assert_has_calls([
             call(self.mock_wiki, 'Fred'),
@@ -407,11 +394,9 @@ class TimelineViewTest(ViewTestCase):
         self.mock_wiki.user_contributions.return_value = [
             WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', None, tags=[]),
         ]
-        user_u1 = get_user_model().objects.create_user('U1')
-        client = Client()
-        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+        self.force_login()
 
-        response = client.get('/spi/timeline/Foo', {'users': ['u1']})
+        response = self.client.get('/spi/timeline/Foo', {'users': ['u1']})
 
         self.assertEqual(response.context['events'], [
             TimelineEvent(datetime(2020, 1, 1), 'Fred', 'edit', '', 'Title', '<comment hidden>', ''),
@@ -428,11 +413,9 @@ class TimelineViewTest(ViewTestCase):
                      None),
             ]
 
-        user_u1 = get_user_model().objects.create_user('U1')
-        client = Client()
-        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+        self.force_login()
 
-        response = client.get('/spi/timeline/Foo', {'users': ['u1']})
+        response = self.client.get('/spi/timeline/Foo', {'users': ['u1']})
 
         self.assertEqual(response.context['events'], [
             TimelineEvent(datetime(2020, 1, 1), 'Fred', 'create', 'create', 'Title', '<comment hidden>', ''),
@@ -444,11 +427,9 @@ class PagesViewTest(ViewTestCase):
 
 
     def test_get_uses_correct_template(self):
-        user_u1 = get_user_model().objects.create_user('U1')
-        client = Client()
-        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+        self.force_login()
 
-        response = client.get('/spi/pages/Foo', {'users': ['u1']})
+        response = self.client.get('/spi/pages/Foo', {'users': ['u1']})
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.templates, ['spi/pages.html'])
@@ -507,11 +488,9 @@ class PagesViewTest(ViewTestCase):
     def test_context_includes_page_data(self, mock_CacheableUserContribs):
         mock_CacheableUserContribs.get.return_value = CacheableUserContribs([])
         self.mock_wiki.deleted_user_contributions.return_value = []
-        user_u1 = get_user_model().objects.create_user('U1')
-        client = Client()
-        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+        self.force_login()
 
-        response = client.get('/spi/pages/Foo', {'users': ['u1']})
+        response = self.client.get('/spi/pages/Foo', {'users': ['u1']})
 
         self.assertEqual(response.status_code, 200)
         self.assertIsInstance(response.context['page_data'], PagesView.PageData)
@@ -521,11 +500,9 @@ class PagesViewTest(ViewTestCase):
     def test_context_make_correct_back_end_calls(self, mock_CacheableUserContribs):
         mock_CacheableUserContribs.get.return_value = CacheableUserContribs([])
         self.mock_wiki.deleted_user_contributions.return_value = []
-        user_u1 = get_user_model().objects.create_user('U1')
-        client = Client()
-        client.force_login(user_u1, backend='django.contrib.auth.backends.ModelBackend')
+        self.force_login()
 
-        response = client.get('/spi/pages/Foo', {'users': ['u1']})
+        response = self.client.get('/spi/pages/Foo', {'users': ['u1']})
 
         mock_CacheableUserContribs.get.assert_called_once_with(self.mock_wiki, 'u1')
         self.mock_wiki.deleted_user_contributions.assert_called_once_with('u1')
