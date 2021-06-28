@@ -26,12 +26,12 @@ class ViewTestCase(TestCase):
 
 
     def setUp(self):
-        render_patcher = patch('spi.views.render')
+        render_patcher = patch('spi.views.render', autospec=True)
         self.mock_render = render_patcher.start()
         self.mock_render.side_effect = self.render_patch
         self.addCleanup(render_patcher.stop)
 
-        wiki_patcher = patch('spi.views.Wiki')
+        wiki_patcher = patch('spi.views.Wiki', autospec=True)
         MockWikiClass = wiki_patcher.start()
         self.mock_wiki = MockWikiClass()
         self.addCleanup(wiki_patcher.stop)
@@ -40,7 +40,7 @@ class ViewTestCase(TestCase):
         # It's just here to catch anyplace where we might have missed
         # patching something and should prevent any actual network
         # traffic from leaking.
-        site_patcher = patch('wiki_interface.wiki.Site')
+        site_patcher = patch('wiki_interface.wiki.Site', autospec=True)
         MockSiteClass = site_patcher.start()
         MockSiteClass.side_effect = RuntimeError
         self.addCleanup(site_patcher.stop)
@@ -147,7 +147,7 @@ class SockSelectViewTest(ViewTestCase):
 
         response = client.get('/spi/sock-select/Foo/')
 
-        self.mock_render.atassert_called_once()
+        self.mock_render.assert_called_once()
         context = response.context[0]
         self.assertEqual(context['case_name'], "Foo")
         self.assertEqual(context['invalid_users'], [])
