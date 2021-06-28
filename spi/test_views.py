@@ -36,6 +36,15 @@ class ViewTestCase(TestCase):
         self.mock_wiki = MockWikiClass()
         self.addCleanup(wiki_patcher.stop)
 
+        # In theory, we've patched Wiki so this should be a no-op.
+        # It's just here to catch anyplace where we might have missed
+        # patching something and should prevent any actual network
+        # traffic from leaking.
+        site_patcher = patch('wiki_interface.wiki.Site')
+        MockSiteClass = site_patcher.start()
+        MockSiteClass.side_effect = RuntimeError
+        self.addCleanup(site_patcher.stop)
+
 
 # For reasons that are not clear, test_unknown_button() fails (killed)
 # when inheriting from ViewTestCase.  It is obviously some interaction
