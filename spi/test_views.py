@@ -53,26 +53,20 @@ class ViewTestCase(TestCase):
         self.client = Client()
 
 
+class IndexViewTest(ViewTestCase):
+    # pylint: disable=invalid-name
 
-# For reasons that are not clear, test_unknown_button() fails (killed)
-# when inheriting from ViewTestCase.  It is obviously some interaction
-# between patching spi.forms.Wiki and pathing spi.views.Wiki, but that
-# doesn't make sense.  Breaking that one test out into a class that
-# doesn't inherit from ViewTestCase is a hack, but works around the
-# problem.
-class IndexViewFormTest(TestCase):
-    @patch('spi.forms.Wiki')
-    def test_unknown_button(self, mock_Wiki):
+    @patch('spi.forms.Wiki', autospec=True)
+    @patch('spi.views.get_current_case_names', autospec=True)
+    def test_unknown_button(self, mock_get_current_case_names, mock_Wiki):
         mock_Wiki().page_exists.return_value = True
+        mock_get_current_case_names.return_value = ['blah']
 
         response = self.client.post('/spi/', {'case_name': ['Fred']})
 
         self.assertEqual(response.status_code, 200)
         self.assertRegex(response.content, b'No known button in POST')
 
-
-class IndexViewTest(ViewTestCase):
-    # pylint: disable=invalid-name
 
     @patch('spi.views.get_current_case_names')
     def test_generates_correct_case_names(self, mock_get_current_case_names):
