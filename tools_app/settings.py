@@ -153,7 +153,7 @@ SOCIAL_AUTH_MEDIAWIKI_URL = 'https://meta.wikimedia.org/w/index.php'
 SOCIAL_AUTH_MEDIAWIKI_CALLBACK = 'https://%s.toolforge.org/oauth/complete/mediawiki/' % TOOL_NAME
 
 # For use with mwclient library
-MEDIAWIKI_SITE_NAME = 'en.wikipedia.org'
+MEDIAWIKI_SITE_NAME = 'example.com' if TESTING else 'en.wikipedia.org'
 MEDIAWIKI_USER_AGENT = f'{TOOL_NAME} (toolforge)'
 
 # It would be neater to use django.urls.reverse() here, but that's
