@@ -68,7 +68,7 @@ class IndexViewTest(ViewTestCase):
         self.assertRegex(response.content, b'No known button in POST')
 
 
-    @patch('spi.views.get_current_case_names')
+    @patch('spi.views.get_current_case_names', autospec=True)
     def test_generates_correct_case_names(self, mock_get_current_case_names):
         mock_get_current_case_names.return_value = ['Alice', 'Bob']
 
@@ -79,7 +79,7 @@ class IndexViewTest(ViewTestCase):
         self.assertEqual(data, expected_data)
 
 
-    @patch('spi.views.get_current_case_names')
+    @patch('spi.views.get_current_case_names', autospec=True)
     def test_url_case_name_is_selected(self, mock_get_current_case_names):
         mock_get_current_case_names.return_value = ['Alice', 'Bob']
 
@@ -91,7 +91,7 @@ class IndexViewTest(ViewTestCase):
         self.assertEqual(data, expected_data)
 
 
-    @patch('spi.views.get_current_case_names')
+    @patch('spi.views.get_current_case_names', autospec=True)
     def test_url_case_name_is_added_if_missing(self, mock_get_current_case_names):
         mock_get_current_case_names.return_value = ['Alice', 'Bob']
 
@@ -103,7 +103,7 @@ class IndexViewTest(ViewTestCase):
         self.assertEqual(data, expected_data)
 
 
-    @patch('spi.views.get_current_case_names')
+    @patch('spi.views.get_current_case_names', autospec=True)
     def test_deduplicates_case_name_with_sock_names(self, mock_get_current_case_names):
         mock_get_current_case_names.return_value = ['Adhithya Kiran Chekavar',
                                                     'Fred']
@@ -122,7 +122,7 @@ class IndexViewTest(ViewTestCase):
 class SockSelectViewTest(ViewTestCase):
     # pylint: disable=invalid-name
 
-    @patch('spi.views.get_sock_names')
+    @patch('spi.views.get_sock_names', autospec=True)
     def test_context_is_correct(self, mock_get_sock_names):
         mock_get_sock_names.return_value = [ValidatedUser("User1", "20 June 2020", True),
                                             ValidatedUser("User2", "21 June 2020", True),
@@ -138,7 +138,7 @@ class SockSelectViewTest(ViewTestCase):
                          {('User1', 'User1', '20 June 2020'), ('User2', 'User2', '21 June 2020')})
 
 
-    @patch('spi.views.get_sock_names')
+    @patch('spi.views.get_sock_names', autospec=True)
     def test_users_are_deduplicated(self, mock_get_sock_names):
         mock_get_sock_names.return_value = [ValidatedUser("User1", "20 June 2020", True),
                                             ValidatedUser("User1", "20 June 2020", True),
@@ -174,7 +174,7 @@ class SockSelectViewTest(ViewTestCase):
         self.assertEqual(response.status_code, 200)
 
 
-    @patch('spi.views.get_sock_names')
+    @patch('spi.views.get_sock_names', autospec=True)
     def test_context_includes_unique_dates(self, mock_get_sock_names):
         mock_get_sock_names.return_value = [ValidatedUser("User1", "20 June 2020", True),
                                             ValidatedUser("User2", "21 June 2020", True),
@@ -187,7 +187,7 @@ class SockSelectViewTest(ViewTestCase):
         self.assertEqual(context['dates'], ['20 June 2020', '21 June 2020'])
 
 
-    @patch('spi.views.get_sock_names')
+    @patch('spi.views.get_sock_names', autospec=True)
     def test_context_dates_are_sorted_in_chronological_order(self, mock_get_sock_names):
         mock_get_sock_names.return_value = [ValidatedUser("User", "08 October 2020", True),
                                             ValidatedUser("User", "10 December 2019", True),
@@ -210,7 +210,7 @@ class SockSelectViewTest(ViewTestCase):
                          ])
 
 
-    @patch('spi.views.get_sock_names')
+    @patch('spi.views.get_sock_names', autospec=True)
     def test_html_date_classes(self, mock_get_sock_names):
         mock_get_sock_names.return_value = [
             ValidatedUser("User1", "20 June 2020", True),
@@ -226,7 +226,7 @@ class SockSelectViewTest(ViewTestCase):
         self.assertEqual(len(tree.cssselect('td.spi-date-21June2020 > input[type=checkbox]')), 3)
 
 
-    @patch('spi.views.get_sock_names')
+    @patch('spi.views.get_sock_names', autospec=True)
     def test_html_includes_dropdown(self, mock_get_sock_names):
         mock_get_sock_names.return_value = [
             ValidatedUser("User1", "20 June 2020", True),
@@ -241,7 +241,7 @@ class SockSelectViewTest(ViewTestCase):
         self.assertEqual([b.get('data-date') for b in buttons], ['20June2020', '21June2020'])
 
 
-    @patch('spi.views.get_sock_names')
+    @patch('spi.views.get_sock_names', autospec=True)
     def test_usernames_are_escaped_in_html(self, mock_get_sock_names):
         mock_get_sock_names.return_value = [
             ValidatedUser("foo&bar", "20 June 2020", True),
@@ -357,7 +357,7 @@ class TimelineViewTest(ViewTestCase):
         self.assertEqual(response.context['tag_list'], ['tag', 'tag1', 'tag2', 'tag3', 'tag4'])
 
 
-    @patch('spi.views.CacheableUserContribs')
+    @patch('spi.views.CacheableUserContribs', spec=CacheableUserContribs)
     def test_context_includes_tag_table(self, mock_CacheableUserContribs):
         mock_CacheableUserContribs.get.side_effect = [
             CacheableUserContribs([
@@ -429,7 +429,7 @@ class PagesViewTest(ViewTestCase):
         self.assertEqual(response.templates, ['spi/pages.html'])
 
 
-    @patch('spi.views.CacheableUserContribs')
+    @patch('spi.views.CacheableUserContribs', spec=CacheableUserContribs)
     def test_get_page_data(self, mock_CacheableUserContribs):
         wiki = self.mock_wiki
         mock_CacheableUserContribs.get.side_effect = [
@@ -478,7 +478,7 @@ class PagesViewTest(ViewTestCase):
                           })
 
 
-    @patch('spi.views.CacheableUserContribs')
+    @patch('spi.views.CacheableUserContribs', spec=CacheableUserContribs)
     def test_context_includes_page_data(self, mock_CacheableUserContribs):
         mock_CacheableUserContribs.get.return_value = CacheableUserContribs([])
         self.mock_wiki.deleted_user_contributions.return_value = []
@@ -490,7 +490,7 @@ class PagesViewTest(ViewTestCase):
         self.assertIsInstance(response.context['page_data'], PagesView.PageData)
 
 
-    @patch('spi.views.CacheableUserContribs')
+    @patch('spi.views.CacheableUserContribs', spec=CacheableUserContribs)
     def test_context_make_correct_back_end_calls(self, mock_CacheableUserContribs):
         mock_CacheableUserContribs.get.return_value = CacheableUserContribs([])
         self.mock_wiki.deleted_user_contributions.return_value = []
