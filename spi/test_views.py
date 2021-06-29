@@ -154,8 +154,8 @@ class SockSelectViewTest(ViewTestCase):
                          {('User1', 'User1', '20 June 2020'), ('User2', 'User2', '21 June 2020')})
 
 
-    @patch('wiki_interface.wiki.Site')
-    @patch('spi.views.CacheableSpiCase')
+    @patch('wiki_interface.wiki.Site')  # autospec fails here, not sure why
+    @patch('spi.views.CacheableSpiCase', autospec=True)
     def test_mismatched_quotes(self, mock_CacheableSpiCase, mock_Site):
         mock_Site().pages.__getitem__().text.return_value = textwrap.dedent(
             """
