@@ -15,42 +15,45 @@ from wiki_interface.data import WikiContrib, LogEvent
 from wiki_interface.wiki import Wiki, Page
 from wiki_interface.block_utils import BlockEvent, UnblockEvent
 
-
 class ConstructorTest(TestCase):
     # pylint: disable=invalid-name
 
-    @patch('wiki_interface.wiki.Site')
-    def test_default(self, mock_Site):
+    def setUp(self):
+        site_patcher = patch('wiki_interface.wiki.Site', autospec=True)
+        self.MockSiteClass = site_patcher.start()
+        self.MockSiteClass.return_value.namespaces = {}
+        self.addCleanup(site_patcher.stop)
+
+
+    def test_default_wiki_construction_creates_site_with_host_name_and_user_agent(self):
         Wiki()
 
-        mock_Site.assert_called_once()
-        args, kwargs = mock_Site.call_args
+        self.MockSiteClass.assert_called_once()
+        args, kwargs = self.MockSiteClass.call_args
         self.assertEqual(args, (settings.MEDIAWIKI_SITE_NAME,))
         self.assertEqual(kwargs, {'clients_useragent': settings.MEDIAWIKI_USER_AGENT})
 
 
-    @patch('wiki_interface.wiki.Site')
     @patch('django.contrib.auth.get_user')
-    def test_anonymous(self, mock_get_user, mock_Site):
+    def test_wiki_construction_with_anonymous_request_creates_site_with_host_name_and_user_agent(self, mock_get_user):
         mock_get_user().is_anonymous = True
 
         Wiki(HttpRequest())
 
-        mock_Site.assert_called_once()
-        args, kwargs = mock_Site.call_args
+        self.MockSiteClass.assert_called_once()
+        args, kwargs = self.MockSiteClass.call_args
         self.assertEqual(args, (settings.MEDIAWIKI_SITE_NAME,))
         self.assertEqual(kwargs, {'clients_useragent': settings.MEDIAWIKI_USER_AGENT})
 
 
-    @patch('wiki_interface.wiki.Site')
     @patch('django.contrib.auth.get_user')
-    def test_authenticated(self, mock_get_user, mock_Site):
+    def test_wiki_construction_with_authenticated_request_creates_site_with_host_name_and_user_agent_and_auth_data(self, mock_get_user):
         mock_get_user().is_anonymous = False
 
         Wiki(HttpRequest())
 
-        mock_Site.assert_called_once()
-        args, kwargs = mock_Site.call_args
+        self.MockSiteClass.assert_called_once()
+        args, kwargs = self.MockSiteClass.call_args
         self.assertEqual(args, (settings.MEDIAWIKI_SITE_NAME,))
         self.assertEqual(set(kwargs.keys()), {'clients_useragent',
                                               'consumer_token',
@@ -60,13 +63,23 @@ class ConstructorTest(TestCase):
         self.assertEqual(kwargs['clients_useragent'], settings.MEDIAWIKI_USER_AGENT)
 
 
-class NamespaceTest(TestCase):
+
+class WikiTestCase(TestCase):
+    def setUp(self):
+        site_patcher = patch('wiki_interface.wiki.Site', autospec=True)
+        MockSiteClass = site_patcher.start()
+        self.mock_site = MockSiteClass(settings.MEDIAWIKI_SITE_NAME)
+        self.mock_site.namespaces = {}
+        self.mock_site.pages = MagicMock()
+        self.addCleanup(site_patcher.stop)
+
+
+class NamespaceTest(WikiTestCase):
     # pylint: disable=invalid-name
 
-    @patch('wiki_interface.wiki.Site')
-    def test_namespaces(self, mock_Site):
-        mock_Site().namespaces = {0: '',
-                                  1: 'Whatever'}
+    def test_namespaces(self):
+        self.mock_site.namespaces = {0: '',
+                                     1: 'Whatever'}
         wiki = Wiki()
 
         self.assertEqual(wiki.namespaces[0], '')
@@ -103,12 +116,11 @@ class WikiContribTest(TestCase):
         self.assertFalse(contrib.is_live)
 
 
-class UserContributionsTest(TestCase):
+class UserContributionsTest(WikiTestCase):
     # pylint: disable=invalid-name
 
-    @patch('wiki_interface.wiki.Site')
-    def test_user_contributions_with_string(self, mock_Site):
-        mock_Site().usercontributions.return_value = [
+    def test_user_contributions_with_string(self):
+        self.mock_site.usercontributions.return_value = [
             {'revid': 20200730, 'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
              'ns': 0, 'user': 'fred', 'title': 'p1', 'comment': 'c1', 'tags': []},
             {'revid': 20200729, 'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0),
@@ -117,7 +129,7 @@ class UserContributionsTest(TestCase):
 
         contributions = list(wiki.user_contributions('fred'))
 
-        mock_Site().usercontributions.assert_called_once_with(
+        self.mock_site.usercontributions.assert_called_once_with(
             'fred',
             prop='ids|title|timestamp|comment|flags|tags',
             show='',
@@ -128,9 +140,8 @@ class UserContributionsTest(TestCase):
             WikiContrib(20200729, datetime(2020, 7, 29, tzinfo=timezone.utc), 'fred', 0, 'p2', 'c2')])
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_user_contributions_with_list_of_strings(self, mock_Site):
-        mock_Site().usercontributions.return_value = [
+    def test_user_contributions_with_list_of_strings(self):
+        self.mock_site.usercontributions.return_value = [
             {'revid': 20200730, 'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
              'user': 'bob', 'ns': 0, 'title': 'p1', 'comment': 'c1', 'tags': []},
             {'revid': 20200729, 'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0),
@@ -141,7 +152,7 @@ class UserContributionsTest(TestCase):
 
         contributions = list(wiki.user_contributions(['bob', 'alice']))
 
-        mock_Site().usercontributions.assert_called_once_with(
+        self.mock_site.usercontributions.assert_called_once_with(
             'bob|alice',
             prop='ids|title|timestamp|comment|flags|tags',
             show='',
@@ -153,18 +164,16 @@ class UserContributionsTest(TestCase):
             WikiContrib(20200728, datetime(2020, 7, 28, tzinfo=timezone.utc), 'alice', 0, 'p3', 'c3')])
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_user_contributions_raises_value_error_with_pipe_in_name(self, mock_Site):
-        mock_Site().usercontributions.return_value = iter([])
+    def test_user_contributions_raises_value_error_with_pipe_in_name(self):
+        self.mock_site.usercontributions.return_value = iter([])
         wiki = Wiki()
 
         with self.assertRaises(ValueError):
             list(wiki.user_contributions('foo|bar'))
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_user_contributions_with_too_many_names(self, mock_Site):
-        mock_Site().usercontributions.side_effect = [
+    def test_user_contributions_with_too_many_names(self):
+        self.mock_site.usercontributions.side_effect = [
             [{'revid': 20200729,
               'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0),
               'user': '0',
@@ -191,7 +200,7 @@ class UserContributionsTest(TestCase):
         user_names = [str(i) for i in range(55)]
         contributions = list(wiki.user_contributions(user_names))
 
-        self.assertEqual(mock_Site().usercontributions.call_args_list,
+        self.assertEqual(self.mock_site.usercontributions.call_args_list,
                          [call('0|1|2|3|4|5|6|7|8|9'
                                '|10|11|12|13|14|15|16|17|18|19'
                                '|20|21|22|23|24|25|26|27|28|29'
@@ -210,9 +219,8 @@ class UserContributionsTest(TestCase):
             WikiContrib(20200730, datetime(2020, 7, 30, tzinfo=timezone.utc), '1', 0, 'p2', 'c2')])
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_user_contributions_returns_tags(self, mock_Site):
-        mock_Site().usercontributions.return_value = [
+    def test_user_contributions_returns_tags(self):
+        self.mock_site.usercontributions.return_value = [
             {'revid': 999,
              'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
              'ns': 0,
@@ -234,9 +242,8 @@ class UserContributionsTest(TestCase):
                                                      tags=['t1', 't2'])])
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_user_contributions_handles_supressed_comment(self, mock_Site):
-        mock_Site().usercontributions.return_value = [
+    def test_user_contributions_handles_supressed_comment(self):
+        self.mock_site.usercontributions.return_value = [
             {'revid': 999,
              'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0),
              'ns': 0,
@@ -258,14 +265,13 @@ class UserContributionsTest(TestCase):
                                                      tags=['t1', 't2'])])
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_user_contributions_accepts_end_parameter(self, mock_Site):
-        mock_Site().usercontributions.return_value = []
+    def test_user_contributions_accepts_end_parameter(self):
+        self.mock_site.usercontributions.return_value = []
         wiki = Wiki()
 
         contributions = list(wiki.user_contributions('fred', end='2020-01-01T00:00:00'))
 
-        mock_Site().usercontributions.assert_called_once_with(
+        self.mock_site.usercontributions.assert_called_once_with(
             'fred',
             prop='ids|title|timestamp|comment|flags|tags',
             show='',
@@ -273,12 +279,11 @@ class UserContributionsTest(TestCase):
         self.assertEqual(contributions, [])
 
 
-class DeletedUserContributionsTest(TestCase):
+class DeletedUserContributionsTest(WikiTestCase):
     # pylint: disable=invalid-name
 
     @patch('wiki_interface.wiki.List')
-    @patch('wiki_interface.wiki.Site', autospec=True)
-    def test_deleted_user_contributions_with_single_page(self, mock_Site, mock_List):
+    def test_deleted_user_contributions_with_single_page(self, mock_List):
         # See https://www.mediawiki.org/wiki/API:Alldeletedrevisions#Response
         example_response = {
             "query": {
@@ -308,7 +313,6 @@ class DeletedUserContributionsTest(TestCase):
         pages = example_response['query']['alldeletedrevisions']
         mock_List().__iter__ = Mock(return_value=iter(pages))
         mock_List.generate_kwargs.side_effect = mwclient.listing.List.generate_kwargs
-        mock_Site(settings.MEDIAWIKI_SITE_NAME).namespaces = {}
         wiki = Wiki()
 
         deleted_contributions = wiki.deleted_user_contributions('fred')
@@ -328,8 +332,7 @@ class DeletedUserContributionsTest(TestCase):
 
 
     @patch('wiki_interface.wiki.List')
-    @patch('wiki_interface.wiki.Site', autospec=True)
-    def test_deleted_user_contributions_with_multiple_pages(self, mock_Site, mock_List):
+    def test_deleted_user_contributions_with_multiple_pages(self, mock_List):
         # See https://www.mediawiki.org/wiki/API:Alldeletedrevisions#Response
         response = {
             "query": {
@@ -378,7 +381,6 @@ class DeletedUserContributionsTest(TestCase):
         pages = response['query']['alldeletedrevisions']
         mock_List().__iter__ = Mock(return_value=iter(pages))
         mock_List.generate_kwargs.side_effect = mwclient.listing.List.generate_kwargs
-        mock_Site(settings.MEDIAWIKI_SITE_NAME).namespaces = {}
         wiki = Wiki()
 
         deleted_contributions = wiki.deleted_user_contributions('fred')
@@ -404,12 +406,10 @@ class DeletedUserContributionsTest(TestCase):
 
 
     @patch('wiki_interface.wiki.List')
-    @patch('wiki_interface.wiki.Site', autospec=True)
-    def test_deleted_user_contributions_with_permission_denied_exception(self, mock_Site, mock_List):
+    def test_deleted_user_contributions_with_permission_denied_exception(self, mock_List):
         mock_List().__iter__.side_effect = mwclient.errors.APIError('permissiondenied',
                                                                     'blah',
                                                                     'blah-blah')
-        mock_Site(settings.MEDIAWIKI_SITE_NAME).namespaces = {}
         wiki = Wiki()
 
         deleted_contributions = wiki.deleted_user_contributions('fred')
@@ -418,9 +418,7 @@ class DeletedUserContributionsTest(TestCase):
 
 
     @patch('wiki_interface.wiki.List')
-    @patch('wiki_interface.wiki.Site', autospec=True)
-    def test_deleted_user_contributions_handles_hidden_comment(self, mock_Site, mock_List):
-        mock_Site(settings.MEDIAWIKI_SITE_NAME).namespaces = {}
+    def test_deleted_user_contributions_handles_hidden_comment(self, mock_List):
         # See https://www.mediawiki.org/wiki/API:Alldeletedrevisions#Response
         example_response = {
             "query": {
@@ -461,13 +459,12 @@ class DeletedUserContributionsTest(TestCase):
             ])
 
 
-class UserBlocksTest(TestCase):
+class UserBlocksTest(WikiTestCase):
     # pylint: disable=invalid-name
 
     @patch('wiki_interface.wiki.logger')
-    @patch('wiki_interface.wiki.Site')
-    def test_user_blocks_with_no_blocks(self, mock_Site, mock_logger):
-        mock_Site().logevents.return_value = iter([])
+    def test_user_blocks_with_no_blocks(self, mock_logger):
+        self.mock_site.logevents.return_value = iter([])
         wiki = Wiki()
 
         user_blocks = wiki.user_blocks('fred')
@@ -477,15 +474,14 @@ class UserBlocksTest(TestCase):
 
 
     @patch('wiki_interface.wiki.logger')
-    @patch('wiki_interface.wiki.Site')
-    def test_user_blocks_with_multiple_events(self, mock_Site, mock_logger):
+    def test_user_blocks_with_multiple_events(self, mock_logger):
         jan_1 = '2020-01-01T00:00:00Z'
         feb_1 = '2020-02-01T00:00:00Z'
         mar_1 = '2020-03-01T00:00:00Z'
         apr_1 = '2020-04-01T00:00:00Z'
         may_1 = '2020-05-01T00:00:00Z'
 
-        mock_Site().logevents.return_value = iter([
+        self.mock_site.logevents.return_value = iter([
             {'title': 'User:fred',
              'timestamp': mwclient.util.parse_timestamp(jan_1),
              'params': {'expiry': feb_1},
@@ -513,14 +509,13 @@ class UserBlocksTest(TestCase):
 
 
     @patch('wiki_interface.wiki.logger')
-    @patch('wiki_interface.wiki.Site')
-    def test_user_blocks_with_reblock(self, mock_Site, mock_logger):
+    def test_user_blocks_with_reblock(self, mock_logger):
         jan_1 = '2020-01-01T00:00:00Z'
         jan_2 = '2020-01-02T00:00:00Z'
         feb_1 = '2020-02-01T00:00:00Z'
         mar_1 = '2020-03-01T00:00:00Z'
 
-        mock_Site().logevents.return_value = iter([
+        self.mock_site.logevents.return_value = iter([
             {'title': 'User:fred',
              'timestamp': mwclient.util.parse_timestamp(jan_1),
              'params': {'expiry': feb_1},
@@ -543,14 +538,13 @@ class UserBlocksTest(TestCase):
 
 
     @patch('wiki_interface.wiki.logger')
-    @patch('wiki_interface.wiki.Site')
-    def test_user_blocks_with_unknown_action(self, mock_Site, mock_logger):
+    def test_user_blocks_with_unknown_action(self, mock_logger):
         jan_1 = '2020-01-01T00:00:00Z'
         feb_1 = '2020-02-01T00:00:00Z'
         mar_1 = '2020-03-01T00:00:00Z'
         apr_1 = '2020-04-01T00:00:00Z'
 
-        mock_Site().logevents.return_value = iter([
+        self.mock_site.logevents.return_value = iter([
             {'title': 'User:fred',
              'timestamp': mwclient.util.parse_timestamp(jan_1),
              'params': {'expiry': feb_1},
@@ -570,12 +564,10 @@ class UserBlocksTest(TestCase):
         mock_logger.error.assert_called_once()
 
 
-class MultiUserBlocksTest(TestCase):
+class MultiUserBlocksTest(WikiTestCase):
     #pylint: disable=invalid-name
 
-    @patch('wiki_interface.wiki.Site', autospec=True)
-    def test_multi_user_blocks_with_no_users_returns_empty_list(self, mock_Site):
-        mock_Site(settings.MEDIAWIKI_SITE_NAME).namespaces = {}
+    def test_multi_user_blocks_with_no_users_returns_empty_list(self):
         wiki = Wiki()
 
         blocks = async_to_sync(wiki.multi_user_blocks)([])
@@ -583,24 +575,22 @@ class MultiUserBlocksTest(TestCase):
         self.assertEqual(blocks, [])
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_multi_user_blocks_with_one_user_and_no_blocks_returns_empty_list(self, mock_Site):
-        mock_Site().logevents.return_value = []
+    def test_multi_user_blocks_with_one_user_and_no_blocks_returns_empty_list(self):
+        self.mock_site.logevents.return_value = []
         wiki = Wiki()
 
         blocks = async_to_sync(wiki.multi_user_blocks)(['fred'])
 
         self.assertEqual(blocks, [])
-        mock_Site().logevents.assert_called_once_with(title='User:fred', type='block')
+        self.mock_site.logevents.assert_called_once_with(title='User:fred', type='block')
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_multi_user_blocks_with_one_user_and_multiple_blocks_returns_correct_list(self, mock_Site):
+    def test_multi_user_blocks_with_one_user_and_multiple_blocks_returns_correct_list(self):
         jan_1 = '2020-01-01T00:00:00Z'
         feb_1 = '2020-02-01T00:00:00Z'
         mar_1 = '2020-03-01T00:00:00Z'
         apr_1 = '2020-04-01T00:00:00Z'
-        mock_Site().logevents.return_value = iter([
+        self.mock_site.logevents.return_value = iter([
             {'title': 'User:fred',
              'timestamp': mwclient.util.parse_timestamp(mar_1),
              'params': {'expiry': apr_1},
@@ -620,11 +610,10 @@ class MultiUserBlocksTest(TestCase):
             BlockEvent('fred', isoparse(mar_1), isoparse(apr_1)),
             BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
         ])
-        mock_Site().logevents.assert_called_once_with(title='User:fred', type='block')
+        self.mock_site.logevents.assert_called_once_with(title='User:fred', type='block')
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_multi_user_blocks_with_two_user_and_one_block_each_returns_correct_list(self, mock_Site):
+    def test_multi_user_blocks_with_two_user_and_one_block_each_returns_correct_list(self):
         jan_1 = '2020-01-01T00:00:00Z'
         feb_1 = '2020-02-01T00:00:00Z'
         mar_1 = '2020-03-01T00:00:00Z'
@@ -645,12 +634,12 @@ class MultiUserBlocksTest(TestCase):
                  'action': 'block'},
             ],
         }
-        mock_Site().logevents.side_effect = lambda title, type: logevents_data[title]
+        self.mock_site.logevents.side_effect = lambda title, type: logevents_data[title]
         wiki = Wiki()
 
         blocks = async_to_sync(wiki.multi_user_blocks)(['fred', 'wilma'])
 
-        mock_Site().logevents.assert_has_calls([call(title='User:fred', type='block'),
+        self.mock_site.logevents.assert_has_calls([call(title='User:fred', type='block'),
                                                 call(title='User:wilma', type='block')])
         self.assertEqual(blocks, [
             BlockEvent('wilma', isoparse(mar_1), isoparse(apr_1)),
@@ -658,8 +647,7 @@ class MultiUserBlocksTest(TestCase):
         ])
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_multi_user_blocks_with_two_user_and_multiple_blocks_each_returns_correct_list(self, mock_Site):
+    def test_multi_user_blocks_with_two_user_and_multiple_blocks_each_returns_correct_list(self):
         jan_1 = '2020-01-01T00:00:00Z'
         feb_1 = '2020-02-01T00:00:00Z'
         mar_1 = '2020-03-01T00:00:00Z'
@@ -694,12 +682,12 @@ class MultiUserBlocksTest(TestCase):
                  'action': 'block'},
             ],
         }
-        mock_Site().logevents.side_effect = lambda title, type: logevents_data[title]
+        self.mock_site.logevents.side_effect = lambda title, type: logevents_data[title]
         wiki = Wiki()
 
         blocks = async_to_sync(wiki.multi_user_blocks)(['fred', 'wilma'])
 
-        mock_Site().logevents.assert_has_calls([call(title='User:fred', type='block'),
+        self.mock_site.logevents.assert_has_calls([call(title='User:fred', type='block'),
                                                 call(title='User:wilma', type='block')])
         self.assertEqual(blocks, [
             BlockEvent('fred', isoparse(jul_1), isoparse(aug_1)),
@@ -709,12 +697,11 @@ class MultiUserBlocksTest(TestCase):
         ])
 
 
-class UserLogsTest(TestCase):
+class UserLogsTest(WikiTestCase):
     # pylint: disable=invalid-name
 
-    @patch('wiki_interface.wiki.Site')
-    def test_user_log_events(self, mock_Site):
-        mock_Site().logevents.return_value = iter([
+    def test_user_log_events(self):
+        self.mock_site.logevents.return_value = iter([
             {
                 'title': 'Fred-sock',
                 'params': {'userid': 37950265},
@@ -737,9 +724,8 @@ class UserLogsTest(TestCase):
             'testing')])
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_user_log_events_handles_hidden_comment(self, mock_Site):
-        mock_Site().logevents.return_value = iter([
+    def test_user_log_events_handles_hidden_comment(self):
+        self.mock_site.logevents.return_value = iter([
             {
                 'title': 'Fred-sock',
                 'params': {'userid': 37950265},
@@ -762,9 +748,8 @@ class UserLogsTest(TestCase):
             None)])
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_user_log_events_handles_hidden_title(self, mock_Site):
-        mock_Site().logevents.return_value = iter([
+    def test_user_log_events_handles_hidden_title(self):
+        self.mock_site.logevents.return_value = iter([
             {
                 'params': {'userid': 37950265},
                 'type': 'newusers',
@@ -786,9 +771,8 @@ class UserLogsTest(TestCase):
             None)])
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_user_log_events_handles_hidden_action(self, mock_Site):
-        mock_Site().logevents.return_value = iter([
+    def test_user_log_events_handles_hidden_action(self):
+        self.mock_site.logevents.return_value = iter([
             {
                 'title': 'Fred-sock',
                 'params': {'userid': 37950265},
@@ -810,29 +794,21 @@ class UserLogsTest(TestCase):
             None)])
 
 
-class GetPageTest(TestCase):
+class GetPageTest(WikiTestCase):
     #pylint: disable=invalid-name
 
-    @patch('wiki_interface.wiki.Site', autospec=True)
-    def test_page(self, mock_Site):
-        mock_site = mock_Site(settings.MEDIAWIKI_SITE_NAME)
-        mock_site.namespaces = {}
-        mock_site.pages = MagicMock()
+    def test_page(self):
         wiki = Wiki()
         page = wiki.page('foo')
 
         self.assertIsInstance(page, Page)
 
 
-class PageTest(TestCase):
+class PageTest(WikiTestCase):
     #pylint: disable=invalid-name
 
 
-    @patch('wiki_interface.wiki.Site', autospec=True)
-    def test_construct(self, mock_Site):
-        mock_site = mock_Site(settings.MEDIAWIKI_SITE_NAME)
-        mock_site.namespaces = {}
-        mock_site.pages = MagicMock()
+    def test_construct(self):
         wiki = Wiki()
         page = Page(wiki, "my page")
 
@@ -840,31 +816,28 @@ class PageTest(TestCase):
         self.assertIsNotNone(page.mw_page)
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_exists_true(self, mock_Site):
-        mock_Site().pages.__getitem__().exists = True
+    def test_exists_true(self):
+        self.mock_site.pages.__getitem__().exists = True
         wiki = Wiki()
         page = Page(wiki, "my page")
 
         self.assertTrue(page.exists())
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_exists_false(self, mock_Site):
-        mock_Site().pages.__getitem__().exists = False
+    def test_exists_false(self):
+        self.mock_site.pages.__getitem__().exists = False
         wiki = Wiki()
         page = Page(wiki, "my page")
 
         self.assertFalse(page.exists())
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_revisions(self, mock_Site):
-        mock_Site().pages.__getitem__().revisions.return_value = [
+    def test_revisions(self):
+        self.mock_site.pages.__getitem__().revisions.return_value = [
             {'revid': 101, 'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0), 'user': 'fred', 'comment': 'c1'},
             {'revid': 102, 'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0), 'user': 'fred', 'comment': 'c2'}]
-        mock_Site().pages.__getitem__().name = 'blah'
-        mock_Site().pages.__getitem__().namespace = 0
+        self.mock_site.pages.__getitem__().name = 'blah'
+        self.mock_site.pages.__getitem__().namespace = 0
         wiki = Wiki()
 
         revisions = list(wiki.page('blah').revisions())
@@ -875,12 +848,11 @@ class PageTest(TestCase):
             WikiContrib(102, datetime(2020, 7, 29, tzinfo=timezone.utc), 'fred', 0, 'blah', 'c2')])
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_revisions_with_hidden_comment(self, mock_Site):
-        mock_Site().pages.__getitem__().revisions.return_value = [
+    def test_revisions_with_hidden_comment(self):
+        self.mock_site.pages.__getitem__().revisions.return_value = [
             {'revid': 100, 'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0), 'user': 'fred', 'commenthidden': ''}]
-        mock_Site().pages.__getitem__().name = 'blah'
-        mock_Site().pages.__getitem__().namespace = 0
+        self.mock_site.pages.__getitem__().name = 'blah'
+        self.mock_site.pages.__getitem__().namespace = 0
         wiki = Wiki()
 
         revisions = list(wiki.page('blah').revisions())
@@ -891,13 +863,12 @@ class PageTest(TestCase):
         ])
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_revisions_with_count(self, mock_Site):
-        mock_Site().pages.__getitem__().revisions.return_value = [
+    def test_revisions_with_count(self):
+        self.mock_site.pages.__getitem__().revisions.return_value = [
             {'revid': 20200730, 'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0), 'user': 'fred', 'comment': 'c1'},
             {'revid': 20200729, 'timestamp': (2020, 7, 29, 0, 0, 0, 0, 0, 0), 'user': 'fred', 'comment': 'c2'}]
-        mock_Site().pages.__getitem__().name = 'blah'
-        mock_Site().pages.__getitem__().namespace = 0
+        self.mock_site.pages.__getitem__().name = 'blah'
+        self.mock_site.pages.__getitem__().namespace = 0
         wiki = Wiki()
 
         revisions = list(wiki.page('blah').revisions(count=1))
@@ -906,34 +877,31 @@ class PageTest(TestCase):
                          [WikiContrib(20200730, datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 0, 'blah', 'c1')])
 
 
-class IsValidUsernameTest(TestCase):
+class IsValidUsernameTest(WikiTestCase):
     #pylint: disable=invalid-name
 
-    @patch('wiki_interface.wiki.Site')
-    def test_with_valid_name(self, mock_Site):
-        mock_Site().usercontributions.return_value = []
+    def test_with_valid_name(self):
+        self.mock_site.usercontributions.return_value = []
         wiki = Wiki()
 
         self.assertTrue(wiki.is_valid_username('foo'))
-        mock_Site().usercontributions.assert_called_once_with('foo', limit=1)
+        self.mock_site.usercontributions.assert_called_once_with('foo', limit=1)
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_with_invalid_name(self, mock_Site):
-        mock_Site().usercontributions.side_effect = mwclient.errors.APIError('baduser',
+    def test_with_invalid_name(self):
+        self.mock_site.usercontributions.side_effect = mwclient.errors.APIError('baduser',
                                                                              'blah',
                                                                              None)
         wiki = Wiki()
 
         self.assertFalse(wiki.is_valid_username('foo'))
-        mock_Site().usercontributions.assert_called_once_with('foo', limit=1)
+        self.mock_site.usercontributions.assert_called_once_with('foo', limit=1)
 
 
-    @patch('wiki_interface.wiki.Site')
-    def test_with_unexpected_exception(self, mock_Site):
-        mock_Site().usercontributions.side_effect = RuntimeError('blah')
+    def test_with_unexpected_exception(self):
+        self.mock_site.usercontributions.side_effect = RuntimeError('blah')
         wiki = Wiki()
 
         with self.assertRaises(RuntimeError):
             wiki.is_valid_username('foo')
-        mock_Site().usercontributions.assert_called_once_with('foo', limit=1)
+        self.mock_site.usercontributions.assert_called_once_with('foo', limit=1)
