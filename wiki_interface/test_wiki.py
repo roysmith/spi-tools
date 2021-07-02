@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from unittest import TestCase
-from unittest.mock import call, patch, Mock
+from unittest.mock import call, patch, Mock, MagicMock
 
 from dateutil.parser import isoparse
 from django.conf import settings
@@ -277,7 +277,8 @@ class DeletedUserContributionsTest(TestCase):
     # pylint: disable=invalid-name
 
     @patch('wiki_interface.wiki.List')
-    def test_deleted_user_contributions_with_single_page(self, mock_List):
+    @patch('wiki_interface.wiki.Site', autospec=True)
+    def test_deleted_user_contributions_with_single_page(self, mock_Site, mock_List):
         # See https://www.mediawiki.org/wiki/API:Alldeletedrevisions#Response
         example_response = {
             "query": {
@@ -307,6 +308,7 @@ class DeletedUserContributionsTest(TestCase):
         pages = example_response['query']['alldeletedrevisions']
         mock_List().__iter__ = Mock(return_value=iter(pages))
         mock_List.generate_kwargs.side_effect = mwclient.listing.List.generate_kwargs
+        mock_Site(settings.MEDIAWIKI_SITE_NAME).namespaces = {}
         wiki = Wiki()
 
         deleted_contributions = wiki.deleted_user_contributions('fred')
@@ -326,7 +328,8 @@ class DeletedUserContributionsTest(TestCase):
 
 
     @patch('wiki_interface.wiki.List')
-    def test_deleted_user_contributions_with_multiple_pages(self, mock_List):
+    @patch('wiki_interface.wiki.Site', autospec=True)
+    def test_deleted_user_contributions_with_multiple_pages(self, mock_Site, mock_List):
         # See https://www.mediawiki.org/wiki/API:Alldeletedrevisions#Response
         response = {
             "query": {
@@ -375,6 +378,7 @@ class DeletedUserContributionsTest(TestCase):
         pages = response['query']['alldeletedrevisions']
         mock_List().__iter__ = Mock(return_value=iter(pages))
         mock_List.generate_kwargs.side_effect = mwclient.listing.List.generate_kwargs
+        mock_Site(settings.MEDIAWIKI_SITE_NAME).namespaces = {}
         wiki = Wiki()
 
         deleted_contributions = wiki.deleted_user_contributions('fred')
@@ -400,10 +404,12 @@ class DeletedUserContributionsTest(TestCase):
 
 
     @patch('wiki_interface.wiki.List')
-    def test_deleted_user_contributions_with_permission_denied_exception(self, mock_List):
+    @patch('wiki_interface.wiki.Site', autospec=True)
+    def test_deleted_user_contributions_with_permission_denied_exception(self, mock_Site, mock_List):
         mock_List().__iter__.side_effect = mwclient.errors.APIError('permissiondenied',
                                                                     'blah',
                                                                     'blah-blah')
+        mock_Site(settings.MEDIAWIKI_SITE_NAME).namespaces = {}
         wiki = Wiki()
 
         deleted_contributions = wiki.deleted_user_contributions('fred')
@@ -412,7 +418,9 @@ class DeletedUserContributionsTest(TestCase):
 
 
     @patch('wiki_interface.wiki.List')
-    def test_deleted_user_contributions_handles_hidden_comment(self, mock_List):
+    @patch('wiki_interface.wiki.Site', autospec=True)
+    def test_deleted_user_contributions_handles_hidden_comment(self, mock_Site, mock_List):
+        mock_Site(settings.MEDIAWIKI_SITE_NAME).namespaces = {}
         # See https://www.mediawiki.org/wiki/API:Alldeletedrevisions#Response
         example_response = {
             "query": {
@@ -565,7 +573,9 @@ class UserBlocksTest(TestCase):
 class MultiUserBlocksTest(TestCase):
     #pylint: disable=invalid-name
 
-    def test_multi_user_blocks_with_no_users_returns_empty_list(self):
+    @patch('wiki_interface.wiki.Site', autospec=True)
+    def test_multi_user_blocks_with_no_users_returns_empty_list(self, mock_Site):
+        mock_Site(settings.MEDIAWIKI_SITE_NAME).namespaces = {}
         wiki = Wiki()
 
         blocks = async_to_sync(wiki.multi_user_blocks)([])
@@ -803,7 +813,11 @@ class UserLogsTest(TestCase):
 class GetPageTest(TestCase):
     #pylint: disable=invalid-name
 
-    def test_page(self):
+    @patch('wiki_interface.wiki.Site', autospec=True)
+    def test_page(self, mock_Site):
+        mock_site = mock_Site(settings.MEDIAWIKI_SITE_NAME)
+        mock_site.namespaces = {}
+        mock_site.pages = MagicMock()
         wiki = Wiki()
         page = wiki.page('foo')
 
@@ -813,7 +827,12 @@ class GetPageTest(TestCase):
 class PageTest(TestCase):
     #pylint: disable=invalid-name
 
-    def test_construct(self):
+
+    @patch('wiki_interface.wiki.Site', autospec=True)
+    def test_construct(self, mock_Site):
+        mock_site = mock_Site(settings.MEDIAWIKI_SITE_NAME)
+        mock_site.namespaces = {}
+        mock_site.pages = MagicMock()
         wiki = Wiki()
         page = Page(wiki, "my page")
 
