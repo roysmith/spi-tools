@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import patch, call, NonCallableMock
+from unittest.mock import patch, NonCallableMock
 from datetime import datetime
 
 from wiki_interface import Wiki, WikiContrib

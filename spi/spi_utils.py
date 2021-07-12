@@ -11,6 +11,8 @@ from mwparserfromhell.wikicode import Wikicode
 
 from django.core.cache import cache
 
+# pylint: disable=invalid-name
+
 
 class ArchiveError(ValueError):
     pass
@@ -91,8 +93,6 @@ class SpiCase:
         return SpiCase(*docs)
 
 
-    MAP_53_PATTERN = re.compile(r"^=====<big>([a-zA-Z 0-9]*)</big>=====$", re.MULTILINE)
-
     def __init__(self, *sources):
         """A case can be made up of multiple source documents.  In practice,
         there will usually be two; the currently active page, and the
@@ -108,8 +108,9 @@ class SpiCase:
 
         """
         self.parsed_docs = []
+        map_5_to_3_pattern = re.compile(r"^=====<big>([a-zA-Z 0-9]*)</big>=====$", re.MULTILINE)
         for s in sources:
-            mapped_text = self.MAP_53_PATTERN.sub(r'===\1===', s.wikitext)
+            mapped_text = map_5_to_3_pattern.sub(r'===\1===', s.wikitext)
             parsed_text = parse(mapped_text, skip_style_tags=True)
             self.parsed_docs.append(SpiParsedDocument(s.page_title, parsed_text))
 
