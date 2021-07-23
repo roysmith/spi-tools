@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import logging
 import urllib
 
@@ -28,12 +28,12 @@ class SockSelectView(View):
         form = SockSelectForm.build(names)
 
         all_date_strings = set(user.date for user in user_infos if user.date)
-        keyed_dates = [(datetime.datetime.strptime(d, '%d %B %Y'), d) for d in all_date_strings]
+        keyed_dates = [(datetime.strptime(d, '%d %B %Y'), d) for d in all_date_strings]
 
         context = {'case_name': case_name,
                    'form_info': list(zip(form, names, dates)),
                    'invalid_users': invalid_users,
-                   'dates': [v for (k, v) in sorted(keyed_dates)]}
+                   'dates': [v for (k, v) in sorted(keyed_dates, reverse=True)]}
         return render(request, 'spi/sock-select.html', context)
 
 

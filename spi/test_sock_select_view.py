@@ -77,11 +77,11 @@ class SockSelectViewTest(ViewTestCase):
 
         self.mock_render.assert_called_once()
         context = response.context[0]
-        self.assertEqual(context['dates'], ['20 June 2020', '21 June 2020'])
+        self.assertEqual(context['dates'], ['21 June 2020', '20 June 2020'])
 
 
     @patch('spi.sock_select_view.get_sock_names', autospec=True)
-    def test_context_dates_are_sorted_in_chronological_order(self, mock_get_sock_names):
+    def test_context_dates_are_sorted_in_reverse_chronological_order(self, mock_get_sock_names):
         mock_get_sock_names.return_value = [ValidatedUser("User", "08 October 2020", True),
                                             ValidatedUser("User", "10 December 2019", True),
                                             ValidatedUser("User", "12 December 2019", True),
@@ -94,12 +94,12 @@ class SockSelectViewTest(ViewTestCase):
         self.mock_render.assert_called_once()
         context = response.context[0]
         self.assertEqual(context['dates'],
-                         ['10 December 2019',
-                          '12 December 2019',
-                          '15 May 2020',
-                          '12 July 2020',
+                         ['15 December 2020',
                           '08 October 2020',
-                          '15 December 2020',
+                          '12 July 2020',
+                          '15 May 2020',
+                          '12 December 2019',
+                          '10 December 2019',
                          ])
 
 
@@ -131,7 +131,7 @@ class SockSelectViewTest(ViewTestCase):
 
         tree = etree.HTML(response.content)
         buttons = tree.cssselect('div.dropdown-menu > button.dropdown-item[type=button]')
-        self.assertEqual([b.get('data-date') for b in buttons], ['20June2020', '21June2020'])
+        self.assertEqual([b.get('data-date') for b in buttons], ['21June2020', '20June2020'])
 
 
     @patch('spi.sock_select_view.get_sock_names', autospec=True)
