@@ -13,7 +13,7 @@ $(document).ready(function() {
     $('button.date-select').click(function(){
         $("input:checkbox").prop('checked', false);
         let found = false;
-        for (button of $('#date-select-menu > button.dropdown-item')) {
+        for (button of $($('#date-select-menu > button.dropdown-item')).get().reverse()) {
             found = found || (button.dataset.date == this.dataset.date);
             if (found) {
                 $(".spi-date-" + button.dataset.date + ">input:checkbox").prop('checked', true);
