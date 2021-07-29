@@ -168,7 +168,8 @@ class SpiCaseDay:
         h3_count = len(headings)
         if h3_count == 1:
             return headings[0].title.strip_code().strip()
-        raise ArchiveError("Expected exactly 1 level-3 heading, found %d" % h3_count)
+        titles = tuple(h.title for h in headings)
+        raise ArchiveError(f"Expected exactly 1 level-3 heading, found {h3_count} {titles}")
 
 
     def find_users(self):

@@ -415,7 +415,7 @@ class SpiCaseDayTest(TestCase):
         self.assertEqual(date, '21 March 2019')
 
 
-    def test_day_with_multiple_level_3_headers_raises_archive_error(self):
+    def test_day_with_multiple_level_3_headers_raises_archive_error_with_header_text(self):
         text = '''
         {{SPIarchive notice|1=Crazyalien}}
         {{SPIpriorcases}}
@@ -424,7 +424,7 @@ class SpiCaseDayTest(TestCase):
         blah, blah, blaha
         '''
         day = SpiCaseDay(make_code(text), 'title')
-        with self.assertRaises(ArchiveError):
+        with self.assertRaisesRegex(ArchiveError, r"('21 March 2019', '22 March 2019')"):
             day.date()
 
 
