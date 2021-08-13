@@ -16,6 +16,7 @@ class CacheableUserContribs:
     data: List[WikiContrib] = field(default_factory=list)
 
 
+    @staticmethod
     def get(wiki, user_name):
         key = f'spi.CacheableUserContribs.{user_name}'
         data = cache.get(key, default=[])

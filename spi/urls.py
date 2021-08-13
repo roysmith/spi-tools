@@ -1,12 +1,11 @@
 from django.urls import path
-from spi.views import (IndexView,
-                       IpAnalysisView,
-                       SockSelectView,
-                       TimecardView,
-                       TimelineView,
-                       G5View,
-                       PagesView,
-)
+from spi.index_view import IndexView
+from spi.ip_analysis_view import IpAnalysisView
+from spi.sock_select_view import SockSelectView
+from spi.timecard_view import TimecardView
+from spi.timeline_view import TimelineView
+from spi.pages_view import PagesView
+from spi.g5_view import G5View
 
 urlpatterns = [
     # pylint: disable=line-too-long

@@ -8,10 +8,10 @@ from django.contrib.staticfiles import views as staticfile_views
 from django.urls import include, path, re_path
 
 from tools_app import views as tools_app_views
-from spi import views as spi_views
+from spi.index_view import IndexView
 
 urlpatterns = [
-    path('', spi_views.IndexView.as_view(), name='home'),
+    path('', IndexView.as_view(), name='home'),
     path('account/logout', tools_app_views.logout, name='logout'),
     path('oauth/', include('social_django.urls', namespace='social')),
     path('admin/', admin.site.urls),
