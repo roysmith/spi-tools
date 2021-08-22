@@ -36,7 +36,7 @@
 	<!--  {{ row_class.next() if loop.changed(event.timestamp.date()) }} -->
 	<tr class="table-{{ row_class.current }}">
 	  <td class="align-top">
-	    <div class="text-nowrap">{{ event.timestamp }}</div>
+	    <div class="text-nowrap">{{ event|event_link }}</div>
 	  </td>
 	  <td class="align-top">
 	    <div class="text-nowrap">{{ event.description }}</div>

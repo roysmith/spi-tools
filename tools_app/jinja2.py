@@ -12,6 +12,13 @@ def page_link(title):
     return Markup(f'<a href="https://en.wikipedia.org/wiki/{escaped}">{escaped}</a>')
 
 
+def event_link(event):
+    escaped = escape(event.timestamp)
+    if event.id:
+        return Markup(f'<a href="http://en.wikipedia.org/wiki/Special:Diff/{event.id}">{event.timestamp}</a>')
+    else:
+        return Markup(f'{event.timestamp}')
+
 def user_link(name):
     escaped = escape(name)
     return Markup(f'<a href="https://en.wikipedia.org/wiki/User:{name}">{name}</a>')
@@ -44,6 +51,7 @@ def environment(**options):
     })
     env.filters.update({
         'page_link': page_link,
+        'event_link': event_link,
         'user_link': user_link,
         'spi_link': spi_link,
         'contributions': contributions,
