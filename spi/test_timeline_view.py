@@ -34,11 +34,11 @@ class TimelineViewTest(ViewTestCase):
 
         # pylint: disable=line-too-long
         self.assertEqual(response.context['events'], [
-            TimelineEvent(datetime(2020, 2, 1), 'Wilma', 'block', '', 'indef', '', ''),
-            TimelineEvent(datetime(2020, 1, 3), 'Fred', 'edit', '', 'Title', 'comment', ''),
-            TimelineEvent(datetime(2020, 1, 2), 'Fred', 'edit', 'deleted', 'Title', 'comment', ''),
-            TimelineEvent(datetime(2020, 1, 1), 'Fred', 'edit', '', 'Title', 'comment', ''),
-            TimelineEvent(datetime(2019, 11, 29), 'Fred', 'newusers', 'create2', 'Fred-sock', 'testing', ''),
+            TimelineEvent(datetime(2020, 2, 1), 0, 'Wilma', 'block', '', 'indef', '', ''),
+            TimelineEvent(datetime(2020, 1, 3), 103, 'Fred', 'edit', '', 'Title', 'comment', ''),
+            TimelineEvent(datetime(2020, 1, 2), 102, 'Fred', 'edit', 'deleted', 'Title', 'comment', ''),
+            TimelineEvent(datetime(2020, 1, 1), 101, 'Fred', 'edit', '', 'Title', 'comment', ''),
+            TimelineEvent(datetime(2019, 11, 29), 0, 'Fred', 'newusers', 'create2', 'Fred-sock', 'testing', ''),
         ])
 
 
@@ -53,9 +53,22 @@ class TimelineViewTest(ViewTestCase):
 
         # pylint: disable=line-too-long
         self.assertEqual(response.context['events'], [
-            TimelineEvent(datetime(2020, 1, 1), 'Fred', 'edit', '', 'Title', 'comment', ''),
-            TimelineEvent(datetime(2020, 1, 2), 'Fred', 'edit', '', 'Title', 'comment', 'tag'),
-            TimelineEvent(datetime(2020, 1, 3), 'Fred', 'edit', '', 'Title', 'comment', 'tag1, tag2'),
+            TimelineEvent(datetime(2020, 1, 1), 1001, 'Fred', 'edit', '', 'Title', 'comment', ''),
+            TimelineEvent(datetime(2020, 1, 2), 1002, 'Fred', 'edit', '', 'Title', 'comment', 'tag'),
+            TimelineEvent(datetime(2020, 1, 3), 1003, 'Fred', 'edit', '', 'Title', 'comment', 'tag1, tag2'),
+        ])
+
+
+    def test_edit_event_includes_id(self):
+        self.mock_wiki.user_contributions.return_value = [
+            WikiContrib(1001, datetime(2020, 1, 1), 'Fred', 0, 'Title', 'comment', is_live=True, tags=[]),
+        ]
+        self.force_login()
+        response = self.client.get('/spi/timeline/Foo', {'users': ['u1']})
+
+        # pylint: disable=line-too-long
+        self.assertEqual(response.context['events'], [
+            TimelineEvent(datetime(2020, 1, 1), 1001, 'Fred', 'edit', '', 'Title', 'comment', ''),
         ])
 
 
@@ -68,7 +81,7 @@ class TimelineViewTest(ViewTestCase):
 
         # pylint: disable=line-too-long
         self.assertEqual(response.context['events'], [
-            TimelineEvent(datetime(2020, 1, 3), 'Fred', 'edit', 'deleted', 'Title', 'comment', 'tag1, tag2'),
+            TimelineEvent(datetime(2020, 1, 3), 1001, 'Fred', 'edit', 'deleted', 'Title', 'comment', 'tag1, tag2'),
         ])
 
 
@@ -136,7 +149,7 @@ class TimelineViewTest(ViewTestCase):
         response = self.client.get('/spi/timeline/Foo', {'users': ['u1']})
 
         self.assertEqual(response.context['events'], [
-            TimelineEvent(datetime(2020, 1, 1), 'Fred', 'edit', '', 'Title', '<comment hidden>', ''),
+            TimelineEvent(datetime(2020, 1, 1), 1001, 'Fred', 'edit', '', 'Title', '<comment hidden>', ''),
         ])
 
 
@@ -155,5 +168,5 @@ class TimelineViewTest(ViewTestCase):
         response = self.client.get('/spi/timeline/Foo', {'users': ['u1']})
 
         self.assertEqual(response.context['events'], [
-            TimelineEvent(datetime(2020, 1, 1), 'Fred', 'create', 'create', 'Title', '<comment hidden>', ''),
+            TimelineEvent(datetime(2020, 1, 1), 0, 'Fred', 'create', 'create', 'Title', '<comment hidden>', ''),
         ])

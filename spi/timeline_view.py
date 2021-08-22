@@ -27,8 +27,12 @@ class TimelineEvent:
     Extra is optional additional information specific to the type of
     event.  Edit events, for example, use this for the tags.
 
+    If you don't have an id, you must supply a value of 0. Using None
+    will result in an exception when comparing two instances.
+
     """
     timestamp: datetime
+    id: int
     user_name: str
     description: str
     details: str
@@ -92,6 +96,7 @@ class TimelineView(LoginRequiredMixin, View):
                 self.tag_data[user_name][tag] += 1
 
             yield TimelineEvent(contrib.timestamp,
+                                contrib.rev_id,
                                 contrib.user_name,
                                 'edit',
                                 '' if contrib.is_live else 'deleted',
@@ -108,6 +113,7 @@ class TimelineView(LoginRequiredMixin, View):
         for block in wiki.user_blocks(user_name):
             if isinstance(block, BlockEvent):
                 yield TimelineEvent(block.timestamp,
+                                    0,
                                     block.target,
                                     'block',
                                     'reblock' if block.is_reblock else '',
@@ -115,6 +121,7 @@ class TimelineView(LoginRequiredMixin, View):
                                     '')
             elif isinstance(block, UnblockEvent):
                 yield TimelineEvent(block.timestamp,
+                                    0,
                                     block.target,
                                     'unblock',
                                     '',
@@ -122,6 +129,7 @@ class TimelineView(LoginRequiredMixin, View):
                                     '')
             else:
                 yield TimelineEvent(block.timestamp,
+                                    0,
                                     block.target,
                                     'block',
                                     'unknown',
@@ -135,6 +143,7 @@ class TimelineView(LoginRequiredMixin, View):
         """
         for event in wiki.user_log_events(user_name):
             yield TimelineEvent(event.timestamp,
+                                0,
                                 event.user_name,
                                 event.type,
                                 event.action,
