@@ -206,14 +206,15 @@ class Wiki:
         for block in blocks:
             action = block['action']
             timestamp = struct_to_datetime(block['timestamp'])
+            id = block['logid']
             mw_expiry = block['params'].get('expiry')
             expiry = mw_expiry and isoparse(mw_expiry)
             if action == 'block':
-                events.append(BlockEvent(user_name, timestamp, expiry))
+                events.append(BlockEvent(user_name, timestamp, id, expiry))
             elif action == 'reblock':
-                events.append(BlockEvent(user_name, timestamp, expiry, is_reblock=True))
+                events.append(BlockEvent(user_name, timestamp, id, expiry, is_reblock=True))
             elif action == 'unblock':
-                events.append(UnblockEvent(user_name, timestamp))
+                events.append(UnblockEvent(user_name, timestamp, id))
             else:
                 logger.error('Ignoring block due to unknown block action in %s', block)
         return events
@@ -244,7 +245,8 @@ class Wiki:
 
         """
         for event in self.site.logevents(user=user_name):
-            yield LogEvent(struct_to_datetime(event['timestamp']),
+            yield LogEvent(event['logid'],
+                           struct_to_datetime(event['timestamp']),
                            event['user'],
                            event['title'] if 'title' in event else None,
                            event['type'],

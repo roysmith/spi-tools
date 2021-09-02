@@ -26,6 +26,7 @@ class WikiContrib:
 
 @dataclass(frozen=True)
 class LogEvent:
+    log_id: int
     timestamp: datetime.datetime
     user_name: str
     title: str

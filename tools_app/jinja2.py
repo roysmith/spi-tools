@@ -14,8 +14,10 @@ def page_link(title):
 
 def event_link(event):
     escaped = escape(event.timestamp)
-    if event.id:
+    if event.description == 'edit':
         return Markup(f'<a href="http://en.wikipedia.org/wiki/Special:Diff/{event.id}">{event.timestamp}</a>')
+    if event.description in ('block', 'reblock', 'unblock', 'newusers', 'create', 'thanks', 'upload'):
+        return Markup(f'<a href="http://en.wikipedia.org/w/index.php?title=Special:Log&logid={event.id}">{event.timestamp}</a>')
     else:
         return Markup(f'{event.timestamp}')
 

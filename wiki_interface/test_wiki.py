@@ -482,17 +482,20 @@ class UserBlocksTest(WikiTestCase):
         may_1 = '2020-05-01T00:00:00Z'
 
         self.mock_site.logevents.return_value = iter([
-            {'title': 'User:fred',
+            {'logid': 1,
+             'title': 'User:fred',
              'timestamp': mwclient.util.parse_timestamp(jan_1),
              'params': {'expiry': feb_1},
              'type': 'block',
              'action': 'block'},
-            {'title': 'User:fred',
+            {'logid': 2,
+             'title': 'User:fred',
              'timestamp': mwclient.util.parse_timestamp(mar_1),
              'params': {'expiry': apr_1},
              'type': 'block',
              'action': 'block'},
-            {'title': 'User:fred',
+            {'logid': 3,
+             'title': 'User:fred',
              'timestamp': mwclient.util.parse_timestamp(may_1),
              'params': {},
              'type': 'block',
@@ -502,9 +505,9 @@ class UserBlocksTest(WikiTestCase):
 
         user_blocks = wiki.user_blocks('fred')
 
-        self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
-                                       BlockEvent('fred', isoparse(mar_1), isoparse(apr_1)),
-                                       UnblockEvent('fred', isoparse(may_1))])
+        self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), 1, isoparse(feb_1)),
+                                       BlockEvent('fred', isoparse(mar_1), 2, isoparse(apr_1)),
+                                       UnblockEvent('fred', isoparse(may_1), 3)])
         mock_logger.error.assert_not_called()
 
 
@@ -516,12 +519,14 @@ class UserBlocksTest(WikiTestCase):
         mar_1 = '2020-03-01T00:00:00Z'
 
         self.mock_site.logevents.return_value = iter([
-            {'title': 'User:fred',
+            {'logid': 1,
+             'title': 'User:fred',
              'timestamp': mwclient.util.parse_timestamp(jan_1),
              'params': {'expiry': feb_1},
              'type': 'block',
              'action': 'block'},
-            {'title': 'User:fred',
+            {'logid': 2,
+             'title': 'User:fred',
              'timestamp': mwclient.util.parse_timestamp(jan_2),
              'params': {'expiry': mar_1},
              'type': 'block',
@@ -531,26 +536,28 @@ class UserBlocksTest(WikiTestCase):
 
         user_blocks = wiki.user_blocks('fred')
 
-        self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
-                                       BlockEvent('fred', isoparse(jan_2), isoparse(mar_1),
+        self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(jan_1), 1, isoparse(feb_1)),
+                                       BlockEvent('fred', isoparse(jan_2), 2, isoparse(mar_1),
                                                   is_reblock=True)])
         mock_logger.error.assert_not_called()
 
 
     @patch('wiki_interface.wiki.logger')
-    def test_user_blocks_with_unknown_action(self, mock_logger):
+    def test_user_blocks_with_unknown_action_logs_error_message(self, mock_logger):
         jan_1 = '2020-01-01T00:00:00Z'
         feb_1 = '2020-02-01T00:00:00Z'
         mar_1 = '2020-03-01T00:00:00Z'
         apr_1 = '2020-04-01T00:00:00Z'
 
         self.mock_site.logevents.return_value = iter([
-            {'title': 'User:fred',
+            {'logid': 1,
+             'title': 'User:fred',
              'timestamp': mwclient.util.parse_timestamp(jan_1),
              'params': {'expiry': feb_1},
              'type': 'block',
              'action': 'wugga-wugga'},
-            {'title': 'User:fred',
+            {'logid': 2,
+             'title': 'User:fred',
              'timestamp': mwclient.util.parse_timestamp(mar_1),
              'params': {'expiry': apr_1},
              'type': 'block',
@@ -560,7 +567,7 @@ class UserBlocksTest(WikiTestCase):
 
         user_blocks = wiki.user_blocks('fred')
 
-        self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(mar_1), isoparse(apr_1))])
+        self.assertEqual(user_blocks, [BlockEvent('fred', isoparse(mar_1), 2, isoparse(apr_1))])
         mock_logger.error.assert_called_once()
 
 
@@ -591,12 +598,14 @@ class MultiUserBlocksTest(WikiTestCase):
         mar_1 = '2020-03-01T00:00:00Z'
         apr_1 = '2020-04-01T00:00:00Z'
         self.mock_site.logevents.return_value = iter([
-            {'title': 'User:fred',
+            {'logid': 101,
+             'title': 'User:fred',
              'timestamp': mwclient.util.parse_timestamp(mar_1),
              'params': {'expiry': apr_1},
              'type': 'block',
              'action': 'block'},
-            {'title': 'User:fred',
+            {'logid': 102,
+             'title': 'User:fred',
              'timestamp': mwclient.util.parse_timestamp(jan_1),
              'params': {'expiry': feb_1},
              'type': 'block',
@@ -607,8 +616,8 @@ class MultiUserBlocksTest(WikiTestCase):
         blocks = async_to_sync(wiki.multi_user_blocks)(['fred'])
 
         self.assertEqual(blocks, [
-            BlockEvent('fred', isoparse(mar_1), isoparse(apr_1)),
-            BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
+            BlockEvent('fred', isoparse(mar_1), 101, isoparse(apr_1)),
+            BlockEvent('fred', isoparse(jan_1), 102, isoparse(feb_1)),
         ])
         self.mock_site.logevents.assert_called_once_with(title='User:fred', type='block')
 
@@ -620,14 +629,16 @@ class MultiUserBlocksTest(WikiTestCase):
         apr_1 = '2020-04-01T00:00:00Z'
         logevents_data = {
             'User:fred': [
-                {'title': 'User:fred',
+                {'logid': 1,
+                 'title': 'User:fred',
                  'timestamp': mwclient.util.parse_timestamp(jan_1),
                  'params': {'expiry': feb_1},
                  'type': 'block',
                  'action': 'block'},
             ],
             'User:wilma': [
-                {'title': 'User:wilma',
+                {'logid': 2,
+                 'title': 'User:wilma',
                  'timestamp': mwclient.util.parse_timestamp(mar_1),
                  'params': {'expiry': apr_1},
                  'type': 'block',
@@ -642,8 +653,8 @@ class MultiUserBlocksTest(WikiTestCase):
         self.mock_site.logevents.assert_has_calls([call(title='User:fred', type='block'),
                                                 call(title='User:wilma', type='block')])
         self.assertEqual(blocks, [
-            BlockEvent('wilma', isoparse(mar_1), isoparse(apr_1)),
-            BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
+            BlockEvent('wilma', isoparse(mar_1), 2, isoparse(apr_1)),
+            BlockEvent('fred', isoparse(jan_1), 1, isoparse(feb_1)),
         ])
 
 
@@ -658,24 +669,28 @@ class MultiUserBlocksTest(WikiTestCase):
         aug_1 = '2020-08-01T00:00:00Z'
         logevents_data = {
             'User:fred': [
-                {'title': 'User:fred',
+                {'logid': 1,
+                 'title': 'User:fred',
                  'timestamp': mwclient.util.parse_timestamp(jul_1),
                  'params': {'expiry': aug_1},
                  'type': 'block',
                  'action': 'block'},
-                {'title': 'User:fred',
+                {'logid': 2,
+                 'title': 'User:fred',
                  'timestamp': mwclient.util.parse_timestamp(jan_1),
                  'params': {'expiry': feb_1},
                  'type': 'block',
                  'action': 'block'},
             ],
             'User:wilma': [
-                {'title': 'User:wilma',
+                {'logid': 3,
+                 'title': 'User:wilma',
                  'timestamp': mwclient.util.parse_timestamp(may_1),
                  'params': {'expiry': jun_1},
                  'type': 'block',
                  'action': 'block'},
-                {'title': 'User:wilma',
+                {'logid': 4,
+                 'title': 'User:wilma',
                  'timestamp': mwclient.util.parse_timestamp(mar_1),
                  'params': {'expiry': apr_1},
                  'type': 'block',
@@ -690,10 +705,10 @@ class MultiUserBlocksTest(WikiTestCase):
         self.mock_site.logevents.assert_has_calls([call(title='User:fred', type='block'),
                                                 call(title='User:wilma', type='block')])
         self.assertEqual(blocks, [
-            BlockEvent('fred', isoparse(jul_1), isoparse(aug_1)),
-            BlockEvent('wilma', isoparse(may_1), isoparse(jun_1)),
-            BlockEvent('wilma', isoparse(mar_1), isoparse(apr_1)),
-            BlockEvent('fred', isoparse(jan_1), isoparse(feb_1)),
+            BlockEvent('fred', isoparse(jul_1), 1, isoparse(aug_1)),
+            BlockEvent('wilma', isoparse(may_1), 3, isoparse(jun_1)),
+            BlockEvent('wilma', isoparse(mar_1), 4, isoparse(apr_1)),
+            BlockEvent('fred', isoparse(jan_1), 2, isoparse(feb_1)),
         ])
 
 
@@ -703,6 +718,7 @@ class UserLogsTest(WikiTestCase):
     def test_user_log_events(self):
         self.mock_site.logevents.return_value = iter([
             {
+                'logid': 1,
                 'title': 'Fred-sock',
                 'params': {'userid': 37950265},
                 'type': 'newusers',
@@ -716,6 +732,7 @@ class UserLogsTest(WikiTestCase):
 
         log_events = list(wiki.user_log_events('Fred'))
         self.assertEqual(log_events, [LogEvent(
+            1,
             datetime(2019, 11, 29, tzinfo=timezone.utc),
             'Fred',
             'Fred-sock',
@@ -727,6 +744,7 @@ class UserLogsTest(WikiTestCase):
     def test_user_log_events_handles_hidden_comment(self):
         self.mock_site.logevents.return_value = iter([
             {
+                'logid': 1,
                 'title': 'Fred-sock',
                 'params': {'userid': 37950265},
                 'type': 'newusers',
@@ -740,6 +758,7 @@ class UserLogsTest(WikiTestCase):
 
         log_events = list(wiki.user_log_events('Fred'))
         self.assertEqual(log_events, [LogEvent(
+            1,
             datetime(2019, 11, 29, tzinfo=timezone.utc),
             'Fred',
             'Fred-sock',
@@ -751,6 +770,7 @@ class UserLogsTest(WikiTestCase):
     def test_user_log_events_handles_hidden_title(self):
         self.mock_site.logevents.return_value = iter([
             {
+                'logid': 1,
                 'params': {'userid': 37950265},
                 'type': 'newusers',
                 'action': 'create2',
@@ -763,6 +783,7 @@ class UserLogsTest(WikiTestCase):
 
         log_events = list(wiki.user_log_events('Fred'))
         self.assertEqual(log_events, [LogEvent(
+            1,
             datetime(2019, 11, 29, tzinfo=timezone.utc),
             'Fred',
             None,
@@ -774,6 +795,7 @@ class UserLogsTest(WikiTestCase):
     def test_user_log_events_handles_hidden_action(self):
         self.mock_site.logevents.return_value = iter([
             {
+                'logid': 99,
                 'title': 'Fred-sock',
                 'params': {'userid': 37950265},
                 'type': 'newusers',
@@ -786,6 +808,7 @@ class UserLogsTest(WikiTestCase):
 
         log_events = list(wiki.user_log_events('Fred'))
         self.assertEqual(log_events, [LogEvent(
+            99,
             datetime(2019, 11, 29, tzinfo=timezone.utc),
             'Fred',
             'Fred-sock',
