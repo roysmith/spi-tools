@@ -25,20 +25,20 @@ class TimelineViewTest(ViewTestCase):
         self.mock_wiki.deleted_user_contributions.return_value = [
             WikiContrib(102, datetime(2020, 1, 2), 'Fred', 0, 'Title', 'comment', False)]
         self.mock_wiki.user_blocks.return_value = [
-            BlockEvent('Wilma', datetime(2020, 2, 1))]
+            BlockEvent('Wilma', datetime(2020, 2, 1), 1001)]
         self.mock_wiki.user_log_events.return_value = [
-            LogEvent(datetime(2019, 11, 29), 'Fred', 'Fred-sock', 'newusers', 'create2', 'testing')
+            LogEvent(1002, datetime(2019, 11, 29), 'Fred', 'Fred-sock', 'newusers', 'create2', 'testing')
         ]
         self.force_login()
         response = self.client.get('/spi/timeline/Foo', {'users': ['u1']})
 
         # pylint: disable=line-too-long
         self.assertEqual(response.context['events'], [
-            TimelineEvent(datetime(2020, 2, 1), 0, 'Wilma', 'block', '', 'indef', '', ''),
+            TimelineEvent(datetime(2020, 2, 1), 1001, 'Wilma', 'block', '', 'indef', '', ''),
             TimelineEvent(datetime(2020, 1, 3), 103, 'Fred', 'edit', '', 'Title', 'comment', ''),
             TimelineEvent(datetime(2020, 1, 2), 102, 'Fred', 'edit', 'deleted', 'Title', 'comment', ''),
             TimelineEvent(datetime(2020, 1, 1), 101, 'Fred', 'edit', '', 'Title', 'comment', ''),
-            TimelineEvent(datetime(2019, 11, 29), 0, 'Fred', 'newusers', 'create2', 'Fred-sock', 'testing', ''),
+            TimelineEvent(datetime(2019, 11, 29), 1002, 'Fred', 'newusers', 'create2', 'Fred-sock', 'testing', ''),
         ])
 
 
@@ -155,7 +155,8 @@ class TimelineViewTest(ViewTestCase):
 
     def test_hidden_log_comments_render_as_hidden(self):
         self.mock_wiki.user_log_events.return_value = [
-            LogEvent(datetime(2020, 1, 1),
+            LogEvent(1,
+                     datetime(2020, 1, 1),
                      'Fred',
                      'Title',
                      'create',
@@ -168,5 +169,5 @@ class TimelineViewTest(ViewTestCase):
         response = self.client.get('/spi/timeline/Foo', {'users': ['u1']})
 
         self.assertEqual(response.context['events'], [
-            TimelineEvent(datetime(2020, 1, 1), 0, 'Fred', 'create', 'create', 'Title', '<comment hidden>', ''),
+            TimelineEvent(datetime(2020, 1, 1), 1, 'Fred', 'create', 'create', 'Title', '<comment hidden>', ''),
         ])

@@ -113,7 +113,7 @@ class TimelineView(LoginRequiredMixin, View):
         for block in wiki.user_blocks(user_name):
             if isinstance(block, BlockEvent):
                 yield TimelineEvent(block.timestamp,
-                                    0,
+                                    block.id,
                                     block.target,
                                     'block',
                                     'reblock' if block.is_reblock else '',
@@ -121,7 +121,7 @@ class TimelineView(LoginRequiredMixin, View):
                                     '')
             elif isinstance(block, UnblockEvent):
                 yield TimelineEvent(block.timestamp,
-                                    0,
+                                    block.id,
                                     block.target,
                                     'unblock',
                                     '',
@@ -129,7 +129,7 @@ class TimelineView(LoginRequiredMixin, View):
                                     '')
             else:
                 yield TimelineEvent(block.timestamp,
-                                    0,
+                                    block.id,
                                     block.target,
                                     'block',
                                     'unknown',
@@ -143,7 +143,7 @@ class TimelineView(LoginRequiredMixin, View):
         """
         for event in wiki.user_log_events(user_name):
             yield TimelineEvent(event.timestamp,
-                                0,
+                                event.log_id,
                                 event.user_name,
                                 event.type,
                                 event.action,

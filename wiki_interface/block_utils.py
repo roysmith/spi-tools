@@ -25,6 +25,7 @@ class BlockEvent(BaseBlockEvent):
     """
     target: str
     timestamp: datetime
+    id: int
     expiry: datetime = None
     is_reblock: bool = False
 
@@ -46,6 +47,7 @@ class UnblockEvent(BaseBlockEvent):
     """
     target: str
     timestamp: datetime
+    id: int
 
 
 @dataclass
