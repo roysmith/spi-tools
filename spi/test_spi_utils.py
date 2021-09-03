@@ -451,6 +451,25 @@ class SpiCaseDayTest(TestCase):
                                       SpiUserInfo('user2', '21 March 2019')])
 
 
+    def test_find_users_includes_checkip_templates(self):
+        text = '''
+        ===21 March 2019===
+        {{checkuser|user1}}
+        {{checkuser|user2}}
+        {{checkip|1.2.3.4}}
+        {{checkIP|5.6.7.8}}
+
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.find_users())
+        self.assertCountEqual(users, [SpiUserInfo('user1', '21 March 2019'),
+                                      SpiUserInfo('user2', '21 March 2019'),
+                                      SpiUserInfo('1.2.3.4', '21 March 2019'),
+                                      SpiUserInfo('5.6.7.8', '21 March 2019'),
+        ])
+
+
+
     def test_find_user_instances(self):
         text = '''
         ===21 March 2019===

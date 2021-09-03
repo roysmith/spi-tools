@@ -130,9 +130,11 @@ class SpiCase:
 
 
     def find_all_ips(self):
-        '''Iterates over all the IPs mentioned in checkuser templates.
-        Each user is represented as a SpiIpInfo.  Order of iteration
-        is not guaranteed, and templates are not deduplicated.
+        '''Iterates over all the IPs mentioned in checkuser or checkip
+        templates.  Each user is represented as a SpiIpInfo.  Order of
+        iteration is not guaranteed, and templates are not
+        deduplicated.
+
         '''
         for day in self.days():
             for ip_address in day.find_ips():
@@ -173,9 +175,10 @@ class SpiCaseDay:
 
 
     def find_users(self):
-        '''Iterates over all the accounts mentioned in checkuser templates.
-        Each user is represented as an SpiUserInfo.  Order of iteration
-        is not guaranteed, and templates are not deduplicated.
+        '''Iterates over all the users mentioned in checkuser or checkip
+        templates.  Each user is represented as a SpiUserInfo.  Order
+        of iteration is not guaranteed, and templates are not
+        deduplicated.
 
         '''
         date = self.date()
@@ -183,6 +186,7 @@ class SpiCaseDay:
             matches=lambda n: n.name.matches(['checkuser',
                                               'user',
                                               'checkip',
+                                              'checkIP',
                                               'SPIarchive notice']))
         for template in templates:
             username = template.get('1').value
@@ -204,9 +208,10 @@ class SpiCaseDay:
 
 
     def find_ips(self):
-        '''Iterates over all the IPs mentioned in checkuser templates.
-        Each ip is represented as an SpiIpInfo.  Order of iteration
-        is not guaranteed, and templates are not deduplicated.
+        '''Iterates over all the IPs mentioned in checkuser or checkip
+        templates.  Each ip is represented as an SpiIpInfo.  Order of
+        iteration is not guaranteed, and templates are not
+        deduplicated.
 
         The normal case-mapping rules supoprt either checkip or
         Checkip.  We also allow checkIP and CheckIP, since those are
