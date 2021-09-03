@@ -544,6 +544,24 @@ class SpiCaseDayTest(TestCase):
         self.assertEqual(ips, [SpiIpInfo('1.2.3.4', '21 March 2019', 'title')])
 
 
+    def test_find_ips_accepts_uppercase_variants(self):
+        text = '''
+        ===21 March 2019===
+        {{checkip|1.2.3.4}}
+        {{checkIP|5.6.7.8}}
+        {{Checkip|9.10.11.12}}
+        {{CheckIP|13.14.15.16}}
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        ips = list(day.find_ips())
+        self.assertCountEqual(ips, [
+            SpiIpInfo('1.2.3.4', '21 March 2019', 'title'),
+            SpiIpInfo('5.6.7.8', '21 March 2019', 'title'),
+            SpiIpInfo('9.10.11.12', '21 March 2019', 'title'),
+            SpiIpInfo('13.14.15.16', '21 March 2019', 'title'),
+        ])
+
+
 
 class SpiUserInfoTest(TestCase):
     def test_eq(self):

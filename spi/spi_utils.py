@@ -207,10 +207,15 @@ class SpiCaseDay:
         '''Iterates over all the IPs mentioned in checkuser templates.
         Each ip is represented as an SpiIpInfo.  Order of iteration
         is not guaranteed, and templates are not deduplicated.
+
+        The normal case-mapping rules supoprt either checkip or
+        Checkip.  We also allow checkIP and CheckIP, since those are
+        available on enwiki via a redirect.
+
         '''
         date = self.date()
         templates = self.wikicode.filter_templates(
-            matches=lambda n: n.name.matches('checkip'))
+            matches=lambda n: n.name.matches(['checkip', 'checkIP']))
         for template in templates:
             ip_str = template.get('1').value
             try:
