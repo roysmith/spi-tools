@@ -106,6 +106,9 @@ class SpiCase:
         before parsing.  This is an ugly hack, but doing it correctly
         is just too painful.
 
+        en.wikipedia.org/w/index.php?oldid=1039087434#Header_levels_on_SPI_report_template
+        has some history on why this uses such strange formatting.
+
         """
         self.parsed_docs = []
         map_5_to_3_pattern = re.compile(r"^=====<big>([a-zA-Z 0-9]*)</big>=====$", re.MULTILINE)
