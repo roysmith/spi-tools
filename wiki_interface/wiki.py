@@ -11,6 +11,7 @@ mwclient.Site directly.
 """
 import logging
 from dataclasses import dataclass
+from ipaddress import IPv4Address, IPv6Address, AddressValueError
 from itertools import islice
 import asyncio
 import heapq
@@ -32,6 +33,10 @@ from wiki_interface.time_utils import struct_to_datetime
 
 
 logger = logging.getLogger('wiki_interface')
+
+
+MAX_UCUSER = 50  # See https://www.mediawiki.org/wiki/API:Usercontribs.
+MAX_USUSER = 50  # See https://www.mediawiki.org/wiki/API:Users
 
 
 class Wiki:
@@ -99,9 +104,6 @@ class Wiki:
             return None
 
 
-    # See https://www.mediawiki.org/wiki/API:Usercontribs.
-    MAX_UCUSER = 50
-
     def user_contributions(self, user_name_or_names, show='', end=None):
         """Get one or more users' live (i.e. non-deleted) edits.
 
@@ -125,7 +127,7 @@ class Wiki:
             all_names.append(str_name)
 
         props = 'ids|title|timestamp|comment|flags|tags'
-        for chunk in chunked(all_names, self.MAX_UCUSER):
+        for chunk in chunked(all_names, MAX_UCUSER):
             for contrib in self.site.usercontributions('|'.join(chunk), show=show, prop=props, end=end):
                 logger.debug("contrib = %s", contrib)
                 yield WikiContrib(contrib['revid'],
@@ -273,6 +275,64 @@ class Wiki:
             if ex.code == 'baduser':
                 return False
             raise
+
+
+
+    def valid_usernames(self, names):
+        """Given an iterable over usernames, returns a set of those names
+        which are valid.  Similar to is_valid_username(), but batches
+        requests into fewer API calls.
+
+        The intent here is that a 'valid username' is any string which
+        you can stick a 'User:' in front of and find contributions or
+        log entries.  Thus, we consider '1.2.3.4' to be a valid
+        username, but not '1.2.3.0/24'.
+
+        """
+        all_names = []
+        for name in names:
+            str_name = str(name)
+            if '|' in str_name:
+                raise ValueError(f'"|" in user name: {str_name}')
+            all_names.append(str_name)
+
+        valid_names = set()
+        for chunk in chunked(all_names, MAX_USUSER):
+            data = self.site.api('query', list='users', ususers='|'.join(chunk))
+            for user in data['query']['users']:
+                name = user['name']
+                # If the API returned a userid, its valid
+                if 'userid' in user:
+                    valid_names.add(name)
+                    continue
+
+                # The most likely way to get here is an IP address.  IP
+                # addresses are considered invalid by the list users
+                # query, so we special case them locally without having to
+                # do any additional API calls.
+                try:
+                    IPv4Address(name)
+                    valid_names.add(name)
+                    continue
+                except AddressValueError:
+                    pass
+                try:
+                    IPv6Address(name)
+                    valid_names.add(name)
+                    continue
+                except AddressValueError:
+                    pass
+
+                # By the time we get here, the most likely reason is
+                # somebody put an IP range (i.e. '1.2.3.0/24') in a
+                # template.  But it could also be a syntactically valid
+                # username string that's simply not registered on this
+                # wiki.  Or even some totally off-the-wall string that's
+                # syntactically invalid.  We consider all of those to be
+                # invalid.
+                logger.warning('Invalid username (%s)', name)
+
+        return valid_names
 
 
 @dataclass

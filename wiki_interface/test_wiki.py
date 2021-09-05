@@ -12,7 +12,7 @@ import mwclient.util
 import mwclient.errors
 
 from wiki_interface.data import WikiContrib, LogEvent
-from wiki_interface.wiki import Wiki, Page
+from wiki_interface.wiki import Wiki, Page, MAX_UCUSER
 from wiki_interface.block_utils import BlockEvent, UnblockEvent
 
 class ConstructorTest(TestCase):
@@ -195,7 +195,7 @@ class UserContributionsTest(WikiTestCase):
         # to work with any value of MAX_UCUSER.  In practice, doing so
         # is just more effort (and complicated test code) than is
         # worth it.  At least this future-proofs us a bit.
-        self.assertEqual(wiki.MAX_UCUSER, 50)
+        self.assertEqual(MAX_UCUSER, 50)
 
         user_names = [str(i) for i in range(55)]
         contributions = list(wiki.user_contributions(user_names))
@@ -928,3 +928,66 @@ class IsValidUsernameTest(WikiTestCase):
         with self.assertRaises(RuntimeError):
             wiki.is_valid_username('foo')
         self.mock_site.usercontributions.assert_called_once_with('foo', limit=1)
+
+
+class ValidUsernamesTest(WikiTestCase):
+    #pylint: disable=invalid-name
+
+    def test_api_is_called_with_correct_arguments(self):
+        wiki = Wiki()
+        wiki.valid_usernames(['user1', 'user2', 'user3'])
+        self.mock_site.api.assert_called_once_with('query', list='users', ususers='user1|user2|user3')
+
+
+    def test_valid_usernames_returns_no_names_with_empty_api_result(self):
+        self.mock_site.api.return_value = {
+            "batchcomplete": True,
+            "query": {
+                "users": [],
+            }
+        }
+        wiki = Wiki()
+        valid_names = wiki.valid_usernames([])
+        self.assertEqual(valid_names, set())
+
+
+    def test_valid_usernames_returns_only_valid_names(self):
+        self.mock_site.api.return_value = {
+            "batchcomplete": True,
+            "query": {
+                "users": [{'name': 'user1',
+                           'userid': 1
+                           },
+                          {'name': 'user2',
+                           'userid': 2
+                           },
+                          {'name': 'user3',
+                           'missing': ''
+                           },
+                          {'name': 'user4',
+                           'invalid': ''
+                           }]
+                }
+            }
+        wiki = Wiki()
+        valid_names = wiki.valid_usernames(['user1', 'user2', 'user3', 'user4'])
+        self.mock_site.api.assert_called_once_with('query', list='users', ususers='user1|user2|user3|user4')
+        self.assertEqual(valid_names, set(['user1', 'user2']))
+
+
+    def test_valid_usernames_returns_IP_addresses_as_valid(self):
+        self.mock_site.api.return_value = {
+            "batchcomplete": True,
+            "query": {
+                "users": [{'name': '1.2.3.4',
+                           'invalid': ''
+                           },
+                          {'name': 'fe80::4438:87ff:feb6:f684',
+                           'invalid': ''
+                           }]
+                }
+            }
+        wiki = Wiki()
+        valid_names = wiki.valid_usernames(['1.2.3.4', 'fe80::4438:87ff:feb6:f684'])
+        self.mock_site.api.assert_called_once_with('query', list='users', ususers='1.2.3.4|fe80::4438:87ff:feb6:f684')
+        self.assertEqual(valid_names, set(['1.2.3.4', 'fe80::4438:87ff:feb6:f684']))

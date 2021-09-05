@@ -28,10 +28,12 @@ def get_sock_names(wiki, master_name):
     if users is None:
         case = CacheableSpiCase.get(wiki, master_name)
         # Need to work out cache invalidation
+        usernames = [user_info.username for user_info in case.users]
+        valid_usernames = wiki.valid_usernames(usernames)
         users = []
         for user_info in case.users:
             name = user_info.username
-            valid = wiki.is_valid_username(name)
+            valid = name in valid_usernames
             user = ValidatedUser(name, user_info.date, valid)
             if not valid:
                 logger.warning('invalid username (%s) in case "%s"', user, master_name)
