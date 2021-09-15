@@ -15,6 +15,7 @@ from ipaddress import IPv4Address, IPv6Address, AddressValueError
 from itertools import islice
 import asyncio
 import heapq
+import re
 
 import django.contrib.auth
 from django.conf import settings
@@ -278,10 +279,32 @@ class Wiki:
 
 
 
-    def valid_usernames(self, names):
-        """Given an iterable over usernames, returns a set of those names
-        which are valid.  Similar to is_valid_username(), but batches
-        requests into fewer API calls.
+    @staticmethod
+    def normalize_username(name):
+        """Return a normalized username.  The exact definition of 'normalized'
+        is vague; see
+        https://lists.wikimedia.org/hyperkitty/list/cloud@lists.wikimedia.org/thread/274WJ2XCHWZ6544MITG57EATDQHSRS5I/
+
+        The intent is to match how API:Users does it, so underscores
+        are mapped to spaces.
+
+        """
+        underscores = re.sub(r'\s', '_', name)
+        single_space = re.sub(r'_+', ' ', underscores)
+        trimmed = single_space.strip()
+        first = trimmed[0:1]
+        rest = trimmed[1:]
+        return first.upper() + rest
+
+
+    def validate_usernames(self, input_names):
+        """Given an iterable over strings, returns a set of those that are
+        invalid usernames.  For this purpose, "invalid" means either
+        syntactically invalid (ex: ':::foo'), or not registered on
+        this wiki.
+
+        Raises TypeError if any of the inputs are not strings.  Raises
+        ValueError is any of the names contains a '|'.
 
         The intent here is that a 'valid username' is any string which
         you can stick a 'User:' in front of and find contributions or
@@ -289,50 +312,53 @@ class Wiki:
         username, but not '1.2.3.0/24'.
 
         """
-        all_names = []
-        for name in names:
-            str_name = str(name)
-            if '|' in str_name:
-                raise ValueError(f'"|" in user name: {str_name}')
-            all_names.append(str_name)
+        user_names = []
+        for name in input_names:
+            logger.debug('name = %s', name)
+            if not isinstance(name, str):
+                raise TypeError(f'{repr(name)} is not a string')
+            if '|' in name:
+                raise ValueError(f'"|" in user name: {name}')
+            if not self._is_ip_address(name):
+                user_names.append(name)
 
-        valid_names = set()
-        for chunk in chunked(all_names, MAX_USUSER):
-            data = self.site.api('query', list='users', ususers='|'.join(chunk))
-            for user in data['query']['users']:
-                name = user['name']
-                # If the API returned a userid, its valid
-                if 'userid' in user:
-                    valid_names.add(name)
-                    continue
+        invalid_names = set()
+        normalized_missing_names = set()
+        for input_chunk in chunked(user_names, MAX_USUSER):
+            api_result = self.site.api('query', list='users', ususers='|'.join(input_chunk))
+            output_chunk = api_result['query']['users']
+            for output_data in output_chunk:
+                if 'invalid' in output_data:
+                    invalid_names.add(output_data['name'])
+                elif 'missing' in output_data:
+                    normalized_missing_names.add(output_data['name'])
 
-                # The most likely way to get here is an IP address.  IP
-                # addresses are considered invalid by the list users
-                # query, so we special case them locally without having to
-                # do any additional API calls.
-                try:
-                    IPv4Address(name)
-                    valid_names.add(name)
-                    continue
-                except AddressValueError:
-                    pass
-                try:
-                    IPv6Address(name)
-                    valid_names.add(name)
-                    continue
-                except AddressValueError:
-                    pass
+        result = set()
+        for name in user_names:
+            if self.normalize_username(name) in normalized_missing_names:
+                logger.warning('missing username (%s)', name)
+                result.add(name)
+            elif name in invalid_names:
+                logger.warning('invalid username (%s)', name)
+                result.add(name)
 
-                # By the time we get here, the most likely reason is
-                # somebody put an IP range (i.e. '1.2.3.0/24') in a
-                # template.  But it could also be a syntactically valid
-                # username string that's simply not registered on this
-                # wiki.  Or even some totally off-the-wall string that's
-                # syntactically invalid.  We consider all of those to be
-                # invalid.
-                logger.warning('Invalid username (%s)', name)
+        return result
 
-        return valid_names
+
+    @staticmethod
+    def _is_ip_address(str):
+        """Return a truthy value if the string is a valid IP (v4 or v6)
+        address, False otherwise.
+
+        """
+        try:
+            return IPv4Address(str)
+        except AddressValueError:
+            try:
+                return IPv6Address(str)
+            except AddressValueError:
+                return False
+
 
 
 @dataclass

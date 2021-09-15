@@ -1,6 +1,9 @@
 from datetime import datetime, timezone
 from unittest import TestCase
 from unittest.mock import call, patch, Mock, MagicMock
+from pprint import pprint
+from logging import getLogger
+
 
 from dateutil.parser import isoparse
 from django.conf import settings
@@ -930,16 +933,10 @@ class IsValidUsernameTest(WikiTestCase):
         self.mock_site.usercontributions.assert_called_once_with('foo', limit=1)
 
 
-class ValidUsernamesTest(WikiTestCase):
+class ValidateUsernamesTest(WikiTestCase):
     #pylint: disable=invalid-name
 
-    def test_api_is_called_with_correct_arguments(self):
-        wiki = Wiki()
-        wiki.valid_usernames(['user1', 'user2', 'user3'])
-        self.mock_site.api.assert_called_once_with('query', list='users', ususers='user1|user2|user3')
-
-
-    def test_valid_usernames_returns_no_names_with_empty_api_result(self):
+    def test_validate_usernames_returns_no_names_with_empty_api_result(self):
         self.mock_site.api.return_value = {
             "batchcomplete": True,
             "query": {
@@ -947,21 +944,21 @@ class ValidUsernamesTest(WikiTestCase):
             }
         }
         wiki = Wiki()
-        valid_names = wiki.valid_usernames([])
-        self.assertEqual(valid_names, set())
+        result = wiki.validate_usernames([])
+        self.assertEqual(result, set())
 
 
-    def test_valid_usernames_returns_only_valid_names(self):
+    def test_validate_usernames_returns_invalid_or_missing_names(self):
         self.mock_site.api.return_value = {
             "batchcomplete": True,
             "query": {
-                "users": [{'name': 'user1',
+                "users": [{'name': 'User1',
                            'userid': 1
                            },
-                          {'name': 'user2',
+                          {'name': 'User2',
                            'userid': 2
                            },
-                          {'name': 'user3',
+                          {'name': 'User3',
                            'missing': ''
                            },
                           {'name': 'user4',
@@ -970,12 +967,12 @@ class ValidUsernamesTest(WikiTestCase):
                 }
             }
         wiki = Wiki()
-        valid_names = wiki.valid_usernames(['user1', 'user2', 'user3', 'user4'])
+        result = wiki.validate_usernames(['user1', 'user2', 'user3', 'user4'])
         self.mock_site.api.assert_called_once_with('query', list='users', ususers='user1|user2|user3|user4')
-        self.assertEqual(valid_names, set(['user1', 'user2']))
+        self.assertEqual(result, {'user3', 'user4'})
 
 
-    def test_valid_usernames_returns_IP_addresses_as_valid(self):
+    def test_validate_usernames_returns_IP_addresses_range_as_invalid(self):
         self.mock_site.api.return_value = {
             "batchcomplete": True,
             "query": {
@@ -984,10 +981,69 @@ class ValidUsernamesTest(WikiTestCase):
                            },
                           {'name': 'fe80::4438:87ff:feb6:f684',
                            'invalid': ''
+                           },
+                          {'name': '1.2.3.0/24',
+                           'invalid': ''
                            }]
                 }
             }
         wiki = Wiki()
-        valid_names = wiki.valid_usernames(['1.2.3.4', 'fe80::4438:87ff:feb6:f684'])
-        self.mock_site.api.assert_called_once_with('query', list='users', ususers='1.2.3.4|fe80::4438:87ff:feb6:f684')
-        self.assertEqual(valid_names, set(['1.2.3.4', 'fe80::4438:87ff:feb6:f684']))
+        result = wiki.validate_usernames(['1.2.3.4', 'fe80::4438:87ff:feb6:f684', '1.2.3.0/24'])
+        self.mock_site.api.assert_called_once_with('query', list='users', ususers='1.2.3.0/24')
+        self.assertEqual(result, {'1.2.3.0/24'})
+
+
+    def test_validate_usernames_logs_warning_for_missing_name(self):
+        self.mock_site.api.return_value = {
+            "batchcomplete": True,
+            "query": {
+                "users": [{'name': 'Foo',
+                           'missing': ''
+                           }]
+                }
+            }
+        wiki = Wiki()
+        with self.assertLogs('wiki_interface', level='WARN') as cm:
+           result = wiki.validate_usernames(['foo'])
+        self.assertEqual(cm.output, ['WARNING:wiki_interface:missing username (foo)'])
+
+
+
+    def test_validate_usernames_logs_warning_for_invalid_name(self):
+        self.mock_site.api.return_value = {
+            "batchcomplete": True,
+            "query": {
+                "users": [{'name': '::foo',
+                           'invalid': ''
+                           }]
+                }
+            }
+        wiki = Wiki()
+        with self.assertLogs('wiki_interface', level='WARN') as cm:
+           result = wiki.validate_usernames(['::foo'])
+        self.assertEqual(cm.output, ['WARNING:wiki_interface:invalid username (::foo)'])
+
+
+class NormalizeUsernameTest(WikiTestCase):
+    def test_empty_string(self):
+        self.assertEqual(Wiki.normalize_username(''), '')
+
+
+    def test_all_lowercase(self):
+        self.assertEqual(Wiki.normalize_username('foo'), 'Foo')
+
+
+    def test_embedded_space(self):
+        self.assertEqual(Wiki.normalize_username('Foo Bar'), 'Foo Bar')
+
+
+    def test_multiple_embedded_spaces(self):
+        self.assertEqual(Wiki.normalize_username('Foo   Bar'), 'Foo Bar')
+
+
+    def test_underscore(self):
+        self.assertEqual(Wiki.normalize_username('Foo_Bar'), 'Foo Bar')
+
+
+    def test_mixed_spaces_and_underscores(self):
+        self.assertEqual(Wiki.normalize_username(' Foo__Bar Baz_'), 'Foo Bar Baz')
