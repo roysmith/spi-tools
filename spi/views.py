@@ -20,7 +20,7 @@ def get_sock_names(wiki, master_name):
     """Returns a iterable over ValidatedUsers
 
     Discovered usernames are checked for validity.  See
-    Wiki.is_valid_username() for what it means to be valid.
+    Wiki.validate_username() for what it means to be valid.
 
     """
     key = f'views.get_sock_names.{master_name}'
@@ -29,11 +29,11 @@ def get_sock_names(wiki, master_name):
         case = CacheableSpiCase.get(wiki, master_name)
         # Need to work out cache invalidation
         usernames = [user_info.username for user_info in case.users]
-        valid_usernames = wiki.valid_usernames(usernames)
+        invalid_names = wiki.validate_usernames(usernames)
         users = []
         for user_info in case.users:
             name = user_info.username
-            valid = name in valid_usernames
+            valid = name not in invalid_names
             user = ValidatedUser(name, user_info.date, valid)
             if not valid:
                 logger.warning('invalid username (%s) in case "%s"', user, master_name)

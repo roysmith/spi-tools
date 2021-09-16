@@ -28,7 +28,7 @@ class GetSockNamesTest(TestCase):
         cache.get.return_value = None
         mock_CacheableSpiCase.get.return_value = CacheableSpiCase('fred', 1, [], [])
         wiki = NonCallableMock(Wiki)
-        wiki.valid_usernames.return_value = set()
+        wiki.validate_usernames.return_value = {}
         sock_names = get_sock_names(wiki, 'fred')
         self.assertEqual(sock_names, [])
 
@@ -45,9 +45,9 @@ class GetSockNamesTest(TestCase):
                                                                    SpiUserInfo('1.2.3.0/24', '1 January 2020')],
                                                                   [])
         wiki = NonCallableMock(Wiki)
-        wiki.valid_usernames.return_value = set(['sock1', 'sock2', '1.2.3.4'])
+        wiki.validate_usernames.return_value = {'1.2.3.0/24'}
         socks = get_sock_names(wiki, 'fred')
-        wiki.valid_usernames.assert_called_once_with(['sock1', 'sock2', '1.2.3.4', '1.2.3.0/24'])
+        wiki.validate_usernames.assert_called_once_with(['sock1', 'sock2', '1.2.3.4', '1.2.3.0/24'])
         self.assertCountEqual(socks, [ValidatedUser('sock1', '1 January 2020', True),
                                       ValidatedUser('sock2', '1 January 2020', True),
                                       ValidatedUser('1.2.3.4', '1 January 2020', True),
