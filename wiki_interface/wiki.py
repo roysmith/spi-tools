@@ -319,7 +319,7 @@ class Wiki:
                 raise TypeError(f'{repr(name)} is not a string')
             if '|' in name:
                 raise ValueError(f'"|" in user name: {name}')
-            if not self._is_ip_address(name):
+            if not self._is_ip_address(name.strip()):
                 user_names.append(name)
 
         invalid_names = set()

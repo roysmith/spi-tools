@@ -1024,6 +1024,20 @@ class ValidateUsernamesTest(WikiTestCase):
         self.assertEqual(cm.output, ['WARNING:wiki_interface:invalid username (::foo)'])
 
 
+    def test_validate_usernames_ignores_leading_and_trailing_whitespace_in_ip_addresses(self):
+        self.mock_site.api.return_value = {
+            "batchcomplete": True,
+            "query": {
+                "users": []
+                }
+            }
+        wiki = Wiki()
+        result = wiki.validate_usernames([' 1.2.3.4', '5.6.7.8 ', ' 9.10.11.12 ', 'foo'])
+        self.mock_site.api.assert_called_once_with('query', list='users', ususers='foo')
+        self.assertEqual(result, set())
+
+
+
 class NormalizeUsernameTest(WikiTestCase):
     def test_empty_string(self):
         self.assertEqual(Wiki.normalize_username(''), '')
