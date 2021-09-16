@@ -993,37 +993,6 @@ class ValidateUsernamesTest(WikiTestCase):
         self.assertEqual(result, {'1.2.3.0/24'})
 
 
-    def test_validate_usernames_logs_warning_for_missing_name(self):
-        self.mock_site.api.return_value = {
-            "batchcomplete": True,
-            "query": {
-                "users": [{'name': 'Foo',
-                           'missing': ''
-                           }]
-                }
-            }
-        wiki = Wiki()
-        with self.assertLogs('wiki_interface', level='WARN') as cm:
-           result = wiki.validate_usernames(['foo'])
-        self.assertEqual(cm.output, ['WARNING:wiki_interface:missing username (foo)'])
-
-
-
-    def test_validate_usernames_logs_warning_for_invalid_name(self):
-        self.mock_site.api.return_value = {
-            "batchcomplete": True,
-            "query": {
-                "users": [{'name': '::foo',
-                           'invalid': ''
-                           }]
-                }
-            }
-        wiki = Wiki()
-        with self.assertLogs('wiki_interface', level='WARN') as cm:
-           result = wiki.validate_usernames(['::foo'])
-        self.assertEqual(cm.output, ['WARNING:wiki_interface:invalid username (::foo)'])
-
-
     def test_validate_usernames_ignores_leading_and_trailing_whitespace_in_ip_addresses(self):
         self.mock_site.api.return_value = {
             "batchcomplete": True,

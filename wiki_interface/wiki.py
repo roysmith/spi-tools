@@ -336,10 +336,8 @@ class Wiki:
         result = set()
         for name in user_names:
             if self.normalize_username(name) in normalized_missing_names:
-                logger.warning('missing username (%s)', name)
                 result.add(name)
             elif name in invalid_names:
-                logger.warning('invalid username (%s)', name)
                 result.add(name)
 
         return result
