@@ -260,6 +260,10 @@ class Wiki:
         return Page(self, title)
 
 
+    def category(self, title):
+        return Category(self, title)
+
+
     def is_valid_username(self, user_name):
         """Test a username for validity.  Valid in this context means properly
         formed, i.e. the underlying API doesn't return a 'baduser'
@@ -389,3 +393,22 @@ class Page:
 
     def text(self):
         return self.mw_page.text()
+
+
+    def title(self):
+        return self.mw_page.name
+
+
+@dataclass
+class Category(Page):
+    def __init__(self, wiki, title):
+        super().__init__(wiki, title)
+
+
+    def members(self):
+        """Returns a iterable over the page titles (as strings) which are
+        members of the category.
+
+        """
+        for page in self.mw_page.members():
+            yield page.name

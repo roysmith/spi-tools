@@ -15,7 +15,7 @@ import mwclient.util
 import mwclient.errors
 
 from wiki_interface.data import WikiContrib, LogEvent
-from wiki_interface.wiki import Wiki, Page, MAX_UCUSER
+from wiki_interface.wiki import Wiki, Page, Category, MAX_UCUSER
 from wiki_interface.block_utils import BlockEvent, UnblockEvent
 
 class ConstructorTest(TestCase):
@@ -901,6 +901,24 @@ class PageTest(WikiTestCase):
 
         self.assertEqual(revisions,
                          [WikiContrib(20200730, datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 0, 'blah', 'c1')])
+
+
+class CategoryTest(WikiTestCase):
+    #pylint: disable=invalid-name
+
+    def test_construct(self):
+        wiki = Wiki()
+        cat = Category(wiki, "my category")
+        self.assertEqual(cat.wiki, wiki)
+        self.assertIsNotNone(cat.mw_page)
+
+
+    def test_members_returns_empty_iterable_for_empty_category(self):
+        wiki = Wiki()
+        self.mock_site.pages.__getitem__().return_value = Category(wiki, 'Foo')
+        self.mock_site.pages.__getitem__().members.return_value = []
+        cat = Category(wiki, 'Foo')
+        self.assertEqual(list(cat.members()), [])
 
 
 class IsValidUsernameTest(WikiTestCase):
