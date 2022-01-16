@@ -911,6 +911,7 @@ class CategoryTest(WikiTestCase):
         cat = Category(wiki, "my category")
         self.assertEqual(cat.wiki, wiki)
         self.assertIsNotNone(cat.mw_page)
+        wiki.site.pages.__getitem__.assert_called_once_with('Category:my category')
 
 
     def test_members_returns_empty_iterable_for_empty_category(self):

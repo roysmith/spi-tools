@@ -402,7 +402,7 @@ class Page:
 @dataclass
 class Category(Page):
     def __init__(self, wiki, title):
-        super().__init__(wiki, title)
+        super().__init__(wiki, f'Category:{title}')
 
 
     def members(self):
