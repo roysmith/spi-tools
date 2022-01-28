@@ -106,6 +106,9 @@ class SpiCase:
         before parsing.  This is an ugly hack, but doing it correctly
         is just too painful.
 
+        en.wikipedia.org/w/index.php?oldid=1039087434#Header_levels_on_SPI_report_template
+        has some history on why this uses such strange formatting.
+
         """
         self.parsed_docs = []
         map_5_to_3_pattern = re.compile(r"^=====<big>([a-zA-Z 0-9]*)</big>=====$", re.MULTILINE)
@@ -130,9 +133,11 @@ class SpiCase:
 
 
     def find_all_ips(self):
-        '''Iterates over all the IPs mentioned in checkuser templates.
-        Each user is represented as a SpiIpInfo.  Order of iteration
-        is not guaranteed, and templates are not deduplicated.
+        '''Iterates over all the IPs mentioned in checkuser or checkip
+        templates.  Each user is represented as a SpiIpInfo.  Order of
+        iteration is not guaranteed, and templates are not
+        deduplicated.
+
         '''
         for day in self.days():
             for ip_address in day.find_ips():
@@ -173,9 +178,10 @@ class SpiCaseDay:
 
 
     def find_users(self):
-        '''Iterates over all the accounts mentioned in checkuser templates.
-        Each user is represented as an SpiUserInfo.  Order of iteration
-        is not guaranteed, and templates are not deduplicated.
+        '''Iterates over all the users mentioned in checkuser or checkip
+        templates.  Each user is represented as a SpiUserInfo.  Order
+        of iteration is not guaranteed, and templates are not
+        deduplicated.
 
         '''
         date = self.date()
@@ -183,6 +189,7 @@ class SpiCaseDay:
             matches=lambda n: n.name.matches(['checkuser',
                                               'user',
                                               'checkip',
+                                              'checkIP',
                                               'SPIarchive notice']))
         for template in templates:
             username = template.get('1').value
@@ -204,13 +211,19 @@ class SpiCaseDay:
 
 
     def find_ips(self):
-        '''Iterates over all the IPs mentioned in checkuser templates.
-        Each ip is represented as an SpiIpInfo.  Order of iteration
-        is not guaranteed, and templates are not deduplicated.
+        '''Iterates over all the IPs mentioned in checkuser or checkip
+        templates.  Each ip is represented as an SpiIpInfo.  Order of
+        iteration is not guaranteed, and templates are not
+        deduplicated.
+
+        The normal case-mapping rules supoprt either checkip or
+        Checkip.  We also allow checkIP and CheckIP, since those are
+        available on enwiki via a redirect.
+
         '''
         date = self.date()
         templates = self.wikicode.filter_templates(
-            matches=lambda n: n.name.matches('checkip'))
+            matches=lambda n: n.name.matches(['checkip', 'checkIP']))
         for template in templates:
             ip_str = template.get('1').value
             try:

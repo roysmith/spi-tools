@@ -1,6 +1,9 @@
 from datetime import datetime, timezone
 from unittest import TestCase
 from unittest.mock import call, patch, Mock, MagicMock
+from pprint import pprint
+from logging import getLogger
+
 
 from dateutil.parser import isoparse
 from django.conf import settings
@@ -12,7 +15,7 @@ import mwclient.util
 import mwclient.errors
 
 from wiki_interface.data import WikiContrib, LogEvent
-from wiki_interface.wiki import Wiki, Page
+from wiki_interface.wiki import Wiki, Page, Category, MAX_UCUSER
 from wiki_interface.block_utils import BlockEvent, UnblockEvent
 
 class ConstructorTest(TestCase):
@@ -195,7 +198,7 @@ class UserContributionsTest(WikiTestCase):
         # to work with any value of MAX_UCUSER.  In practice, doing so
         # is just more effort (and complicated test code) than is
         # worth it.  At least this future-proofs us a bit.
-        self.assertEqual(wiki.MAX_UCUSER, 50)
+        self.assertEqual(MAX_UCUSER, 50)
 
         user_names = [str(i) for i in range(55)]
         contributions = list(wiki.user_contributions(user_names))
@@ -900,6 +903,25 @@ class PageTest(WikiTestCase):
                          [WikiContrib(20200730, datetime(2020, 7, 30, tzinfo=timezone.utc), 'fred', 0, 'blah', 'c1')])
 
 
+class CategoryTest(WikiTestCase):
+    #pylint: disable=invalid-name
+
+    def test_construct(self):
+        wiki = Wiki()
+        cat = Category(wiki, "my category")
+        self.assertEqual(cat.wiki, wiki)
+        self.assertIsNotNone(cat.mw_page)
+        wiki.site.pages.__getitem__.assert_called_once_with('Category:my category')
+
+
+    def test_members_returns_empty_iterable_for_empty_category(self):
+        wiki = Wiki()
+        self.mock_site.pages.__getitem__().return_value = Category(wiki, 'Foo')
+        self.mock_site.pages.__getitem__().members.return_value = []
+        cat = Category(wiki, 'Foo')
+        self.assertEqual(list(cat.members()), [])
+
+
 class IsValidUsernameTest(WikiTestCase):
     #pylint: disable=invalid-name
 
@@ -928,3 +950,102 @@ class IsValidUsernameTest(WikiTestCase):
         with self.assertRaises(RuntimeError):
             wiki.is_valid_username('foo')
         self.mock_site.usercontributions.assert_called_once_with('foo', limit=1)
+
+
+class ValidateUsernamesTest(WikiTestCase):
+    #pylint: disable=invalid-name
+
+    def test_validate_usernames_returns_no_names_with_empty_api_result(self):
+        self.mock_site.api.return_value = {
+            "batchcomplete": True,
+            "query": {
+                "users": [],
+            }
+        }
+        wiki = Wiki()
+        result = wiki.validate_usernames([])
+        self.assertEqual(result, set())
+
+
+    def test_validate_usernames_returns_invalid_or_missing_names(self):
+        self.mock_site.api.return_value = {
+            "batchcomplete": True,
+            "query": {
+                "users": [{'name': 'User1',
+                           'userid': 1
+                           },
+                          {'name': 'User2',
+                           'userid': 2
+                           },
+                          {'name': 'User3',
+                           'missing': ''
+                           },
+                          {'name': 'user4',
+                           'invalid': ''
+                           }]
+                }
+            }
+        wiki = Wiki()
+        result = wiki.validate_usernames(['user1', 'user2', 'user3', 'user4'])
+        self.mock_site.api.assert_called_once_with('query', list='users', ususers='user1|user2|user3|user4')
+        self.assertEqual(result, {'user3', 'user4'})
+
+
+    def test_validate_usernames_returns_IP_addresses_range_as_invalid(self):
+        self.mock_site.api.return_value = {
+            "batchcomplete": True,
+            "query": {
+                "users": [{'name': '1.2.3.4',
+                           'invalid': ''
+                           },
+                          {'name': 'fe80::4438:87ff:feb6:f684',
+                           'invalid': ''
+                           },
+                          {'name': '1.2.3.0/24',
+                           'invalid': ''
+                           }]
+                }
+            }
+        wiki = Wiki()
+        result = wiki.validate_usernames(['1.2.3.4', 'fe80::4438:87ff:feb6:f684', '1.2.3.0/24'])
+        self.mock_site.api.assert_called_once_with('query', list='users', ususers='1.2.3.0/24')
+        self.assertEqual(result, {'1.2.3.0/24'})
+
+
+    def test_validate_usernames_ignores_leading_and_trailing_whitespace_in_ip_addresses(self):
+        self.mock_site.api.return_value = {
+            "batchcomplete": True,
+            "query": {
+                "users": []
+                }
+            }
+        wiki = Wiki()
+        result = wiki.validate_usernames([' 1.2.3.4', '5.6.7.8 ', ' 9.10.11.12 ', 'foo'])
+        self.mock_site.api.assert_called_once_with('query', list='users', ususers='foo')
+        self.assertEqual(result, set())
+
+
+
+class NormalizeUsernameTest(WikiTestCase):
+    def test_empty_string(self):
+        self.assertEqual(Wiki.normalize_username(''), '')
+
+
+    def test_all_lowercase(self):
+        self.assertEqual(Wiki.normalize_username('foo'), 'Foo')
+
+
+    def test_embedded_space(self):
+        self.assertEqual(Wiki.normalize_username('Foo Bar'), 'Foo Bar')
+
+
+    def test_multiple_embedded_spaces(self):
+        self.assertEqual(Wiki.normalize_username('Foo   Bar'), 'Foo Bar')
+
+
+    def test_underscore(self):
+        self.assertEqual(Wiki.normalize_username('Foo_Bar'), 'Foo Bar')
+
+
+    def test_mixed_spaces_and_underscores(self):
+        self.assertEqual(Wiki.normalize_username(' Foo__Bar Baz_'), 'Foo Bar Baz')

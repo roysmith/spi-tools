@@ -11,9 +11,11 @@ mwclient.Site directly.
 """
 import logging
 from dataclasses import dataclass
+from ipaddress import IPv4Address, IPv6Address, AddressValueError
 from itertools import islice
 import asyncio
 import heapq
+import re
 
 import django.contrib.auth
 from django.conf import settings
@@ -32,6 +34,10 @@ from wiki_interface.time_utils import struct_to_datetime
 
 
 logger = logging.getLogger('wiki_interface')
+
+
+MAX_UCUSER = 50  # See https://www.mediawiki.org/wiki/API:Usercontribs.
+MAX_USUSER = 50  # See https://www.mediawiki.org/wiki/API:Users
 
 
 class Wiki:
@@ -99,9 +105,6 @@ class Wiki:
             return None
 
 
-    # See https://www.mediawiki.org/wiki/API:Usercontribs.
-    MAX_UCUSER = 50
-
     def user_contributions(self, user_name_or_names, show='', end=None):
         """Get one or more users' live (i.e. non-deleted) edits.
 
@@ -125,7 +128,7 @@ class Wiki:
             all_names.append(str_name)
 
         props = 'ids|title|timestamp|comment|flags|tags'
-        for chunk in chunked(all_names, self.MAX_UCUSER):
+        for chunk in chunked(all_names, MAX_UCUSER):
             for contrib in self.site.usercontributions('|'.join(chunk), show=show, prop=props, end=end):
                 logger.debug("contrib = %s", contrib)
                 yield WikiContrib(contrib['revid'],
@@ -257,6 +260,10 @@ class Wiki:
         return Page(self, title)
 
 
+    def category(self, title):
+        return Category(self, title)
+
+
     def is_valid_username(self, user_name):
         """Test a username for validity.  Valid in this context means properly
         formed, i.e. the underlying API doesn't return a 'baduser'
@@ -273,6 +280,87 @@ class Wiki:
             if ex.code == 'baduser':
                 return False
             raise
+
+
+
+    @staticmethod
+    def normalize_username(name):
+        """Return a normalized username.  The exact definition of 'normalized'
+        is vague; see
+        https://lists.wikimedia.org/hyperkitty/list/cloud@lists.wikimedia.org/thread/274WJ2XCHWZ6544MITG57EATDQHSRS5I/
+
+        The intent is to match how API:Users does it, so underscores
+        are mapped to spaces.
+
+        """
+        underscores = re.sub(r'\s', '_', name)
+        single_space = re.sub(r'_+', ' ', underscores)
+        trimmed = single_space.strip()
+        first = trimmed[0:1]
+        rest = trimmed[1:]
+        return first.upper() + rest
+
+
+    def validate_usernames(self, input_names):
+        """Given an iterable over strings, returns a set of those that are
+        invalid usernames.  For this purpose, "invalid" means either
+        syntactically invalid (ex: ':::foo'), or not registered on
+        this wiki.
+
+        Raises TypeError if any of the inputs are not strings.  Raises
+        ValueError is any of the names contains a '|'.
+
+        The intent here is that a 'valid username' is any string which
+        you can stick a 'User:' in front of and find contributions or
+        log entries.  Thus, we consider '1.2.3.4' to be a valid
+        username, but not '1.2.3.0/24'.
+
+        """
+        user_names = []
+        for name in input_names:
+            logger.debug('name = %s', name)
+            if not isinstance(name, str):
+                raise TypeError(f'{repr(name)} is not a string')
+            if '|' in name:
+                raise ValueError(f'"|" in user name: {name}')
+            if not self._is_ip_address(name.strip()):
+                user_names.append(name)
+
+        invalid_names = set()
+        normalized_missing_names = set()
+        for input_chunk in chunked(user_names, MAX_USUSER):
+            api_result = self.site.api('query', list='users', ususers='|'.join(input_chunk))
+            output_chunk = api_result['query']['users']
+            for output_data in output_chunk:
+                if 'invalid' in output_data:
+                    invalid_names.add(output_data['name'])
+                elif 'missing' in output_data:
+                    normalized_missing_names.add(output_data['name'])
+
+        result = set()
+        for name in user_names:
+            if self.normalize_username(name) in normalized_missing_names:
+                result.add(name)
+            elif name in invalid_names:
+                result.add(name)
+
+        return result
+
+
+    @staticmethod
+    def _is_ip_address(str):
+        """Return a truthy value if the string is a valid IP (v4 or v6)
+        address, False otherwise.
+
+        """
+        try:
+            return IPv4Address(str)
+        except AddressValueError:
+            try:
+                return IPv6Address(str)
+            except AddressValueError:
+                return False
+
 
 
 @dataclass
@@ -305,3 +393,22 @@ class Page:
 
     def text(self):
         return self.mw_page.text()
+
+
+    def title(self):
+        return self.mw_page.name
+
+
+@dataclass
+class Category(Page):
+    def __init__(self, wiki, title):
+        super().__init__(wiki, f'Category:{title}')
+
+
+    def members(self):
+        """Returns a iterable over the page titles (as strings) which are
+        members of the category.
+
+        """
+        for page in self.mw_page.members():
+            yield page.name

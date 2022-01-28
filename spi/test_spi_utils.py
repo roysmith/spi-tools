@@ -451,6 +451,25 @@ class SpiCaseDayTest(TestCase):
                                       SpiUserInfo('user2', '21 March 2019')])
 
 
+    def test_find_users_includes_checkip_templates(self):
+        text = '''
+        ===21 March 2019===
+        {{checkuser|user1}}
+        {{checkuser|user2}}
+        {{checkip|1.2.3.4}}
+        {{checkIP|5.6.7.8}}
+
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.find_users())
+        self.assertCountEqual(users, [SpiUserInfo('user1', '21 March 2019'),
+                                      SpiUserInfo('user2', '21 March 2019'),
+                                      SpiUserInfo('1.2.3.4', '21 March 2019'),
+                                      SpiUserInfo('5.6.7.8', '21 March 2019'),
+        ])
+
+
+
     def test_find_user_instances(self):
         text = '''
         ===21 March 2019===
@@ -542,6 +561,24 @@ class SpiCaseDayTest(TestCase):
         day = SpiCaseDay(make_code(text), 'title')
         ips = list(day.find_ips())
         self.assertEqual(ips, [SpiIpInfo('1.2.3.4', '21 March 2019', 'title')])
+
+
+    def test_find_ips_accepts_uppercase_variants(self):
+        text = '''
+        ===21 March 2019===
+        {{checkip|1.2.3.4}}
+        {{checkIP|5.6.7.8}}
+        {{Checkip|9.10.11.12}}
+        {{CheckIP|13.14.15.16}}
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        ips = list(day.find_ips())
+        self.assertCountEqual(ips, [
+            SpiIpInfo('1.2.3.4', '21 March 2019', 'title'),
+            SpiIpInfo('5.6.7.8', '21 March 2019', 'title'),
+            SpiIpInfo('9.10.11.12', '21 March 2019', 'title'),
+            SpiIpInfo('13.14.15.16', '21 March 2019', 'title'),
+        ])
 
 
 

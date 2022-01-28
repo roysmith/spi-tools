@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: update-venv
+spec:
+  template:
+    metadata:
+      labels:
+        toolforge: tool
+    spec:
+      containers:
+        - name: update-venv
+          image: docker-registry.tools.wmflabs.org/toolforge-python37-sssd-web:latest
+          env:
+            - name: HOME
+              value: "/data/project/spi-tools-dev"
+          workingDir: /data/project/spi-tools-dev/www/python
+          command: ["./src/deploy/update-venv.bash"]
+
+      restartPolicy: Never

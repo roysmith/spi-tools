@@ -1,1 +1,1 @@
-from .wiki import Wiki, WikiContrib
+from .wiki import Wiki, WikiContrib, Category
