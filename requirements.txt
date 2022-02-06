@@ -20,7 +20,9 @@ more-itertools==8.6.0
 mwclient==0.10.0
 mwparserfromhell==0.5.4
 oauthlib==3.1.0
+opensearch-py==1.0.0
 pip-tools==4.3.0
+pkg_resources==0.0.0
 PyJWT==1.7.1
 pylint==2.5.3
 pylint-django==2.2.0

@@ -1,0 +1,10 @@
+{% extends "tools_app/base.html" %}
+
+{% block content %}
+  <form action="" method="post">
+    {{ csrf_input }}
+    <p class="mb-2">{{ form.search_terms }}</p>
+      <p class="mb-0">
+	<input type="submit" name="submit-button" value="Submit">
+  </form>
+{% endblock %}

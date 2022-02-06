@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
+from configparser import ConfigParser
 import os
+from pathlib import Path
 import re
 import sys
 import datetime
@@ -65,6 +67,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'cat_checker',
+    'search',
     'spi',
     'pageutils',
     'wiki_interface',
@@ -228,6 +231,16 @@ os.environ['PYTHONASYNCIODEBUG'] = '1' if DEBUG else '0'
 LOG_NAME = 'django-test.log' if TESTING else 'django.log'
 LOG_LEVEL = 'DEBUG' if 'dev' in TOOL_NAME else 'INFO'
 LOG_REQUEST_ID_HEADER = "HTTP_X_REQUEST_ID"
+
+
+ELASTICSEARCH_CONFIG = ConfigParser()
+ELASTICSEARCH_CONFIG.read(Path.home() / '.elasticsearch.ini')
+ELASTICSEARCH = {
+    'user': ELASTICSEARCH_CONFIG.get('elasticsearch', 'user'),
+    'password': ELASTICSEARCH_CONFIG.get('elasticsearch', 'password'),
+    'server': 'elasticsearch.svc.tools.eqiad1.wikimedia.cloud:80',
+    'index': 'spi-tools-dev-es-index',
+    }
 
 LOGGING = {
     'version': 1,
