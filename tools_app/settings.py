@@ -154,6 +154,10 @@ SOCIAL_AUTH_MEDIAWIKI_SECRET = os.environ.get('MEDIAWIKI_SECRET')
 SOCIAL_AUTH_MEDIAWIKI_URL = 'https://meta.wikimedia.org/w/index.php'
 SOCIAL_AUTH_MEDIAWIKI_CALLBACK = 'https://%s.toolforge.org/oauth/complete/mediawiki/' % TOOL_NAME
 
+# This seems to be needed when using social-auth-app-django > 3.1.0
+# See https://github.com/python-social-auth/social-app-django/issues/256
+SOCIAL_AUTH_PROTECTED_USER_FIELDS = ['groups']
+
 # For use with mwclient library
 MEDIAWIKI_SITE_NAME = 'example.com' if TESTING else 'en.wikipedia.org'
 MEDIAWIKI_USER_AGENT = f'{TOOL_NAME} (toolforge)'
