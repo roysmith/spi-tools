@@ -19,7 +19,7 @@
 
 # To run unit tests outside of Toolforge
 
-- SPI_TOOLS_CONGIG_FILE=$dir/src/unsafe-sample-config.ini
-- export SPI_TOOLS_CONGIG_FILE
+- SPI_TOOLS_CONFIG_FILE=$dir/src/unsafe-sample-config.ini
+- export SPI_TOOLS_CONFIG_FILE
 - cd $dir/src
 - ./manage.py test
