@@ -1,6 +1,8 @@
 from unittest.mock import patch
+import unittest
 from pprint import pprint
 
+from django.conf import settings
 from django.test import TestCase, Client
 from django.test.signals import template_rendered
 from django.shortcuts import render
@@ -56,6 +58,7 @@ class ViewTestCase(TestCase):
 
 
 
+@unittest.skipUnless(settings.ELASTICSEARCH, 'not installed yet')
 class IndexViewTest(ViewTestCase):
     #pylint: disable=arguments-differ
     def setUp(self):
