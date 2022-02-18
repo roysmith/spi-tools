@@ -581,6 +581,16 @@ class SpiCaseDayTest(TestCase):
         ])
 
 
+    def test_parse_socklist_with_no_arguments_yields_no_data(self):
+        text = '''
+        ===21 March 2019===
+        {{sock list}}
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        user_infos = list(day.parse_socklist())
+        self.assertEqual(user_infos, [])
+
+
 
 class SpiUserInfoTest(TestCase):
     def test_eq(self):

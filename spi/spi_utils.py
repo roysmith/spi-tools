@@ -179,9 +179,9 @@ class SpiCaseDay:
 
     def parse_socklist(self):
         '''Iterates over all the users mentioned in socklist templates.
-        Each user is represented as a SpiUserIngo.  Order of iteration
+        Each user is represented as a SpiUserInfo.  Order of iteration
         is not guaranteed, and users are not deduplicated
-        
+
         '''
         date = self.date()
         templates = self.wikicode.filter_templates(
