@@ -177,6 +177,21 @@ class SpiCaseDay:
         raise ArchiveError(f"Expected exactly 1 level-3 heading, found {h3_count} {titles}")
 
 
+    def parse_socklist(self):
+        '''Iterates over all the users mentioned in socklist templates.
+        Each user is represented as a SpiUserIngo.  Order of iteration
+        is not guaranteed, and users are not deduplicated
+        
+        '''
+        date = self.date()
+        templates = self.wikicode.filter_templates(
+            matches=lambda n: n.name.matches(['sock list', 'socklist']))
+        for template in templates:
+            for param_key, param_value in template.params.items():
+                if param_key.removeprefix('sock').removeprefix('ip').isdigit():
+                    yield SpiUserInfo(str(param_value), str(date))
+
+
     def find_users(self):
         '''Iterates over all the users mentioned in checkuser or checkip
         templates.  Each user is represented as a SpiUserInfo.  Order
@@ -194,6 +209,7 @@ class SpiCaseDay:
         for template in templates:
             username = template.get('1').value
             yield SpiUserInfo(str(username), str(date))
+        yield from self.parse_socklist()
 
 
     def find_unique_users(self):
@@ -228,6 +244,11 @@ class SpiCaseDay:
             ip_str = template.get('1').value
             try:
                 yield SpiIpInfo(str(ip_str), str(date), self.page_title)
+            except InvalidIpV4Error:
+                pass
+        for account in self.parse_socklist():
+            try:
+                yield account
             except InvalidIpV4Error:
                 pass
 
