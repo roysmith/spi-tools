@@ -6,5 +6,7 @@
 
 <nav class="nav flex-column">
   <a class="nav-link" href="{{ url('spi-index') }}">SPI</a>
+  {% if request.META['HTTP_HOST'].startswith( 'spi-tools-dev') %}
   <a class="nav-link" href="{{ url('search-index') }}">Search</a>
+  {% endif %}
 </nav>
