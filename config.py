@@ -8,7 +8,7 @@ def get_config():
     Cryptographic (i.e. secret) keys are in the config file, so enforce that it
     must have secure file system permissions.
     """
-    ini_path = os.environ.get("SPI_TOOLS_CONGIG_FILE",
+    ini_path = os.environ.get("SPI_TOOLS_CONFIG_FILE",
                               (Path.home() / "www/python/config.ini").as_posix())
 
     ini_mode = os.stat(ini_path).st_mode
