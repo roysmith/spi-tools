@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
 
   push:
-    branches: [ master dev-basedir ]
+    branches: [ dev-basedir ]
   pull_request:
-    branches: [ master dev-basedir ]
+    branches: [ dev-basedir ]
 
 jobs:
   build:
