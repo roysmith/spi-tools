@@ -1,7 +1,7 @@
 name: Django CI
 
 env:
-  SPI_TOOLS_CONGIG_FILE: $GITHUB_WORKSPACE/unsafe-sample-config.ini
+  SPI_TOOLS_CONFIG_FILE: $GITHUB_WORKSPACE/unsafe-sample-config.ini
 
 on:
   workflow_dispatch:
