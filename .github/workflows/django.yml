@@ -1,5 +1,7 @@
 name: Django CI
 
+workflow_dispatch:
+
 on:
   push:
     branches: [ master dev-basedir ]
