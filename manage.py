@@ -6,7 +6,6 @@ from config import get_config
 
 
 def main():
-    assert 0
     config = get_config()
     os.environ["DJANGO_SETTINGS_MODULE"] = config["django"]["settings_module"]
     os.environ["DJANGO_SECRET"] = config["django"]["secret"]
