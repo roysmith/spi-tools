@@ -29,4 +29,5 @@ jobs:
         pip install -r requirements.txt
     - name: Run Tests
       run: |
+        mkdir $HOME/logs
         SPI_TOOLS_CONFIG_FILE=$GITHUB_WORKSPACE/unsafe-sample-config.ini python manage.py test
