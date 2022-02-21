@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import List
 from ipaddress import IPv4Address, IPv4Network
 from itertools import chain
+from pprint import pprint
 import re
 
 from mwparserfromhell import parse
@@ -178,28 +179,28 @@ class SpiCaseDay:
 
 
     def parse_socklist(self):
-        '''Iterates over all the users mentioned in socklist templates.
-        Each user is represented as a SpiUserInfo.  Order of iteration
-        is not guaranteed, and users are not deduplicated
+        '''Iterates over all the users mentioned in socklist templates.  Each
+        user returned is just the string from the paramter value.
+        Order of iteration is not guaranteed, and users are not
+        deduplicated
 
         '''
-        date = self.date()
         templates = self.wikicode.filter_templates(
             matches=lambda n: n.name.matches(['sock list', 'socklist']))
         for template in templates:
-            for param_key, param_value in template.params.items():
-                if param_key.removeprefix('sock').removeprefix('ip').isdigit():
-                    yield SpiUserInfo(str(param_value), str(date))
+            for param in template.params:
+                if not param.showkey:
+                    yield str(param.value)
 
 
     def find_users(self):
-        '''Iterates over all the users mentioned in checkuser or checkip
-        templates.  Each user is represented as a SpiUserInfo.  Order
-        of iteration is not guaranteed, and templates are not
-        deduplicated.
+        '''Iterates over all the users mentioned in checkuser, checkip, or
+        socklist templates.  Each user is represented as a
+        SpiUserInfo.  Order of iteration is not guaranteed, and
+        templates are not deduplicated.
 
         '''
-        date = self.date()
+        date = str(self.date())
         templates = self.wikicode.filter_templates(
             matches=lambda n: n.name.matches(['checkuser',
                                               'user',
@@ -208,8 +209,9 @@ class SpiCaseDay:
                                               'SPIarchive notice']))
         for template in templates:
             username = template.get('1').value
-            yield SpiUserInfo(str(username), str(date))
-        yield from self.parse_socklist()
+            yield SpiUserInfo(str(username), date)
+        for name in self.parse_socklist():
+            yield SpiUserInfo(name, date)
 
 
     def find_unique_users(self):
@@ -227,9 +229,9 @@ class SpiCaseDay:
 
 
     def find_ips(self):
-        '''Iterates over all the IPs mentioned in checkuser or checkip
-        templates.  Each ip is represented as an SpiIpInfo.  Order of
-        iteration is not guaranteed, and templates are not
+        '''Iterates over all the IPs mentioned in checkuser, checkip, or
+        socklist templates.  Each ip is represented as an SpiIpInfo.
+        Order of iteration is not guaranteed, and templates are not
         deduplicated.
 
         The normal case-mapping rules supoprt either checkip or
@@ -237,18 +239,18 @@ class SpiCaseDay:
         available on enwiki via a redirect.
 
         '''
-        date = self.date()
+        date = str(self.date())
         templates = self.wikicode.filter_templates(
             matches=lambda n: n.name.matches(['checkip', 'checkIP']))
         for template in templates:
             ip_str = template.get('1').value
             try:
-                yield SpiIpInfo(str(ip_str), str(date), self.page_title)
+                yield SpiIpInfo(str(ip_str), date, self.page_title)
             except InvalidIpV4Error:
                 pass
         for account in self.parse_socklist():
             try:
-                yield account
+                yield SpiIpInfo(account, date, self.page_title)
             except InvalidIpV4Error:
                 pass
 

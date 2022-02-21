@@ -468,6 +468,20 @@ class SpiCaseDayTest(TestCase):
                                       SpiUserInfo('5.6.7.8', '21 March 2019'),
         ])
 
+    def test_find_user_includes_socklist_templates(self):
+        text = '''
+        ===21 March 2019===
+        {{checkuser|user1}}
+        {{checkip|1.2.3.4}}
+        {{socklist|user2}}
+
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.find_users())
+        self.assertCountEqual(users, [SpiUserInfo('user1', '21 March 2019'),
+                                      SpiUserInfo('user2', '21 March 2019'),
+                                      SpiUserInfo('1.2.3.4', '21 March 2019'),
+        ])
 
 
     def test_find_user_instances(self):
@@ -581,15 +595,49 @@ class SpiCaseDayTest(TestCase):
         ])
 
 
-    def test_parse_socklist_with_no_arguments_yields_no_data(self):
+    def test_find_ips_uses_socklist_templates(self):
+        text = '''
+        ===21 March 2019===
+        {{checkip|1.2.3.4}}
+        {{socklist|5.6.7.8}}
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        ips = list(day.find_ips())
+        self.assertCountEqual(ips, [
+            SpiIpInfo('1.2.3.4', '21 March 2019', 'title'),
+            SpiIpInfo('5.6.7.8', '21 March 2019', 'title'),
+        ])
+
+
+
+    def test_parse_socklist_with_no_arguments_yields_no_users(self):
         text = '''
         ===21 March 2019===
         {{sock list}}
         '''
         day = SpiCaseDay(make_code(text), 'title')
-        user_infos = list(day.parse_socklist())
-        self.assertEqual(user_infos, [])
+        users = list(day.parse_socklist())
+        self.assertEqual(users, [])
 
+
+    def test_parse_socklist_ignores_named_arguments(self):
+        text = '''
+        ===21 March 2019===
+        {{sock list|foo|bar=baz}}
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.parse_socklist())
+        self.assertEqual(users, ['foo'])
+
+
+    def test_parse_socklist_with_n_arguments_yields_n_users(self):
+        text = '''
+        ===21 March 2019===
+        {{sock list|foo|bar|baz}}
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.parse_socklist())
+        self.assertEqual(users, ['foo', 'bar', 'baz'])
 
 
 class SpiUserInfoTest(TestCase):
