@@ -16,6 +16,7 @@ urlpatterns = [
     path('oauth/', include('social_django.urls', namespace='social')),
     path('admin/', admin.site.urls),
     path('cat_checker/', include('cat_checker.urls')),
+    path('search/', include('search.urls')),
     path('spi/', include('spi.urls')),
     path('pageutils/', include('pageutils.urls')),
 ]

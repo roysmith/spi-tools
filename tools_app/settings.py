@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
+from configparser import ConfigParser
 import os
+from pathlib import Path
 import re
 import sys
 import datetime
@@ -30,9 +32,7 @@ SERVER_START_TIME_UTC = datetime.datetime.utcnow()
 
 # Intuit our toolforge tool name from the file system path.
 m = re.match(r'.*/(?P<tool_name>[^/]*)/www/python/src', BASE_DIR)
-if not m:
-    raise RuntimeError("BASE_DIR doesn't make sense: %s" % BASE_DIR)
-TOOL_NAME = m.group('tool_name')
+TOOL_NAME = m.group('tool_name') if m else 'unknown'
 
 
 # Quick-start development settings - unsuitable for production
@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'cat_checker',
+    'search',
     'spi',
     'pageutils',
     'wiki_interface',
@@ -151,6 +152,10 @@ SOCIAL_AUTH_MEDIAWIKI_SECRET = os.environ.get('MEDIAWIKI_SECRET')
 SOCIAL_AUTH_MEDIAWIKI_URL = 'https://meta.wikimedia.org/w/index.php'
 SOCIAL_AUTH_MEDIAWIKI_CALLBACK = 'https://%s.toolforge.org/oauth/complete/mediawiki/' % TOOL_NAME
 
+# This seems to be needed when using social-auth-app-django > 3.1.0
+# See https://github.com/python-social-auth/social-app-django/issues/256
+SOCIAL_AUTH_PROTECTED_USER_FIELDS = ['groups']
+
 # For use with mwclient library
 MEDIAWIKI_SITE_NAME = 'example.com' if TESTING else 'en.wikipedia.org'
 MEDIAWIKI_USER_AGENT = f'{TOOL_NAME} (toolforge)'
@@ -228,6 +233,21 @@ os.environ['PYTHONASYNCIODEBUG'] = '1' if DEBUG else '0'
 LOG_NAME = 'django-test.log' if TESTING else 'django.log'
 LOG_LEVEL = 'DEBUG' if 'dev' in TOOL_NAME else 'INFO'
 LOG_REQUEST_ID_HEADER = "HTTP_X_REQUEST_ID"
+
+
+ELASTICSEARCH_CONFIG_FILE = Path.home() / '.elasticsearch.ini'
+if ELASTICSEARCH_CONFIG_FILE.exists():
+    ELASTICSEARCH_CONFIG = ConfigParser()
+    ELASTICSEARCH_CONFIG.read(ELASTICSEARCH_CONFIG_FILE)
+    ELASTICSEARCH = {
+        'user': ELASTICSEARCH_CONFIG.get('elasticsearch', 'user'),
+        'password': ELASTICSEARCH_CONFIG.get('elasticsearch', 'password'),
+        'server': 'elasticsearch.svc.tools.eqiad1.wikimedia.cloud:80',
+        'index': 'spi-tools-dev-es-index',
+    }
+else:
+    ELASTICSEARCH = {}
+
 
 LOGGING = {
     'version': 1,

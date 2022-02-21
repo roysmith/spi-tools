@@ -1,8 +1,5 @@
 name: Django CI
 
-env:
-  SPI_TOOLS_CONFIG_FILE: $GITHUB_WORKSPACE/unsafe-sample-config.ini
-
 on:
   workflow_dispatch:
 
@@ -32,4 +29,5 @@ jobs:
         pip install -r requirements.txt
     - name: Run Tests
       run: |
-        python manage.py test
+        mkdir $HOME/logs
+        SPI_TOOLS_CONFIG_FILE=$GITHUB_WORKSPACE/unsafe-sample-config.ini python manage.py test
