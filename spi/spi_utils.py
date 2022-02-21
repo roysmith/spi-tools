@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from typing import List
 from ipaddress import IPv4Address, IPv4Network
 from itertools import chain
-from pprint import pprint
 import re
 
 from mwparserfromhell import parse
