@@ -32,9 +32,7 @@ SERVER_START_TIME_UTC = datetime.datetime.utcnow()
 
 # Intuit our toolforge tool name from the file system path.
 m = re.match(r'.*/(?P<tool_name>[^/]*)/www/python/src', BASE_DIR)
-if not m:
-    raise RuntimeError("BASE_DIR doesn't make sense: %s" % BASE_DIR)
-TOOL_NAME = m.group('tool_name')
+TOOL_NAME = m.group('tool_name') if m else 'unknown'
 
 
 # Quick-start development settings - unsuitable for production
@@ -237,14 +235,19 @@ LOG_LEVEL = 'DEBUG' if 'dev' in TOOL_NAME else 'INFO'
 LOG_REQUEST_ID_HEADER = "HTTP_X_REQUEST_ID"
 
 
-ELASTICSEARCH_CONFIG = ConfigParser()
-ELASTICSEARCH_CONFIG.read(Path.home() / '.elasticsearch.ini')
-ELASTICSEARCH = {
-    'user': ELASTICSEARCH_CONFIG.get('elasticsearch', 'user'),
-    'password': ELASTICSEARCH_CONFIG.get('elasticsearch', 'password'),
-    'server': 'elasticsearch.svc.tools.eqiad1.wikimedia.cloud:80',
-    'index': 'spi-tools-dev-es-index',
+ELASTICSEARCH_CONFIG_FILE = Path.home() / '.elasticsearch.ini'
+if ELASTICSEARCH_CONFIG_FILE.exists():
+    ELASTICSEARCH_CONFIG = ConfigParser()
+    ELASTICSEARCH_CONFIG.read(ELASTICSEARCH_CONFIG_FILE)
+    ELASTICSEARCH = {
+        'user': ELASTICSEARCH_CONFIG.get('elasticsearch', 'user'),
+        'password': ELASTICSEARCH_CONFIG.get('elasticsearch', 'password'),
+        'server': 'elasticsearch.svc.tools.eqiad1.wikimedia.cloud:80',
+        'index': 'spi-tools-dev-es-index',
     }
+else:
+    ELASTICSEARCH = {}
+
 
 LOGGING = {
     'version': 1,
