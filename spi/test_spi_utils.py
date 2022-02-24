@@ -640,6 +640,49 @@ class SpiCaseDayTest(TestCase):
         self.assertEqual(users, ['foo', 'bar', 'baz'])
 
 
+    def test_socklist_parameters_with_no_names_are_recognized_as_uses(self):
+        text = '''
+        ===23 February 2022===
+        {{SPI case status|close}}
+        ====Suspected sockpuppets====
+        {{sock list|user1|user2}}
+
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.find_users())
+        self.assertEqual(users, [SpiUserInfo('user1', '23 February 2022'),
+                                 SpiUserInfo('user2', '23 February 2022')])
+
+
+    def test_socklist_parameters_with_numeric_names_are_recognized_as_users(self):
+        text = '''
+        ===23 February 2022===
+        {{SPI case status|close}}
+        ====Suspected sockpuppets====
+        {{sock list|1=user1|2=user2}}
+
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.find_users())
+        self.assertEqual(users, [SpiUserInfo('user1', '23 February 2022'),
+                                 SpiUserInfo('user2', '23 February 2022')])
+
+
+
+    def test_socklist_parameters_with_mixed_numeric_names_and_no_names_are_recognized_as_users(self):
+        text = '''
+        ===23 February 2022===
+        {{SPI case status|close}}
+        ====Suspected sockpuppets====
+        {{sock list|1=user1|user2}}
+
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.find_users())
+        self.assertEqual(users, [SpiUserInfo('user1', '23 February 2022'),
+                                 SpiUserInfo('user2', '23 February 2022')])
+
+
 class SpiUserInfoTest(TestCase):
     def test_eq(self):
         info1 = SpiUserInfo('user', '1 January 2019')
