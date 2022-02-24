@@ -102,7 +102,7 @@ class SpiCase:
         Each source is SpiSourceDocument.
 
         To accomodate both new and old style formatting, any old-style
-        (level-5) headers are mappedto new style (level-3) headers
+        (level-5) headers are mapped to new style (level-3) headers
         before parsing.  This is an ugly hack, but doing it correctly
         is just too painful.
 
