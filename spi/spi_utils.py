@@ -102,7 +102,7 @@ class SpiCase:
         Each source is SpiSourceDocument.
 
         To accomodate both new and old style formatting, any old-style
-        (level-5) headers are mappedto new style (level-3) headers
+        (level-5) headers are mapped to new style (level-3) headers
         before parsing.  This is an ugly hack, but doing it correctly
         is just too painful.
 
@@ -181,15 +181,30 @@ class SpiCaseDay:
         '''Iterates over all the users mentioned in socklist templates.  Each
         user returned is just the string from the paramter value.
         Order of iteration is not guaranteed, and users are not
-        deduplicated
+        deduplicated.
+
+        Users are positional paramters, which might or might not have
+        explicit "1=" prefixes.
 
         '''
         templates = self.wikicode.filter_templates(
             matches=lambda n: n.name.matches(['sock list', 'socklist']))
         for template in templates:
             for param in template.params:
-                if not param.showkey:
+                if self._is_positional(param):
                     yield str(param.value)
+
+
+    def _is_positional(self, param):
+        name = str(param.name)
+        if name == '':
+            return True
+        try:
+            int(name)
+        except ValueError:
+            return False
+        else:
+            return True
 
 
     def find_users(self):
