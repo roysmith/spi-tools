@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
 
   push:
-    branches: [ master, dev, dev-basedir ]
+    branches: [ 'master', 'dev' ]
   pull_request:
-    branches: [ master, dev, dev-basedir ]
+    branches: [ 'master', 'dev' ]
 
 jobs:
   build:
