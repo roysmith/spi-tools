@@ -191,20 +191,9 @@ class SpiCaseDay:
             matches=lambda n: n.name.matches(['sock list', 'socklist']))
         for template in templates:
             for param in template.params:
-                if self._is_positional(param):
+                name = str(param.name)
+                if name == '' or name.isdigit():
                     yield str(param.value)
-
-
-    def _is_positional(self, param):
-        name = str(param.name)
-        if name == '':
-            return True
-        try:
-            int(name)
-        except ValueError:
-            return False
-        else:
-            return True
 
 
     def find_users(self):
