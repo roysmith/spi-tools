@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'cat_checker',
     'search',
     'spi',
+    'api',
     'pageutils',
     'wiki_interface',
     'tools_app.apps.ToolsAppConfig',
