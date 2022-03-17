@@ -63,11 +63,29 @@ class TimelineView(LoginRequiredMixin, View):
             counts = [(tag, self.tag_data[user][tag]) for tag in tag_list]
             tag_table.append((user, counts))
 
+        tag_shortnames = {'mobile edit': 'me',
+                          'mobile web edit': 'mwe',
+                          'visualeditor': 've',
+                          'AWB': 'awb',
+                          'mw-reverted': 'rev',
+                          'mw-undo': 'undo',
+                          'wikieditor': 'wked',
+                          'mw-rollback': 'rb',
+                          'visualeditor-wikitext': 'vew',
+                          'advanced mobile edit': 'ame',
+                          'mobile app edit': 'app',
+                          'twinkle': 'tw',
+                          'RedWarn': 'rw',
+                          'removal of COI template': 'coi',
+                          'mw-blank': 'blk',
+                          'removal of speedy deletion templates': 'rsdt',
+                          }
         context = {'case_name': case_name,
                    'user_names': user_names,
                    'events': events,
                    'tag_list': tag_list,
                    'tag_table': tag_table,
+                   'tag_shortnames': tag_shortnames,
                    }
         return render(request, 'spi/timeline.html', context)
 
