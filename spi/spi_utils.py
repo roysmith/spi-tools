@@ -191,20 +191,9 @@ class SpiCaseDay:
             matches=lambda n: n.name.matches(['sock list', 'socklist']))
         for template in templates:
             for param in template.params:
-                if self._is_positional(param):
+                name = str(param.name)
+                if name == '' or name.isdigit():
                     yield str(param.value)
-
-
-    def _is_positional(self, param):
-        name = str(param.name)
-        if name == '':
-            return True
-        try:
-            int(name)
-        except ValueError:
-            return False
-        else:
-            return True
 
 
     def find_users(self):
@@ -340,7 +329,8 @@ def _find_active_case_template(wiki):
     template_names = [t.name for t in wikicode.filter_templates()]
     candidates = ['Wikipedia:Sockpuppet investigations/Cases/Overview',
                   'User:AmandaNP/SPI case list',
-                  'User:Mz7/SPI case list']
+                  'User:Mz7/SPI case list',
+                  'Wikipedia:Sockpuppet investigations/SPI/Cases']
     for name in candidates:
         if name in template_names:
             return name

@@ -19,6 +19,7 @@ urlpatterns = [
     path('search/', include('search.urls')),
     path('spi/', include('spi.urls')),
     path('pageutils/', include('pageutils.urls')),
+    path('api/', include('api.urls')),
 ]
 
 if settings.DEBUG:

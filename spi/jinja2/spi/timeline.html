@@ -10,15 +10,24 @@
       <table class="table table-sm small mb-0">
 	<tr>
 	  <th></th>
-	  <th class="text-center" colspan="{{ tag_list|length }}">Hover over numeric entries to see tag name</th>
+	  <th class="text-center" colspan="{{ tag_list|length }}">Hover over column header to see full tag name</th>
 	</tr>
+	<tr>
+	  <th></th>
+	  {% for tag in tag_list %}
+	    <th class="text-center">
+	      <span title="{{ tag }}" data-toggle="tooltip">{{ tag_shortnames.get(tag, '???') }}</span>
+	    </th>
+	  {% endfor %}
+	  </tr>
+
 	{% for user, counts in tag_table %}
 	  <tr>
 	    <td>{{ user }}</td>
 	    {% for tag, count in counts %}
 	      <td class="text-center">
 		{% if count %}
-		  <span title="{{ tag }}" data-toggle="tooltip">{{ count }}</span>
+		  {{ count }}
 		{% endif %}
 	      </td>
 	    {% endfor %}
