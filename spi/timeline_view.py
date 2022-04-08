@@ -56,12 +56,6 @@ class TimelineView(LoginRequiredMixin, View):
         for tag_counts in self.tag_data.values():
             for tag in tag_counts:
                 tags.add(tag)
-        tag_list = sorted(tags)
-
-        tag_table = []
-        for user in user_names:
-            counts = [(tag, self.tag_data[user][tag]) for tag in tag_list]
-            tag_table.append((user, counts))
 
         tag_headings = {'mobile edit': ['mobile'],
                         'mobile web edit': ['mobile', 'web'],
@@ -80,6 +74,13 @@ class TimelineView(LoginRequiredMixin, View):
                         'mw-blank': ['mw-', 'blank'],
                         'removal of speedy deletion templates': ['rm', 'csd'],
         }
+
+        tag_list = sorted(tags)
+        tag_table = []
+        for user in user_names:
+            counts = [(tag, self.tag_data[user][tag]) for tag in tag_list]
+            tag_table.append((user, counts))
+
         context = {'case_name': case_name,
                    'user_names': user_names,
                    'events': events,
