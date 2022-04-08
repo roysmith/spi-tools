@@ -15,8 +15,12 @@
 	<tr>
 	  <th></th>
 	  {% for tag in tag_list %}
-	    <th class="text-center">
-	      <span title="{{ tag }}" data-toggle="tooltip">{{ tag_shortnames.get(tag, '???') }}</span>
+	    <th class="text-center align-middle">
+	      <span title="{{ tag }}" data-toggle="tooltip">
+		{% for h in tag_headings.get(tag, ['???']) %}
+		  <div class="text-nowrap">{{ h }}</div>
+		{% endfor %}
+	      </span>
 	    </th>
 	  {% endfor %}
 	  </tr>
