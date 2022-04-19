@@ -359,7 +359,41 @@ class Wiki:
             try:
                 return IPv6Address(str)
             except AddressValueError:
-                return False
+               return False
+
+
+    def get_cu_log(self, target):
+        request_data = {'action': 'query',
+                        'format': 'json',
+                        'list': 'checkuserlog',
+                        'culuser': 'RoySmith',
+                        'culdir': 'newer',
+                        'culfrom': '2021-10-16T20:21:14.000Z',
+                        'culto': '2021-10-17T20:21:14.000Z',
+        }
+        #return 'foo'
+
+        kwargs = {'cultarget': target,
+                  'culdir': 'newer',
+                  'culfrom': '2021-10-16T20:21:14.000Z',
+                  'culto': '2021-10-17T20:21:14.000Z',
+                  }
+
+        listing = List(self.site,
+                       'checkuserlog',
+                       'cul',
+                       uselang=None,  # unclear why this is needed
+                       **kwargs)
+        return(list(listing))
+
+
+        api_result = self.site.get('query',
+                                   list='checkuserlog',
+                                   cultarget=target,
+                                   culdir='newer',
+                                   culfrom='2021-10-16T20:21:14.000Z',
+                                   culto='2021-10-17T20:21:14.000Z')
+        return api_result
 
 
 
