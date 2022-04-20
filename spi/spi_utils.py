@@ -211,10 +211,10 @@ class SpiCaseDay:
                                               'checkIP',
                                               'SPIarchive notice']))
         for template in templates:
-            username = template.get('1').value
+            username = template.get('1').value.strip()
             yield SpiUserInfo(str(username), date)
         for name in self.parse_socklist():
-            yield SpiUserInfo(name, date)
+            yield SpiUserInfo(name.strip(), date)
 
 
     def find_unique_users(self):

@@ -683,6 +683,32 @@ class SpiCaseDayTest(TestCase):
                                  SpiUserInfo('user2', '23 February 2022')])
 
 
+    def test_extra_whitespace_in_checkuser_templates_is_stripped(self):
+        text = '''
+        ===21 March 2019===
+        {{checkuser| user1}}
+        {{checkuser|user2 }}
+        {{checkuser| user3 }}
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.find_users())
+        self.assertEqual(users, [SpiUserInfo('user1', '21 March 2019'),
+                                 SpiUserInfo('user2', '21 March 2019'),
+                                 SpiUserInfo('user3', '21 March 2019')])
+
+
+    def test_extra_whitespace_in_socklist_templates_is_stripped(self):
+        text = '''
+        ===21 March 2019===
+        {{socklist| user1|user2 | user3 }}
+        '''
+        day = SpiCaseDay(make_code(text), 'title')
+        users = list(day.find_users())
+        self.assertEqual(users, [SpiUserInfo('user1', '21 March 2019'),
+                                 SpiUserInfo('user2', '21 March 2019'),
+                                 SpiUserInfo('user3', '21 March 2019')])
+
+
 class SpiUserInfoTest(TestCase):
     def test_eq(self):
         info1 = SpiUserInfo('user', '1 January 2019')
