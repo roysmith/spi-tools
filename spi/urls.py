@@ -17,5 +17,5 @@ urlpatterns = [
     path('timeline/<case_name>', TimelineView.as_view(), name="spi-timeline"),
     path('g5/<case_name>', G5View.as_view(), name="spi-g5"),
     path('pages/<case_name>', PagesView.as_view(), name="spi-pages"),
-    path('cu-log', CuLogView.as_view(), name="spi-cu-log"),
+    path('cu-log/<case_name>', CuLogView.as_view(), name="spi-cu-log"),
 ]
