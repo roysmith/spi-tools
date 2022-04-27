@@ -15,7 +15,7 @@ import mwclient.util
 import mwclient.errors
 
 from wiki_interface.data import WikiContrib, LogEvent
-from wiki_interface.wiki import Wiki, Page, Category, MAX_UCUSER
+from wiki_interface.wiki import Wiki, Page, Category, MAX_UCUSER, CuLogEntry
 from wiki_interface.block_utils import BlockEvent, UnblockEvent
 
 class ConstructorTest(TestCase):
@@ -1049,3 +1049,104 @@ class NormalizeUsernameTest(WikiTestCase):
 
     def test_mixed_spaces_and_underscores(self):
         self.assertEqual(Wiki.normalize_username(' Foo__Bar Baz_'), 'Foo Bar Baz')
+
+
+
+class CuLogEntryTest(WikiTestCase):
+    def test_cu_log_entry_is_constructed_properly(self):
+        entry = CuLogEntry('RoySmith',
+                           'testing',
+                           'the sock',
+                           datetime(2022, 4, 25),
+                           'userips')
+        self.assertEqual(entry.checkuser, 'RoySmith')
+        self.assertEqual(entry.reason, 'testing')
+        self.assertEqual(entry.target, 'the sock')
+        self.assertEqual(entry.timestamp, datetime(2022, 4, 25))
+        self.assertEqual(entry.type,'userips')
+
+
+    def test_cu_log_entry_from_api_constructs_object(self):
+        entry = {
+            'checkuser': 'test-user',
+            'reason': 'test-reason',
+            'target': 'test-target',
+            'timestamp': '2022-04-27T00:00:00Z',
+            'type': 'userips',
+        }
+        self.assertEqual(CuLogEntry.from_api(entry), CuLogEntry('test-user',
+                                                                'test-reason',
+                                                                'test-target',
+                                                                datetime(2022, 4, 27, tzinfo=timezone.utc),
+                                                                'userips'))
+
+
+
+class GetCuLogTest(WikiTestCase):
+    #pylint: disable=invalid-name
+
+    @patch('wiki_interface.wiki.List')
+    def test_get_cu_log_with_no_log_data_returns_empty_list(self, mockList):
+        mockList.return_value = [[]]
+        wiki = Wiki()
+        result = wiki.get_cu_log(user='foo')
+        self.assertEqual(result, [])
+
+
+    @patch('wiki_interface.wiki.List')
+    def test_get_cu_log_with_one_log_entry_returns_cu_log_entry(self, mockList):
+        mockList.return_value = [[{
+            'checkuser': 'test-user',
+            'reason': 'test-reason',
+            'target': 'test-target',
+            'timestamp': '2022-04-27T00:00:00Z',
+            'type': 'userips'
+        }]]
+        wiki = Wiki()
+        result = wiki.get_cu_log(user='foo')
+        self.assertEqual(result, [CuLogEntry('test-user',
+                                             'test-reason',
+                                             'test-target',
+                                             datetime(2022, 4, 27, tzinfo=timezone.utc),
+                                             'userips')])
+
+
+    @patch('wiki_interface.wiki.List')
+    def test_get_cu_log_with_multiple_log_entries_returns_them_all(self, mockList):
+        mockList.return_value = [[{
+            'checkuser': 'test-user1',
+            'reason': 'test-reason1',
+            'target': 'test-target1',
+            'timestamp': '2022-04-27T01:00:00Z',
+            'type': 'userips'
+        }, {
+        'checkuser': 'test-user2',
+            'reason': 'test-reason2',
+            'target': 'test-target2',
+            'timestamp': '2022-04-27T02:00:00Z',
+            'type': 'userips'
+        }, {
+            'checkuser': 'test-user3',
+            'reason': 'test-reason3',
+            'target': 'test-target3',
+            'timestamp': '2022-04-27T03:00:00Z',
+            'type': 'userips'
+        }]]
+        wiki = Wiki()
+        result = wiki.get_cu_log(user='foo')
+        self.assertEqual(result, [CuLogEntry('test-user1',
+                                             'test-reason1',
+                                             'test-target1',
+                                             datetime(2022, 4, 27, 1, tzinfo=timezone.utc),
+                                             'userips'),
+                                  CuLogEntry('test-user2',
+                                             'test-reason2',
+                                             'test-target2',
+                                             datetime(2022, 4, 27, 2, tzinfo=timezone.utc),
+                                             'userips'),
+                                  CuLogEntry('test-user3',
+                                             'test-reason3',
+                                             'test-target3',
+                                             datetime(2022, 4, 27, 3, tzinfo=timezone.utc),
+                                             'userips')])
+

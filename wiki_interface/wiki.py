@@ -11,6 +11,7 @@ mwclient.Site directly.
 """
 import logging
 from dataclasses import dataclass
+from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address, AddressValueError
 from itertools import islice
 import asyncio
@@ -38,6 +39,29 @@ logger = logging.getLogger('wiki_interface')
 
 MAX_UCUSER = 50  # See https://www.mediawiki.org/wiki/API:Usercontribs.
 MAX_USUSER = 50  # See https://www.mediawiki.org/wiki/API:Users
+
+
+@dataclass(frozen=True)
+class CuLogEntry:
+    checkuser: str
+    reason: str
+    target: str
+    timestamp: datetime
+    type: str
+
+    @staticmethod
+    def from_api(api_entry):
+        '''Return a CuLogEntry given a struct from a raw query/checkuserlog
+        API result's 'entries' list..  Note that all the elements
+        other than the timestamp are optional.
+
+        '''
+        return CuLogEntry(api_entry.get('checkuser'),
+                          api_entry.get('reason'),
+                          api_entry.get('target'),
+                          isoparse(api_entry['timestamp']),
+                          api_entry.get('type'))
+
 
 
 class Wiki:
@@ -362,38 +386,30 @@ class Wiki:
                return False
 
 
-    def get_cu_log(self, target):
-        request_data = {'action': 'query',
-                        'format': 'json',
-                        'list': 'checkuserlog',
-                        'culuser': 'RoySmith',
-                        'culdir': 'newer',
-                        'culfrom': '2021-10-16T20:21:14.000Z',
-                        'culto': '2021-10-17T20:21:14.000Z',
-        }
-        #return 'foo'
+    def get_cu_log(self, user=None, target=None, from_ts=None, to_ts=None):
+        '''Returns a list of CuLogEntry objects, newest first.
 
-        kwargs = {'cultarget': target,
-                  'culdir': 'newer',
-                  'culfrom': '2021-10-16T20:21:14.000Z',
-                  'culto': '2021-10-17T20:21:14.000Z',
-                  }
-
+        '''
+        kwargs = {'culdir': 'older'}
+        if user:
+            kwargs['culuser'] = user
+        if target:
+            kwargs['cultarget'] = target
+        if from_ts:
+            kwargs['culfrom'] = from_ts.isoformat()
+        if to_ts:
+            kwargs['culto'] = to_ts.isoformat()
         listing = List(self.site,
                        'checkuserlog',
                        'cul',
                        uselang=None,  # unclear why this is needed
                        **kwargs)
-        return(list(listing))
 
-
-        api_result = self.site.get('query',
-                                   list='checkuserlog',
-                                   cultarget=target,
-                                   culdir='newer',
-                                   culfrom='2021-10-16T20:21:14.000Z',
-                                   culto='2021-10-17T20:21:14.000Z')
-        return api_result
+        # The return value from List() appears to wrap the data in
+        # an extra list layer.  It's not clear why.  Using the 0'th
+        # element of that does the right thing.
+        entries = list(listing)[0]
+        return [CuLogEntry.from_api(entry) for entry in entries]
 
 
 
