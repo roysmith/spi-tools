@@ -30,4 +30,5 @@ jobs:
     - name: Run Tests
       run: |
         mkdir -p $HOME/logs/django
+        printenv
         SPI_TOOLS_CONFIG_FILE=$GITHUB_WORKSPACE/unsafe-sample-config.ini python manage.py test
