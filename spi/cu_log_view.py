@@ -14,7 +14,7 @@ logger = logging.getLogger('spi.views.cu_log_view')
 
 # Only usres listed here will be allowed to access these views.
 # This is a temporary hack.
-AUTHORIZED_USERS = ['RoySmith']
+AUTHORIZED_USERS = ['RoySmith', 'Yamla', 'Girth Summit']
 
 
 class CuLogView(UserPassesTestMixin, View):
