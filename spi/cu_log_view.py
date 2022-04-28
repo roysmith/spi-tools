@@ -54,10 +54,8 @@ class CuLogView(UserPassesTestMixin, View):
         all_entries = get_ip_entries + get_user_entries
         all_entries.sort(key=lambda e: e.timestamp)
 
-        context = {'names': sock_names,
-                   'get_ip_entries': get_ip_entries,
-                   'get_user_entries': get_user_entries,
-                   'all_entries': all_entries,
+        context = {'case_name': case_name,
+                   'log_entries': all_entries,
                    'ips': sorted(ips),
         }
         return render(request, 'spi/cu_log.html', context)

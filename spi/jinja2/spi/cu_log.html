@@ -1,6 +1,7 @@
 {% extends "tools_app/base.html" %}
 
 {% block content %}
+  <h1><small>CU log analysis for {{case_name|spi_link }}</small></h1>
   <h2>TL;DR:</h2>
   <ul>
     {% for ip in ips %}
@@ -9,7 +10,7 @@
   </ul>
   <h2>The deets:</h2>
   <table class="table table-sm small">
-    {% for entry in all_entries %}
+    {% for entry in log_entries %}
       <tr>
 	<td>{{ entry.timestamp }}</td>
 	<td>
