@@ -23,7 +23,7 @@ from uuid import uuid4
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WWW_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
-LOG_DIR = f'{WWW_DIR}/logs'
+LOG_DIR = os.path.join(os.environ.get('HOME'), 'logs/django')
 PROFILE_DIR = LOG_DIR
 
 VERSION_ID = tools_app.git.get_info()
