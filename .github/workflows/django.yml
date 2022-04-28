@@ -29,6 +29,6 @@ jobs:
         pip install -r requirements.txt
     - name: Run Tests
       run: |
-        mkdir -p $HOME/logs/django
         printenv
+        mkdir -p $HOME/logs/django
         SPI_TOOLS_CONFIG_FILE=$GITHUB_WORKSPACE/unsafe-sample-config.ini python manage.py test
