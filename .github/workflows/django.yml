@@ -32,7 +32,7 @@ jobs:
         git status
         echo $HOME
         echo $HOME/logs
-        mkdir -p $HOME/logs
-        ls -ld $HOME/logs
-        ls -l $HOME/logs
+        mkdir -p $HOME/logs/django
+        ls -lR $HOME/logs
         SPI_TOOLS_CONFIG_FILE=$GITHUB_WORKSPACE/unsafe-sample-config.ini python manage.py test
+        
