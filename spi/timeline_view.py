@@ -56,37 +56,38 @@ class TimelineView(LoginRequiredMixin, View):
         for tag_counts in self.tag_data.values():
             for tag in tag_counts:
                 tags.add(tag)
-        tag_list = sorted(tags)
 
+        tag_headings = {'mobile edit': ['mobile'],
+                        'mobile web edit': ['mobile', 'web'],
+                        'visualeditor': ['visual'],
+                        'AWB': ['AWB'],
+                        'mw-reverted': ['mw-', 'rev'],
+                        'mw-undo': ['mw-', 'undo'],
+                        'wikieditor': ['wiki', 'ed'],
+                        'mw-rollback': ['mw-', 'roll'],
+                        'visualeditor-wikitext': ['vis', 'wiki', 'text'],
+                        'advanced mobile edit': ['adv', 'mobile'],
+                        'mobile app edit': ['mobile', 'app'],
+                        'twinkle': ['twink'],
+                        'RedWarn': ['red', 'warn'],
+                        'removal of COI template': ['rm', 'coi'],
+                        'mw-blank': ['mw-', 'blank'],
+                        'removal of speedy deletion templates': ['rm', 'csd'],
+        }
+
+        tag_list = sorted(tags)
         tag_table = []
         for user in user_names:
             counts = [(tag, self.tag_data[user][tag]) for tag in tag_list]
             tag_table.append((user, counts))
 
-        tag_shortnames = {'mobile edit': 'me',
-                          'mobile web edit': 'mwe',
-                          'visualeditor': 've',
-                          'AWB': 'awb',
-                          'mw-reverted': 'rev',
-                          'mw-undo': 'undo',
-                          'wikieditor': 'wked',
-                          'mw-rollback': 'rb',
-                          'visualeditor-wikitext': 'vew',
-                          'advanced mobile edit': 'ame',
-                          'mobile app edit': 'app',
-                          'twinkle': 'tw',
-                          'RedWarn': 'rw',
-                          'removal of COI template': 'coi',
-                          'mw-blank': 'blk',
-                          'removal of speedy deletion templates': 'rsdt',
-                          }
         context = {'case_name': case_name,
                    'user_names': user_names,
                    'events': events,
                    'tag_list': tag_list,
                    'tag_table': tag_table,
-                   'tag_shortnames': tag_shortnames,
-                   }
+                   'tag_headings': tag_headings,
+        }
         return render(request, 'spi/timeline.html', context)
 
 

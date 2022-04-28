@@ -6,6 +6,7 @@ from spi.timecard_view import TimecardView
 from spi.timeline_view import TimelineView
 from spi.pages_view import PagesView
 from spi.g5_view import G5View
+from spi.cu_log_view import CuLogView
 
 urlpatterns = [
     # pylint: disable=line-too-long
@@ -16,4 +17,5 @@ urlpatterns = [
     path('timeline/<case_name>', TimelineView.as_view(), name="spi-timeline"),
     path('g5/<case_name>', G5View.as_view(), name="spi-g5"),
     path('pages/<case_name>', PagesView.as_view(), name="spi-pages"),
+    path('cu-log/<case_name>', CuLogView.as_view(), name="spi-cu-log"),
 ]

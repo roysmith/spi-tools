@@ -2,8 +2,9 @@
 // Main function.
 //
 async function checkTags(content) {
-    content.find("span.cuEntry a[href*='/User:']").each(async function() {
-        const parseTree = await getParseTree("User:" + this.text);
+    content.find("span.cuEntry").each(async function() {
+        const userNode = $(this).find("a[href*='/User:']")[0];
+        const parseTree = await getParseTree("User:" + userNode.text);
         if (parseTree !== null) {
             const status = tagStatus(parseTree);
             if ('tagType' in status) {

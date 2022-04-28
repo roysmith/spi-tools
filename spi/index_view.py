@@ -7,6 +7,7 @@ from django.views import View
 
 from wiki_interface import Wiki
 from spi.forms import CaseNameForm
+from spi.cu_log_view import CuLogView
 from spi.spi_utils import get_current_case_names
 
 
@@ -19,6 +20,7 @@ class IndexView(View):
         case_name = request.GET.get('caseName')
         context = {'form': form,
                    'choices': self.generate_select2_data(case_name=case_name),
+                   'do_checkuser': CuLogView.is_authorized(request),
                    }
         return render(request, 'spi/index.html', context)
 
@@ -35,6 +37,8 @@ class IndexView(View):
                 return redirect('%s' % (reverse('spi-sock-select', args=[case_name])))
             if 'g5-button' in request.POST:
                 return redirect('%s' % (reverse('spi-g5', args=[case_name])))
+            if 'cu-log-button' in request.POST:
+                return redirect('spi-cu-log', case_name)
             message = 'No known button in POST (%s)' % request.POST.keys()
             logger.error(message)
             context['error'] = message
