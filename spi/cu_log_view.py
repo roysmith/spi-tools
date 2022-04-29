@@ -31,7 +31,7 @@ class CuLogView(UserPassesTestMixin, View):
         logger.info(request)
         wiki = Wiki(request)
         user_infos = list(get_sock_names(wiki, case_name))
-        sock_names = [ui.username for ui in user_infos if ui.valid and ui.sock_type == SockType.KNOWN]
+        sock_names = [ui.username for ui in user_infos if ui.valid and ui.sock_type >= SockType.SUSPECTED]
 
         get_ip_entries = []
         for name in sock_names:
