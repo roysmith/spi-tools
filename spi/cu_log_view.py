@@ -5,6 +5,7 @@ import json
 from django.shortcuts import render
 from django.views import View
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.conf import settings
 
 from spi.views import get_sock_names, SockType
 from wiki_interface import Wiki
@@ -14,12 +15,12 @@ logger = logging.getLogger('spi.views.cu_log_view')
 
 # Only usres listed here will be allowed to access these views.
 # This is a temporary hack.
-AUTHORIZED_USERS = ['RoySmith', 'Yamla', 'Girth Summit']
+AUTHORIZED_USERS = ['RoySmith', 'Yamla', 'Girth Summit', 'GirthSummit']
 
 
 class CuLogView(UserPassesTestMixin, View):
     def test_func(self):
-        return self.is_authorized(self.request)
+        return self.is_authorized(self.request) and settings.DEBUG
 
 
     @staticmethod
