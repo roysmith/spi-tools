@@ -29,11 +29,8 @@ jobs:
         pip install -r requirements.txt
     - name: Run Tests
       run: |
-        echo '----'
         git status
-        echo '----'
         mkdir -p $HOME/logs/django
         ls -lR $HOME/logs
-        echo '----'
         SPI_TOOLS_CONFIG_FILE=$GITHUB_WORKSPACE/unsafe-sample-config.ini python manage.py test
         
