@@ -5,7 +5,6 @@ import json
 from django.shortcuts import render
 from django.views import View
 from django.contrib.auth.mixins import UserPassesTestMixin
-from django.conf import settings
 
 from spi.views import get_sock_names, SockType
 from wiki_interface import Wiki
@@ -20,7 +19,7 @@ AUTHORIZED_USERS = ['RoySmith', 'Yamla', 'Girth Summit', 'GirthSummit']
 
 class CuLogView(UserPassesTestMixin, View):
     def test_func(self):
-        return self.is_authorized(self.request) and settings.DEBUG
+        return self.is_authorized(self.request)
 
 
     @staticmethod
