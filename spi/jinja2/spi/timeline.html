@@ -3,7 +3,7 @@
 {% block content %}
   <h1><small>Consolidated timeline for {{case_name|spi_link }}</small></h1>
   <div>
-    <button class="btn btn-primary btn-sm" type="button" data-toggle="collapse" data-target="#tag-card" aria-expanded="false" aria-controls="tag-card">
+    <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#tag-card" aria-expanded="false" aria-controls="tag-card">
       Show/hide tag counts
     </button>
     <div class="card collapse mt-3" id="tag-card">
@@ -16,7 +16,7 @@
 	  <th></th>
 	  {% for tag in tag_list %}
 	    <th class="text-center align-middle">
-	      <span title="{{ tag }}" data-toggle="tooltip">
+	      <span title="{{ tag }}" data-bs-toggle="tooltip">
 		{% for h in tag_headings.get(tag, ['???']) %}
 		  <div class="text-nowrap">{{ h }}</div>
 		{% endfor %}
