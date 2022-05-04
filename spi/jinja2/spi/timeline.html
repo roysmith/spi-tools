@@ -8,71 +8,77 @@
     </button>
     <div class="card collapse mt-3" id="tag-card">
       <table class="table table-sm small mb-0">
-	<tr>
-	  <th></th>
-	  <th class="text-center" colspan="{{ tag_list|length }}">Hover over column header to see full tag name</th>
-	</tr>
-	<tr>
-	  <th></th>
-	  {% for tag in tag_list %}
-	    <th class="text-center align-middle">
-	      <span title="{{ tag }}" data-bs-toggle="tooltip">
-		{% for h in tag_headings.get(tag, ['???']) %}
-		  <div class="text-nowrap">{{ h }}</div>
-		{% endfor %}
-	      </span>
-	    </th>
-	  {% endfor %}
-	  </tr>
-
-	{% for user, counts in tag_table %}
+	<thead>
 	  <tr>
-	    <td>{{ user }}</td>
-	    {% for tag, count in counts %}
-	      <td class="text-center">
-		{% if count %}
-		  {{ count }}
-		{% endif %}
-	      </td>
+	    <th></th>
+	    <th class="text-center" colspan="{{ tag_list|length }}">Hover over column header to see full tag name</th>
+	  </tr>
+	  <tr>
+	    <th></th>
+	    {% for tag in tag_list %}
+	      <th class="text-center align-middle">
+		<span title="{{ tag }}" data-bs-toggle="tooltip">
+		  {% for h in tag_headings.get(tag, ['???']) %}
+		    <div class="text-nowrap">{{ h }}</div>
+		  {% endfor %}
+		</span>
+	      </th>
 	    {% endfor %}
 	  </tr>
-	{% endfor %}
+	</thead>
+
+	<tbody>
+	  {% for user, counts in tag_table %}
+	    <tr>
+	      <td>{{ user }}</td>
+	      {% for tag, count in counts %}
+		<td class="text-center">
+		  {% if count %}
+		    {{ count }}
+		  {% endif %}
+		</td>
+	      {% endfor %}
+	    </tr>
+	  {% endfor %}
+	</tbody>
       </table>
     </div>
   </div>
   <div class="mt-3">
     <p class="font-weight-bold">Change of stripe background color indicates day boundaries</p>
     <table id="events" class="table table-hover table-sm small">
-      {% set row_class = cycler('primary', 'secondary') %}
-      {% for event in events %}
-	{# See https://stackoverflow.com/questions/66002627 #}
-	<!--  {{ row_class.next() if loop.changed(event.timestamp.date()) }} -->
-	<tr class="table-{{ row_class.current }}">
-	  <td class="align-top">
-	    <div class="text-nowrap">{{ event|event_link }}</div>
-	  </td>
-	  <td class="align-top">
-	    <div class="text-nowrap">{{ event.description }}</div>
-	    <div class="text-nowrap">{{ event.details }}</div>
-	  </td>
-	  <td class="align-top">
-	    <div class="text-nowrap">{{ event.user_name }}</div>
-	  </td>
-	  <td class="align-top">
-	    <div>
-	      {% if event.description == "edit" and event.details == "deleted" %}
+      <tbody>
+	{% set row_class = cycler('primary', 'secondary') %}
+	{% for event in events %}
+	  {# See https://stackoverflow.com/questions/66002627 #}
+	  <!--  {{ row_class.next() if loop.changed(event.timestamp.date()) }} -->
+	  <tr class="table-{{ row_class.current }}">
+	    <td class="align-top">
+	      <div class="text-nowrap">{{ event|event_link }}</div>
+	    </td>
+	    <td class="align-top">
+	      <div class="text-nowrap">{{ event.description }}</div>
+	      <div class="text-nowrap">{{ event.details }}</div>
+	    </td>
+	    <td class="align-top">
+	      <div class="text-nowrap">{{ event.user_name }}</div>
+	    </td>
+	    <td class="align-top">
+	      <div>
+		{% if event.description == "edit" and event.details == "deleted" %}
 		  <del>{{ event.title|page_link }}</del>
-	      {% else %}
+		{% else %}
 		  {{ event.title|page_link }}
+		{% endif %}
+	      </div>
+	      <div class="font-italic" style="overflow-wrap:anywhere">({{ event.comment }})</div>
+	      {% if event.extra %}
+		<div class="extra">{{ event.extra }}</div>
 	      {% endif %}
-	    </div>
-	    <div class="font-italic" style="overflow-wrap:anywhere">({{ event.comment }})</div>
-	    {% if event.extra %}
-	      <div class="extra">{{ event.extra }}</div>
-	    {% endif %}
-	  </td>
-	</tr>
-      {% endfor %}
+	    </td>
+	  </tr>
+	{% endfor %}
+      </tbody>
     </table>
   </div>
 {% endblock %}
