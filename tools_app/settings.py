@@ -272,7 +272,7 @@ LOGGING = {
         } if TESTING else {
             'level': 'DEBUG',
             'class': 'logging.handlers.SocketHandler',
-            'host': 'tools-sgebastion-08.tools.eqiad.wmflabs',
+            'host': 'tools-sgebastion-11',
             'port': 23001,
         },
     },
