@@ -80,7 +80,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--host',
-                        default='tools-sgebastion-08.tools.eqiad.wmflabs',
+                        default='tools-sgebastion-11',
                         help='hostname to listen on')
     parser.add_argument('--port',
                         type=int,

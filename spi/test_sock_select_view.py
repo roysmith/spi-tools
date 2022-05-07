@@ -143,9 +143,9 @@ class SockSelectViewTest(ViewTestCase):
         response = self.client.get('/spi/sock-select/Foo/')
 
         tree = etree.HTML(response.content)
-        checkbox = tree.cssselect('#sock-table > tr > td > input[type=checkbox]')[0]
+        checkbox = tree.cssselect('#sock-table > tbody > tr > td > input[type=checkbox]')[0]
         self.assertEqual(checkbox.get('name'), 'sock_foo%26bar')
         self.assertEqual(checkbox.get('id'), 'id_sock_foo%26bar')
-        label = tree.cssselect('#sock-table > tr > td > label')[0]
+        label = tree.cssselect('#sock-table > tbody > tr > td > label')[0]
         self.assertEqual(label.get('for'), 'id_sock_foo%26bar')
         self.assertEqual(label.text, 'foo&bar')

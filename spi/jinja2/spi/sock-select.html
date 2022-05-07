@@ -22,7 +22,7 @@
     </p>
     <p>
       <div class="dropdown">
-	<button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="select-menu-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+	<button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="select-menu-button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 	  Check users reported on or after date
 	</button>
 	<div class="dropdown-menu" id="date-select-menu" aria-labelledby="select-menu-button">
@@ -39,16 +39,20 @@
       <input type="submit" name="pages-button" value="Pages">
     </p>
     <table id="sock-table" class="table table-sm table-hover">
-      <tr>
-	<th>Use?</th>
-	<th>Username</th>
-      </tr>
-      {% for field, name, date in form_info %}
+      <thead>
 	<tr>
-	  <td class="spi-date-{{ date|replace(' ', '') }}">{{ field }}</td>
-	  <td><label class="mb-0" for="{{ field.id_for_label }}">{{ field.label }}</label></td>
+	  <th>Use?</th>
+	  <th>Username</th>
 	</tr>
-      {% endfor %}
+      </thead>
+      <tbody>
+	{% for field, name, date in form_info %}
+	  <tr>
+	    <td class="spi-date-{{ date|replace(' ', '') }}">{{ field }}</td>
+	    <td><label class="mb-0" for="{{ field.id_for_label }}">{{ field.label }}</label></td>
+	  </tr>
+	{% endfor %}
+      </tbody>
     </table>
   </form>
 {% endblock %}

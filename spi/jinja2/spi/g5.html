@@ -10,32 +10,36 @@
     soley reponsible for determining if each page meets all the G5
     criteria and what to do about it.</p>
   <table class="table table-hover table-sm small">
-    <tr>
-      <th>Creator</th>
-      <th>Page</th>
-      <th>G5 score</th>
-    </tr>
-    {% for c in page_creations %}
-      <tr class="table-primary">
-	<td class="align-top">
-	  <div class="font-weight-bold">
-            {{ c.user|user_link }}
-	  </div>
-	</td>
-	<td class="align-top">
-	  <div>
-            {{ c.title|page_link }}
-	  </div>
-	</td>
-	<td class="align-top">
-	  <div>
-            {{ c.score.rating }}
-            {% if c.score.reason %}
-              ({{ c.score.reason }})
-            {% endif %}
-	  </div>
-	</td>
+    <thead>
+      <tr>
+	<th>Creator</th>
+	<th>Page</th>
+	<th>G5 score</th>
       </tr>
-    {% endfor %}
+    </thead>
+    <tbody>
+      {% for c in page_creations %}
+	<tr>
+	  <td class="align-top">
+	    <div class="font-weight-bold">
+              {{ c.user|user_link }}
+	    </div>
+	  </td>
+	  <td class="align-top">
+	    <div>
+              {{ c.title|page_link }}
+	    </div>
+	  </td>
+	  <td class="align-top">
+	    <div>
+              {{ c.score.rating }}
+              {% if c.score.reason %}
+		({{ c.score.reason }})
+              {% endif %}
+	    </div>
+	  </td>
+	</tr>
+      {% endfor %}
+    </tbody>
   </table>
 {% endblock %}

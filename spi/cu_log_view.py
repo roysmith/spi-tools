@@ -5,6 +5,7 @@ import json
 from django.shortcuts import render
 from django.views import View
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.conf import settings
 
 from spi.views import get_sock_names, SockType
 from wiki_interface import Wiki
@@ -14,12 +15,12 @@ logger = logging.getLogger('spi.views.cu_log_view')
 
 # Only usres listed here will be allowed to access these views.
 # This is a temporary hack.
-AUTHORIZED_USERS = ['RoySmith', 'Yamla', 'Girth Summit']
+AUTHORIZED_USERS = ['RoySmith', 'Yamla', 'Girth Summit', 'GirthSummit', 'TheresNoTime', 'Dreamy Jazz', 'DreamyJazz']
 
 
 class CuLogView(UserPassesTestMixin, View):
     def test_func(self):
-        return self.is_authorized(self.request)
+        return self.is_authorized(self.request) and settings.DEBUG
 
 
     @staticmethod
@@ -31,7 +32,7 @@ class CuLogView(UserPassesTestMixin, View):
         logger.info(request)
         wiki = Wiki(request)
         user_infos = list(get_sock_names(wiki, case_name))
-        sock_names = [ui.username for ui in user_infos if ui.valid and ui.sock_type == SockType.KNOWN]
+        sock_names = [ui.username for ui in user_infos if ui.valid and ui.sock_type >= SockType.SUSPECTED]
 
         get_ip_entries = []
         for name in sock_names:

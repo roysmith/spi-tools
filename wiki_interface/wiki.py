@@ -434,9 +434,10 @@ class Page:
             revisions = islice(revisions, count)
         for rev in revisions:
             comment = rev['comment'] if 'commenthidden' not in rev else None
+            user = rev['user'] if 'userhidden' not in rev else None
             yield WikiContrib(rev['revid'],
                               struct_to_datetime(rev['timestamp']),
-                              rev['user'],
+                              user,
                               self.mw_page.namespace,
                               self.mw_page.name,
                               comment)

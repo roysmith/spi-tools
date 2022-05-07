@@ -889,6 +889,21 @@ class PageTest(WikiTestCase):
         ])
 
 
+    def test_revisions_with_hidden_user(self):
+        self.mock_site.pages.__getitem__().revisions.return_value = [
+            {'revid': 100, 'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0), 'userhidden': '', 'comment': 'my comment'}]
+        self.mock_site.pages.__getitem__().name = 'blah'
+        self.mock_site.pages.__getitem__().namespace = 0
+        wiki = Wiki()
+
+        revisions = list(wiki.page('blah').revisions())
+
+        self.assertIsInstance(revisions[0], WikiContrib)
+        self.assertEqual(revisions, [
+            WikiContrib(100, datetime(2020, 7, 30, tzinfo=timezone.utc), None, 0, 'blah', 'my comment')
+        ])
+
+
     def test_revisions_with_count(self):
         self.mock_site.pages.__getitem__().revisions.return_value = [
             {'revid': 20200730, 'timestamp': (2020, 7, 30, 0, 0, 0, 0, 0, 0), 'user': 'fred', 'comment': 'c1'},
