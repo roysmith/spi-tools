@@ -16,6 +16,7 @@ logger = logging.getLogger('spi.views.index_view')
 
 class IndexView(View):
     def get(self, request):
+        wiki = Wiki(request)
         form = CaseNameForm()
         case_name = request.GET.get('caseName')
         context = {'form': form,

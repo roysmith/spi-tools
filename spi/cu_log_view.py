@@ -13,11 +13,6 @@ from wiki_interface import Wiki
 logger = logging.getLogger('spi.views.cu_log_view')
 
 
-# Only usres listed here will be allowed to access these views.
-# This is a temporary hack.
-AUTHORIZED_USERS = ['RoySmith', 'Yamla', 'Girth Summit', 'GirthSummit', 'TheresNoTime', 'Dreamy Jazz', 'DreamyJazz']
-
-
 class CuLogView(UserPassesTestMixin, View):
     def test_func(self):
         return self.is_authorized(self.request) and settings.DEBUG
@@ -25,7 +20,8 @@ class CuLogView(UserPassesTestMixin, View):
 
     @staticmethod
     def is_authorized(request):
-        return request.user.username in AUTHORIZED_USERS
+        wiki = Wiki(request)
+        return 'checkuser' in wiki.site.groups
 
 
     def get(self, request, case_name):
