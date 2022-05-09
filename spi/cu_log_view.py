@@ -15,7 +15,7 @@ logger = logging.getLogger('spi.views.cu_log_view')
 
 class CuLogView(UserPassesTestMixin, View):
     def test_func(self):
-        return self.is_authorized(self.request) and settings.DEBUG
+        return self.is_authorized(self.request)
 
 
     @staticmethod
