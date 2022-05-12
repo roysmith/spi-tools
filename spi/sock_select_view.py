@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.views import View
 
 from spi.forms import SockSelectForm
-from spi.views import get_sock_names
+from spi.spi_view import get_sock_names
 from wiki_interface import Wiki
 
 

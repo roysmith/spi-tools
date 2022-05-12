@@ -7,7 +7,7 @@ from django.views import View
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.conf import settings
 
-from spi.views import get_sock_names, SockType
+from spi.spi_view import get_sock_names, SockType
 from wiki_interface import Wiki
 
 logger = logging.getLogger('spi.views.cu_log_view')

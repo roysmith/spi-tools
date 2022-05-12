@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from spi.test_views import ViewTestCase
+from spi.test_spi_view import ViewTestCase
 
 # pylint: disable=invalid-name
 # pylint: disable=duplicate-code

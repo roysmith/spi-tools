@@ -6,7 +6,7 @@ import logging
 from django.shortcuts import render
 from django.views import View
 
-from spi.views import get_sock_names
+from spi.spi_view import get_sock_names
 from wiki_interface import Wiki
 from wiki_interface.block_utils import UserBlockHistory
 

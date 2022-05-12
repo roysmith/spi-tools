@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
-from spi.test_views import ViewTestCase
-from spi.views import ValidatedUser
+from spi.test_spi_view import ViewTestCase
+from spi.spi_view import ValidatedUser
 
 
 class G5ViewTest(ViewTestCase):

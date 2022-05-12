@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from spi.index_view import IndexView
-from spi.test_views import ViewTestCase
+from spi.test_spi_view import ViewTestCase
 
 # pylint: disable=invalid-name
 

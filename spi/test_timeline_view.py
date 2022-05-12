@@ -4,7 +4,7 @@ from unittest.mock import call, patch
 from lxml import etree
 
 from spi.timeline_view import TimelineEvent
-from spi.test_views import ViewTestCase
+from spi.test_spi_view import ViewTestCase
 from spi.user_utils import CacheableUserContribs
 from wiki_interface.block_utils import BlockEvent
 from wiki_interface.data import WikiContrib, LogEvent
