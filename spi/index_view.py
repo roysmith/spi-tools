@@ -1,3 +1,4 @@
+from functools import partial
 import logging
 
 from django.core.cache import cache
@@ -20,7 +21,7 @@ class IndexView(View):
         form = CaseNameForm(wiki=wiki)
         case_name = request.GET.get('caseName')
         context = {'form': form,
-                   'choices': self.generate_select2_data(case_name=case_name),
+                   'choices': self.generate_select2_data(case_name=case_name, wiki=wiki),
                    'do_checkuser': CuLogView.is_authorized(request),
                    }
         return render(request, 'spi/index.html', context)
@@ -29,7 +30,7 @@ class IndexView(View):
         wiki = Wiki(request)
         form = CaseNameForm(request.POST, wiki=wiki)
         context = {'form': form,
-                   'choices': self.generate_select2_data()
+                   'choices': self.generate_select2_data(wiki=wiki)
                    }
         if form.is_valid():
             case_name = form.cleaned_data['case_name']
@@ -48,7 +49,7 @@ class IndexView(View):
         return render(request, 'spi/index.html', context)
 
     @staticmethod
-    def generate_select2_data(case_name=None):
+    def generate_select2_data(case_name=None, *, wiki):
         """Return data appropriate for the 'data' element of a select2.js
         configuration object.
 
@@ -57,7 +58,9 @@ class IndexView(View):
         added (and selected).
 
         """
-        names = cache.get_or_set('IndexView.case_names', IndexView.get_case_names, 300)
+        names = cache.get_or_set('IndexView.case_names',
+                                 partial(get_current_case_names, wiki),
+                                 300)
         if case_name and case_name not in names:
             names.append(case_name)
         names.sort()
@@ -73,14 +76,3 @@ class IndexView(View):
             data.append(item)
 
         return data
-
-
-    @staticmethod
-    def get_case_names():
-        """Get the case names from the on-wiki SPI case listing.
-
-        Returns a list of strings.
-
-        """
-        wiki = Wiki()
-        return get_current_case_names(wiki)

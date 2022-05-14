@@ -12,10 +12,8 @@ class IndexViewTest(ViewTestCase):
         super().setUp('spi.index_view')
 
 
-    @patch('spi.forms.Wiki', autospec=True)
     @patch('spi.index_view.get_current_case_names', autospec=True)
-    def test_unknown_button(self, mock_get_current_case_names, mock_Wiki):
-        mock_Wiki().page_exists.return_value = True
+    def test_unknown_button(self, mock_get_current_case_names):
         mock_get_current_case_names.return_value = ['blah']
 
         response = self.client.post('/spi/', {'case_name': ['Fred']})
@@ -28,7 +26,7 @@ class IndexViewTest(ViewTestCase):
     def test_generates_correct_case_names(self, mock_get_current_case_names):
         mock_get_current_case_names.return_value = ['Alice', 'Bob']
 
-        data = IndexView.generate_select2_data('')
+        data = IndexView.generate_select2_data('', wiki=self.mock_wiki)
         expected_data = [{'id': '', 'text': ''},
                          {'id': 'Alice', 'text': 'Alice'},
                          {'id': 'Bob', 'text': 'Bob'}]
@@ -39,7 +37,7 @@ class IndexViewTest(ViewTestCase):
     def test_url_case_name_is_selected(self, mock_get_current_case_names):
         mock_get_current_case_names.return_value = ['Alice', 'Bob']
 
-        data = IndexView.generate_select2_data('Bob')
+        data = IndexView.generate_select2_data('Bob', wiki=self.mock_wiki)
 
         expected_data = [{'id': '', 'text': ''},
                          {'id': 'Alice', 'text': 'Alice'},
@@ -51,7 +49,7 @@ class IndexViewTest(ViewTestCase):
     def test_url_case_name_is_added_if_missing(self, mock_get_current_case_names):
         mock_get_current_case_names.return_value = ['Alice', 'Bob']
 
-        data = IndexView.generate_select2_data('Arnold')
+        data = IndexView.generate_select2_data('Arnold', wiki=self.mock_wiki)
         expected_data = [{'id': '', 'text': ''},
                          {'id': 'Alice', 'text': 'Alice'},
                          {'id': 'Arnold', 'text': 'Arnold', 'selected': True},
@@ -63,7 +61,7 @@ class IndexViewTest(ViewTestCase):
     def test_deduplicates_case_name_with_sock_names(self, mock_get_current_case_names):
         mock_get_current_case_names.return_value = ['Adhithya Kiran Chekavar',
                                                     'Fred']
-        data = IndexView.generate_select2_data('Adhithya Kiran Chekavar')
+        data = IndexView.generate_select2_data('Adhithya Kiran Chekavar', wiki=self.mock_wiki)
         expected_data = [{'id': '',
                           'text': ''},
                          {'id': 'Adhithya Kiran Chekavar',
