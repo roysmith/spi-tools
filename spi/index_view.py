@@ -17,7 +17,7 @@ logger = logging.getLogger('spi.views.index_view')
 class IndexView(View):
     def get(self, request):
         wiki = Wiki(request)
-        form = CaseNameForm()
+        form = CaseNameForm(wiki=wiki)
         case_name = request.GET.get('caseName')
         context = {'form': form,
                    'choices': self.generate_select2_data(case_name=case_name),
@@ -26,7 +26,8 @@ class IndexView(View):
         return render(request, 'spi/index.html', context)
 
     def post(self, request):
-        form = CaseNameForm(request.POST)
+        wiki = Wiki(request)
+        form = CaseNameForm(request.POST, wiki=wiki)
         context = {'form': form,
                    'choices': self.generate_select2_data()
                    }

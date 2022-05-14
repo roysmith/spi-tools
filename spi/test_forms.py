@@ -1,10 +1,11 @@
-from unittest.mock import patch
+from unittest.mock import patch, NonCallableMock
 from unittest import TestCase
 import urllib.parse
 
 from django.forms import BooleanField
 
 from spi.forms import CaseNameForm, SockSelectForm
+from wiki_interface import Wiki
 
 
 class SockSelectFormTest(TestCase):
@@ -25,24 +26,24 @@ class SockSelectFormTest(TestCase):
 class CaseNameFormTest(TestCase):
     # pylint: disable=invalid-name
 
-    @patch('spi.forms.Wiki')
-    def test_validate_with_valid_case_name(self, mock_Wiki):
-        mock_Wiki().page_exists.return_value = True
+    def test_validate_with_valid_case_name(self):
+        wiki = NonCallableMock(Wiki)
+        wiki.page_exists.return_value = True
         data = {'case_name': 'Fred',
                 }
 
-        form = CaseNameForm(data)
+        form = CaseNameForm(data, wiki=wiki)
 
         self.assertTrue(form.is_valid())
 
 
-    @patch('spi.forms.Wiki')
-    def test_validate_with_invalid_case_name(self, mock_Wiki):
-        mock_Wiki().page_exists.return_value = False
+    def test_validate_with_invalid_case_name(self):
+        wiki = NonCallableMock(Wiki)
+        wiki.page_exists.return_value = False
         data = {'case_name': 'Fred',
                 }
 
-        form = CaseNameForm(data)
+        form = CaseNameForm(data, wiki=wiki)
 
         self.assertFalse(form.is_valid())
         errors = form.errors.as_data()
