@@ -3,20 +3,18 @@ import logging
 import json
 
 from django.shortcuts import render
-from django.views import View
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.conf import settings
 
-from spi.spi_view import get_sock_names, SockType
-from wiki_interface import Wiki
+from spi.spi_view import get_sock_names, SockType, SpiView
+
 
 logger = logging.getLogger('spi.views.cu_log_view')
 
 
-class CuLogView(UserPassesTestMixin, View):
+class CuLogView(UserPassesTestMixin, SpiView):
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
-        self.wiki = Wiki(request)
 
 
     def test_func(self):
