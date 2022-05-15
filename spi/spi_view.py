@@ -33,8 +33,6 @@ class SpiView(View):
         self.wiki = Wiki(request)
 
 
-
-
 def get_sock_names(wiki, master_name):
     """Returns a iterable over ValidatedUsers
 
