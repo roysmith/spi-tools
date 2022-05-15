@@ -4,16 +4,14 @@ import itertools
 import logging
 
 from django.shortcuts import render
-from django.views import View
 
-from spi.spi_view import get_sock_names
+from spi.spi_view import get_sock_names, SpiView
 from wiki_interface import Wiki
 from wiki_interface.block_utils import UserBlockHistory
 
 
 
 logger = logging.getLogger('spi.views.g5_view')
-
 
 
 @dataclass(frozen=True)
@@ -30,19 +28,18 @@ class G5Score:
     reason: str = ''
 
 
-class G5View(View):
+class G5View(SpiView):
     def get(self, request, case_name):
-        wiki = Wiki()
-        socks = get_sock_names(wiki, case_name)
+        socks = get_sock_names(self.wiki, case_name)
         sock_names = [s.username for s in socks if s.valid]
 
-        history = UserBlockHistory(wiki.user_blocks(case_name))
+        history = UserBlockHistory(self.wiki.user_blocks(case_name))
 
         page_creations = []
-        for contrib in wiki.user_contributions(sock_names, show="new"):
+        for contrib in self.wiki.user_contributions(sock_names, show="new"):
             if history.is_blocked_at(contrib.timestamp):
                 title = contrib.title
-                page = wiki.page(title)
+                page = self.wiki.page(title)
                 if page.exists():
                     page_creations.append(G5Summary(title,
                                                     contrib.user_name,

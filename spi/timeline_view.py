@@ -6,10 +6,9 @@ import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render
-from django.views import View
 
 from spi.user_utils import CacheableUserContribs
-from wiki_interface import Wiki
+from spi.spi_view import SpiView
 from wiki_interface.block_utils import BlockEvent, UnblockEvent
 
 
@@ -41,14 +40,13 @@ class TimelineEvent:
     extra: str = ''
 
 
-class TimelineView(LoginRequiredMixin, View):
+class TimelineView(LoginRequiredMixin, SpiView):
     def get(self, request, case_name):
-        wiki = Wiki(request)
         user_names = request.GET.getlist('users')
         logger.debug("user_names = %s", user_names)
 
         self.tag_data = {}  # pylint: disable=attribute-defined-outside-init
-        per_user_streams = [self.get_event_stream_for_user(wiki, user) for user in user_names]
+        per_user_streams = [self.get_event_stream_for_user(self.wiki, user) for user in user_names]
         events = list(heapq.merge(*per_user_streams, reverse=True))
         # At this point, i.e. after the merge() output is consumed,
         # self.tag_data will be valid.

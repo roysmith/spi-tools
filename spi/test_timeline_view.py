@@ -4,14 +4,14 @@ from unittest.mock import call, patch
 from lxml import etree
 
 from spi.timeline_view import TimelineEvent
-from spi.test_spi_view import ViewTestCase
+from spi.test_spi_view import SpiViewTestCase
 from spi.user_utils import CacheableUserContribs
 from wiki_interface.block_utils import BlockEvent
 from wiki_interface.data import WikiContrib, LogEvent
 
 # pylint: disable=invalid-name
 
-class TimelineViewTest(ViewTestCase):
+class TimelineViewTest(SpiViewTestCase):
     #pylint: disable=arguments-differ
     def setUp(self):
         super().setUp('spi.timeline_view')

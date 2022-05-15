@@ -5,10 +5,9 @@ import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render
-from django.views import View
 
 from spi.user_utils import CacheableUserContribs
-from wiki_interface import Wiki
+from spi.spi_view import SpiView
 
 # pylint: disable=invalid-name
 
@@ -16,14 +15,13 @@ from wiki_interface import Wiki
 logger = logging.getLogger('spi.views.pages_view')
 
 
-class PagesView(LoginRequiredMixin, View):
+class PagesView(LoginRequiredMixin, SpiView):
     def get(self, request, case_name):
-        wiki = Wiki(request)
         user_names = request.GET.getlist('users')
         logger.debug("user_names = %s", user_names)
 
         context = {'case_name': case_name,
-                   'page_data': self.get_page_data(wiki, user_names)}
+                   'page_data': self.get_page_data(self.wiki, user_names)}
         return render(request, 'spi/pages.html', context)
 
 

@@ -4,12 +4,12 @@ from unittest.mock import patch
 from lxml import etree
 
 from spi.spi_utils import CacheableSpiCase
-from spi.test_spi_view import ViewTestCase
+from spi.test_spi_view import SpiViewTestCase
 from spi.spi_view import ValidatedUser
 
 # pylint: disable=invalid-name
 
-class SockSelectViewTest(ViewTestCase):
+class SockSelectViewTest(SpiViewTestCase):
     #pylint: disable=arguments-differ
     def setUp(self):
         super().setUp('spi.sock_select_view')
