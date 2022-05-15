@@ -22,7 +22,7 @@ class IndexView(View):
         case_name = request.GET.get('caseName')
         context = {'form': form,
                    'choices': self.generate_select2_data(case_name=case_name, wiki=wiki),
-                   'do_checkuser': CuLogView.is_authorized(request),
+                   'do_checkuser': CuLogView.is_authorized(request, wiki),
                    }
         return render(request, 'spi/index.html', context)
 
