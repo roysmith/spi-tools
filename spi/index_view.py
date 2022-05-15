@@ -4,33 +4,30 @@ import logging
 from django.core.cache import cache
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.views import View
 
-from wiki_interface import Wiki
 from spi.forms import CaseNameForm
 from spi.cu_log_view import CuLogView
 from spi.spi_utils import get_current_case_names
+from spi.spi_view import SpiView
 
 
 logger = logging.getLogger('spi.views.index_view')
 
 
-class IndexView(View):
+class IndexView(SpiView):
     def get(self, request):
-        wiki = Wiki(request)
-        form = CaseNameForm(wiki=wiki)
+        form = CaseNameForm(wiki=self.wiki)
         case_name = request.GET.get('caseName')
         context = {'form': form,
-                   'choices': self.generate_select2_data(case_name=case_name, wiki=wiki),
-                   'do_checkuser': CuLogView.is_authorized(request, wiki),
+                   'choices': self.generate_select2_data(case_name=case_name, wiki=self.wiki),
+                   'do_checkuser': CuLogView.is_authorized(request, self.wiki),
                    }
         return render(request, 'spi/index.html', context)
 
     def post(self, request):
-        wiki = Wiki(request)
-        form = CaseNameForm(request.POST, wiki=wiki)
+        form = CaseNameForm(request.POST, wiki=self.wiki)
         context = {'form': form,
-                   'choices': self.generate_select2_data(wiki=wiki)
+                   'choices': self.generate_select2_data(wiki=self.wiki)
                    }
         if form.is_valid():
             case_name = form.cleaned_data['case_name']

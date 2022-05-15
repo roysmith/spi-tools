@@ -4,8 +4,10 @@ import logging
 import re
 
 from django.core.cache import cache
+from django.views import View
 
 from spi.spi_utils import CacheableSpiCase
+from wiki_interface import Wiki
 
 
 logger = logging.getLogger('spi.views')
@@ -23,6 +25,14 @@ class ValidatedUser:
     date: str
     valid: bool
     sock_type: SockType = SockType.NONE
+
+
+class SpiView(View):
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        self.wiki = Wiki(request)
+
+
 
 
 def get_sock_names(wiki, master_name):

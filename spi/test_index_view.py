@@ -1,12 +1,12 @@
 from unittest.mock import patch
 
 from spi.index_view import IndexView
-from spi.test_spi_view import ViewTestCase
+from spi.test_spi_view import SpiViewTestCase
 
 # pylint: disable=invalid-name
 
 
-class IndexViewTest(ViewTestCase):
+class IndexViewTest(SpiViewTestCase):
     #pylint: disable=arguments-differ
     def setUp(self):
         super().setUp('spi.index_view')
