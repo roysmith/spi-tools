@@ -310,28 +310,11 @@ def get_current_case_names(wiki):
     https://github.com/roysmith/spi-tools/issues/133 for details.
 
     """
-    template_name = _find_active_case_template(wiki)
-    overview = wiki.page(template_name).text()
-    wikicode = parse(overview)
-    templates = wikicode.filter_templates(matches=lambda n: n.name.matches('SPIstatusentry'))
-    raw_names = {str(t.get(1)) for t in templates}
-    return [name for name in raw_names if '/' not in name]
-
-
-def _find_active_case_template(wiki):
-    """Return the name of the curently active template listing SPI cases.
-
-    Returns None if the template can't be determined.
-
-    """
-    spi_page = wiki.page('Wikipedia:Sockpuppet investigations').text()
-    wikicode = parse(spi_page)
-    template_names = [t.name for t in wikicode.filter_templates()]
-    candidates = ['Wikipedia:Sockpuppet investigations/Cases/Overview',
-                  'User:AmandaNP/SPI case list',
-                  'User:Mz7/SPI case list',
-                  'Wikipedia:Sockpuppet investigations/SPI/Cases']
-    for name in candidates:
-        if name in template_names:
-            return name
-    return None
+    raw_names = set(wiki.category('Open SPI cases').members())
+    names = []
+    for raw_name in raw_names:
+        if raw_name.startswith('Wikipedia:Sockpuppet investigations/'):
+            _, _, name = raw_name.partition('/')
+            if name and '/' not in name:
+                names.append(name)
+    return names

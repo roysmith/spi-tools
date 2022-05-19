@@ -8,7 +8,7 @@ import mwparserfromhell
 from wiki_interface import Wiki
 from wiki_interface.data import WikiContrib
 from spi.spi_utils import (SpiSourceDocument, SpiCase, SpiCaseDay, SpiIpInfo, SpiUserInfo, CacheableSpiCase,
-                           ArchiveError, get_current_case_names, _find_active_case_template)
+                           ArchiveError, get_current_case_names)
 
 
 def make_code(text):
@@ -766,116 +766,57 @@ class GetCurrentCaseNamesTest(TestCase):
     # pylint: disable=invalid-name
 
     @patch('wiki_interface.wiki.Site')
-    @patch('spi.spi_utils._find_active_case_template')
-    def test_no_entries(self, mock__find_active_case_template, mock_Site):
-        mock__find_active_case_template.return_value = 'whatever'
-        mock_Site().pages.__getitem__().text.return_value = ''
+    def test_no_entries_returns_empty_list(self, mock_Site):
+        wiki = NonCallableMock(Wiki)
+        wiki.category().members.return_value = []
+        wiki.category.reset_mock()
 
-        wiki = Wiki()
         names = get_current_case_names(wiki)
 
+        wiki.category.assert_called_once_with('Open SPI cases')
+        wiki.category().members.assert_called_once_with()
         self.assertEqual(names, [])
-        mock_Site().pages.__getitem__().text.assert_called_once_with()
 
 
     @patch('wiki_interface.wiki.Site')
-    @patch('spi.spi_utils._find_active_case_template')
-    def test_multiple_entries_with_duplicates(self, mock__find_active_case_template, mock_Site):
-        mock__find_active_case_template.return_value = 'whatever'
-        mock_Site().pages.__getitem__().text.return_value = '''
-        {{SPIstatusheader}}
-        {{SPIstatusentry|Rajumitwa878|--|--|--|--|--|--}}
-        {{SPIstatusentry|AntiRacistSwede|--|--|--|--|--|--}}
-        {{SPIstatusentry|Trumanshow69|--|--|--|--|--|--}}
-        {{SPIstatusentry|AntiRacistSwede|--|--|--|--|--|--}}
-        '''
+    def test_case_names_are_deduplicated(self,  mock_Site):
+        wiki = NonCallableMock(Wiki)
+        wiki.category().members.return_value = ['Wikipedia:Sockpuppet investigations/Rajumitwa878',
+                                                'Wikipedia:Sockpuppet investigations/AntiRacistSwede',
+                                                'Wikipedia:Sockpuppet investigations/Trumanshow69',
+                                                'Wikipedia:Sockpuppet investigations/AntiRacistSwede']
+        wiki.category.reset_mock()
 
-        wiki = Wiki()
         names = get_current_case_names(wiki)
 
+        wiki.category.assert_called_once_with('Open SPI cases')
+        wiki.category().members.assert_called_once_with()
         self.assertCountEqual(names, ['Rajumitwa878', 'AntiRacistSwede', 'Trumanshow69'])
-        mock_Site().pages.__getitem__().text.assert_called_once_with()
 
 
     @patch('wiki_interface.wiki.Site')
-    @patch('spi.spi_utils._find_active_case_template')
-    def test_case_name_with_slash(self, mock__find_active_case_template, mock_Site):
-        mock__find_active_case_template.return_value = 'whatever'
-        mock_Site().pages.__getitem__().text.return_value = '''
-        {{SPIstatusheader}}
-        {{SPIstatusentry|Rajumitwa878|--|--|--|--|--|--}}
-        {{SPIstatusentry|AntiRacistSwede|--|--|--|--|--|--}}
-        {{SPIstatusentry|2605:E000:1F00:D3F1:0:0:0:0/64|--|--|--|--|--|--}}
-        '''
+    def test_case_name_with_slash_is_removed(self, mock_Site):
+        wiki = NonCallableMock(Wiki)
+        wiki.category().members.return_value = ['Wikipedia:Sockpuppet investigations/Rajumitwa878',
+                                                'Wikipedia:Sockpuppet investigations/AntiRacistSwede',
+                                                'Wikipedia:Sockpuppet investigations/2605:E000:1F00:D3F1:0:0:0:0/64']
+        wiki.category.reset_mock()
 
-        wiki = Wiki()
         names = get_current_case_names(wiki)
 
-        self.assertEqual(set(names), {'Rajumitwa878', 'AntiRacistSwede'})
-        mock_Site().pages.__getitem__().text.assert_called_once_with()
-
-
-class FindActiveCaseTemplateTest(TestCase):
-    # pylint: disable=invalid-name
-
-    @patch('wiki_interface.wiki.Site')
-    def test_overview(self, mock_Site):
-        mock_Site().pages.__getitem__().text.return_value = '''
-        <h2> Cases currently listed at SPI </h2>
-        {{purge box}}
-        {{Wikipedia:Sockpuppet investigations/Cases/Overview}}
-        <!-- This can be used as a backup: {{User:AmandaNP/SPI case list}} -->
-        '''
-
-        wiki = Wiki()
-        template = _find_active_case_template(wiki)
-        self.assertEqual(template, 'Wikipedia:Sockpuppet investigations/Cases/Overview')
+        wiki.category.assert_called_once_with('Open SPI cases')
+        wiki.category().members.assert_called_once_with()
+        self.assertCountEqual(names, ['Rajumitwa878', 'AntiRacistSwede'])
 
 
     @patch('wiki_interface.wiki.Site')
-    def test_amanda(self, mock_Site):
-        mock_Site().pages.__getitem__().text.return_value = '''
-        <h2> Cases currently listed at SPI </h2>
-        {{purge box}}
-        <!-- Switching to backup. {{Wikipedia:Sockpuppet investigations/Cases/Overview}}-->
-        {{User:AmandaNP/SPI case list}}
-        |}
-        '''
+    def test_subcategory_is_removed(self, mock_Site):
+        wiki = NonCallableMock(Wiki)
+        wiki.category().members.return_value = ['Category:SPI cases on hold by clerk']
+        wiki.category.reset_mock()
 
-        wiki = Wiki()
-        template = _find_active_case_template(wiki)
-        self.assertEqual(template, 'User:AmandaNP/SPI case list')
+        names = get_current_case_names(wiki)
 
-
-    @patch('wiki_interface.wiki.Site')
-    def test_mz7(self, mock_Site):
-        mock_Site().pages.__getitem__().text.return_value = '''
-        <h2> Cases currently listed at SPI </h2>
-        {{purge box}}
-        <!-- Switching to backup for the time being, main case list at {{Wikipedia:Sockpuppet investigations/Cases/Overview}} -->
-        {{User:Mz7/SPI case list}} <!-- Mz7's backup list more closely emulates the "normal" table. The original backup with some hacky table-code to get it working: 
-        {|class="wikitable sortable" width="100%"
-        !Investigation!!Status!!Filer!!Date filed!!Last user edit!!timestamp!!Last clerk/CU edit
-        {{User:AmandaNP/SPI case list}}
-        |}
-        -->
-        '''
-
-        wiki = Wiki()
-        template = _find_active_case_template(wiki)
-        self.assertEqual(template, 'User:Mz7/SPI case list')
-
-
-    @patch('wiki_interface.wiki.Site')
-    def test_None(self, mock_Site):
-        mock_Site().pages.__getitem__().text.return_value = '''
-        <h2> Cases currently listed at SPI </h2>
-        {{purge box}}
-        <!-- Switching to backup. {{Wikipedia:Sockpuppet investigations/Cases/Overview}}-->
-        <!-- {{User:AmandaNP/SPI case list}} -->
-        |}
-        '''
-
-        wiki = Wiki()
-        template = _find_active_case_template(wiki)
-        self.assertIsNone(template)
+        wiki.category.assert_called_once_with('Open SPI cases')
+        wiki.category().members.assert_called_once_with()
+        self.assertCountEqual(names, [])
