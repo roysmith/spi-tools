@@ -15,7 +15,7 @@ idna==2.8
 isort==4.3.21
 Jinja2==2.11.3
 lazy-object-proxy==1.4.3
-lxml==4.6.5
+lxml==4.9.1
 MarkupSafe==1.1.1
 mccabe==0.6.1
 more-itertools==8.6.0
@@ -26,7 +26,7 @@ opensearch-py==1.0.0
 pip-tools==4.3.0
 pkg_resources==0.0.0
 pycparser==2.21
-PyJWT==2.3.0
+PyJWT==2.4.0
 pylint==2.5.3
 pylint-django==2.2.0
 pylint-plugin-utils==0.6
