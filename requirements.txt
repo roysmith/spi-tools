@@ -24,7 +24,6 @@ mwparserfromhell==0.5.4
 oauthlib==3.1.0
 opensearch-py==1.0.0
 pip-tools==4.3.0
-pkg_resources==0.0.0
 pycparser==2.21
 PyJWT==2.4.0
 pylint==2.5.3
