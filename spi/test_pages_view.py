@@ -2,13 +2,13 @@ from datetime import datetime
 from unittest.mock import patch
 
 from spi.pages_view import PagesView
-from spi.test_views import ViewTestCase
+from spi.test_spi_view import SpiViewTestCase
 from spi.user_utils import CacheableUserContribs
 from wiki_interface.data import WikiContrib
 
 # pylint: disable=invalid-name
 
-class PagesViewTest(ViewTestCase):
+class PagesViewTest(SpiViewTestCase):
     #pylint: disable=arguments-differ
     def setUp(self):
         super().setUp('spi.pages_view')

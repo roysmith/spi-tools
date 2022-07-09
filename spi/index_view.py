@@ -1,34 +1,33 @@
+from functools import partial
 import logging
 
 from django.core.cache import cache
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.views import View
 
-from wiki_interface import Wiki
 from spi.forms import CaseNameForm
 from spi.cu_log_view import CuLogView
 from spi.spi_utils import get_current_case_names
+from spi.spi_view import SpiView
 
 
 logger = logging.getLogger('spi.views.index_view')
 
 
-class IndexView(View):
+class IndexView(SpiView):
     def get(self, request):
-        wiki = Wiki(request)
-        form = CaseNameForm()
+        form = CaseNameForm(wiki=self.wiki)
         case_name = request.GET.get('caseName')
         context = {'form': form,
-                   'choices': self.generate_select2_data(case_name=case_name),
-                   'do_checkuser': CuLogView.is_authorized(request),
+                   'choices': self.generate_select2_data(case_name=case_name, wiki=self.wiki),
+                   'do_checkuser': CuLogView.is_authorized(request, self.wiki),
                    }
         return render(request, 'spi/index.html', context)
 
     def post(self, request):
-        form = CaseNameForm(request.POST)
+        form = CaseNameForm(request.POST, wiki=self.wiki)
         context = {'form': form,
-                   'choices': self.generate_select2_data()
+                   'choices': self.generate_select2_data(wiki=self.wiki)
                    }
         if form.is_valid():
             case_name = form.cleaned_data['case_name']
@@ -47,7 +46,7 @@ class IndexView(View):
         return render(request, 'spi/index.html', context)
 
     @staticmethod
-    def generate_select2_data(case_name=None):
+    def generate_select2_data(case_name=None, *, wiki):
         """Return data appropriate for the 'data' element of a select2.js
         configuration object.
 
@@ -56,7 +55,9 @@ class IndexView(View):
         added (and selected).
 
         """
-        names = cache.get_or_set('IndexView.case_names', IndexView.get_case_names, 300)
+        names = cache.get_or_set('IndexView.case_names',
+                                 partial(get_current_case_names, wiki),
+                                 300)
         if case_name and case_name not in names:
             names.append(case_name)
         names.sort()
@@ -72,14 +73,3 @@ class IndexView(View):
             data.append(item)
 
         return data
-
-
-    @staticmethod
-    def get_case_names():
-        """Get the case names from the on-wiki SPI case listing.
-
-        Returns a list of strings.
-
-        """
-        wiki = Wiki()
-        return get_current_case_names(wiki)

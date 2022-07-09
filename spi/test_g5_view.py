@@ -1,10 +1,10 @@
 from unittest.mock import patch
 
-from spi.test_views import ViewTestCase
-from spi.views import ValidatedUser
+from spi.test_spi_view import SpiViewTestCase
+from spi.spi_view import ValidatedUser
 
 
-class G5ViewTest(ViewTestCase):
+class G5ViewTest(SpiViewTestCase):
     #pylint: disable=arguments-differ
     def setUp(self):
         super().setUp('spi.g5_view')

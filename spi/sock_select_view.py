@@ -4,11 +4,9 @@ import urllib
 
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.views import View
 
 from spi.forms import SockSelectForm
-from spi.views import get_sock_names
-from wiki_interface import Wiki
+from spi.spi_view import get_sock_names, SpiView
 
 
 logger = logging.getLogger('spi.views.sock_select_view')
@@ -16,10 +14,9 @@ logger = logging.getLogger('spi.views.sock_select_view')
 EDITOR_INTERACT_BASE = "https://tools.wmflabs.org/sigma/editorinteract.py"
 
 
-class SockSelectView(View):
+class SockSelectView(SpiView):
     def get(self, request, case_name):
-        wiki = Wiki()
-        user_infos = list(get_sock_names(wiki, case_name))
+        user_infos = list(get_sock_names(self.wiki, case_name))
         logger.debug(user_infos)
         users_by_name = {user.username: user for user in user_infos}
         names = list({user.username for user in user_infos if user.valid})

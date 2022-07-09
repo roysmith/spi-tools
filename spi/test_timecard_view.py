@@ -1,12 +1,12 @@
 from unittest.mock import patch
 
-from spi.test_views import ViewTestCase
+from spi.test_spi_view import SpiViewTestCase
 
 # pylint: disable=invalid-name
 # pylint: disable=duplicate-code
 
 
-class IpAnalysisiewTest(ViewTestCase):
+class TimecardViewTest(SpiViewTestCase):
     #pylint: disable=arguments-differ
     def setUp(self):
         super().setUp('spi.timecard_view')

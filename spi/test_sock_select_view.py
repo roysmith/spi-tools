@@ -4,12 +4,12 @@ from unittest.mock import patch
 from lxml import etree
 
 from spi.spi_utils import CacheableSpiCase
-from spi.test_views import ViewTestCase
-from spi.views import ValidatedUser
+from spi.test_spi_view import SpiViewTestCase
+from spi.spi_view import ValidatedUser
 
 # pylint: disable=invalid-name
 
-class SockSelectViewTest(ViewTestCase):
+class SockSelectViewTest(SpiViewTestCase):
     #pylint: disable=arguments-differ
     def setUp(self):
         super().setUp('spi.sock_select_view')
@@ -48,7 +48,7 @@ class SockSelectViewTest(ViewTestCase):
 
 
     @patch('wiki_interface.wiki.Site')  # autospec fails here, not sure why
-    @patch('spi.views.CacheableSpiCase', autospec=True)
+    @patch('spi.spi_view.CacheableSpiCase', autospec=True)
     def test_mismatched_quotes(self, mock_CacheableSpiCase, mock_Site):
         mock_Site().pages.__getitem__().text.return_value = textwrap.dedent(
             """

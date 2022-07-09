@@ -3,8 +3,6 @@ import urllib.parse
 from django import forms
 from django.core.exceptions import ValidationError
 
-from wiki_interface import Wiki
-
 
 class CaseNameChoiceField(forms.ChoiceField):
     def __init__(self, *args, **kwargs):
@@ -17,14 +15,17 @@ class CaseNameChoiceField(forms.ChoiceField):
                                   code='required',
                                   params={'value': value})
         case_page_title = f'Wikipedia:Sockpuppet investigations/{value}'
-        wiki = Wiki()
-        if not wiki.page_exists(case_page_title):
+        if not self.wiki.page_exists(case_page_title):
             raise ValidationError(f'{case_page_title} does not exist.',
                                   code='invalid_choice',
                                   params={'value': value})
 
 
 class CaseNameForm(forms.Form):
+    def __init__(self, *args, wiki, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['case_name'].wiki = wiki
+
     case_name = CaseNameChoiceField()
 
 

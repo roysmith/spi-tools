@@ -232,7 +232,7 @@ DEBUG_TOOLBAR_CONFIG = {
 os.environ['PYTHONASYNCIODEBUG'] = '1' if DEBUG else '0'
 
 LOG_NAME = 'django-test.log' if TESTING else 'django.log'
-LOG_LEVEL = 'DEBUG' if 'dev' in TOOL_NAME else 'INFO'
+LOG_LEVEL = 'INFO' if 'dev' in TOOL_NAME else 'INFO'
 LOG_REQUEST_ID_HEADER = "HTTP_X_REQUEST_ID"
 
 
@@ -288,7 +288,7 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['file', 'bastion'],
+            'handlers': ['file'],
             'level': 'INFO',
             'propagate': True,
         },

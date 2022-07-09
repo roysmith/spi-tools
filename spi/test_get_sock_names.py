@@ -2,7 +2,7 @@ from unittest.mock import patch, call, MagicMock, NonCallableMock
 
 from django.test import TestCase
 
-from spi.views import get_sock_names, ValidatedUser, SockType
+from spi.spi_view import get_sock_names, ValidatedUser, SockType
 from spi.spi_utils import CacheableSpiCase, SpiUserInfo
 from wiki_interface import Wiki, Category
 
@@ -33,8 +33,8 @@ class GetSockNamesTest(TestCase):
         self.addCleanup(site_patcher.stop)
 
 
-    @patch('spi.views.CacheableSpiCase')
-    @patch('spi.views.cache')
+    @patch('spi.spi_view.CacheableSpiCase')
+    @patch('spi.spi_view.cache')
     def test_get_sock_names_returns_empty_list_for_empty_case(self, cache, mock_CacheableSpiCase):
         cache.get.return_value = None
         mock_CacheableSpiCase.get.return_value = CacheableSpiCase('fred', 1, [], [])
@@ -45,8 +45,8 @@ class GetSockNamesTest(TestCase):
         self.assertEqual(sock_names, [])
 
 
-    @patch('spi.views.CacheableSpiCase')
-    @patch('spi.views.cache')
+    @patch('spi.spi_view.CacheableSpiCase')
+    @patch('spi.spi_view.cache')
     def test_get_sock_names_returns_valid_names_for_case(self, cache, mock_CacheableSpiCase):
         cache.get.return_value = None
         mock_CacheableSpiCase.get.return_value = CacheableSpiCase('fred',
@@ -67,8 +67,8 @@ class GetSockNamesTest(TestCase):
                                       ValidatedUser('1.2.3.0/24', '1 January 2020', False)])
 
 
-    @patch('spi.views.CacheableSpiCase')
-    @patch('spi.views.cache')
+    @patch('spi.spi_view.CacheableSpiCase')
+    @patch('spi.spi_view.cache')
     def test_get_sock_names_retrieves_sock_categories(self, cache, mock_CacheableSpiCase):
         cache.get.return_value = None
         mock_CacheableSpiCase.get.return_value = CacheableSpiCase('Fred',
@@ -87,8 +87,8 @@ class GetSockNamesTest(TestCase):
                           call('Suspected Wikipedia sockpuppets of Fred')])
 
 
-    @patch('spi.views.CacheableSpiCase')
-    @patch('spi.views.cache')
+    @patch('spi.spi_view.CacheableSpiCase')
+    @patch('spi.spi_view.cache')
     def test_get_sock_names_marks_sock_types(self, cache, mock_CacheableSpiCase):
         cache.get.return_value = None
         mock_CacheableSpiCase.get.return_value = CacheableSpiCase('Fred',

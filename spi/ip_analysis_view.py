@@ -4,10 +4,9 @@ import logging
 from typing import List
 
 from django.shortcuts import render
-from django.views import View
 
 from spi.spi_utils import CacheableSpiCase, SpiIpInfo
-from wiki_interface import Wiki
+from spi.spi_view import SpiView
 
 
 logger = logging.getLogger('spi.views.ip_analysis_view')
@@ -19,11 +18,10 @@ class IpSummary:
     spi_dates: List[SpiIpInfo]
 
 
-class IpAnalysisView(View):
+class IpAnalysisView(SpiView):
     def get(self, request, case_name):
-        wiki = Wiki()
         ip_data = defaultdict(list)
-        for i in CacheableSpiCase.get(wiki, case_name).ip_addresses:
+        for i in CacheableSpiCase.get(self.wiki, case_name).ip_addresses:
             ip_data[i.ip_address].append(i.date)
         summaries = [IpSummary(ip, sorted(ip_data[ip])) for ip in ip_data]
         summaries.sort()

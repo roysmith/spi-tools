@@ -1,5 +1,5 @@
 import logging
-import datetime
+from datetime import datetime
 
 logger = logging.getLogger('tools_app.middleware')
 
@@ -8,7 +8,12 @@ class LoggingMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        return self.get_response(request)
+        t0 = datetime.utcnow()
+        response = self.get_response(request)
+        dt = datetime.utcnow() - t0
+        logger.info("request took %s", dt)
+        return response
+
 
     # pylint: disable=unused-argument
     # pylint: disable=no-self-use
@@ -22,5 +27,5 @@ class RequestAugmentationMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        request.x_tools_request_time_utc = datetime.datetime.utcnow()
+        request.x_tools_request_time_utc = datetime.utcnow()
         return self.get_response(request)

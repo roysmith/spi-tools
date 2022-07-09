@@ -9,7 +9,7 @@ from django.shortcuts import render
 # pylint: disable=invalid-name
 
 
-class ViewTestCase(TestCase):
+class SpiViewTestCase(TestCase):
     """Base class for all SPI view tests.
 
     Subclass this and have setUp() call super().setUp('spi.my_view')
@@ -41,7 +41,7 @@ class ViewTestCase(TestCase):
         self.mock_render.side_effect = self.render_patch
         self.addCleanup(render_patcher.stop)
 
-        wiki_patcher = patch(f'{view_module_name}.Wiki', autospec=True)
+        wiki_patcher = patch('spi.spi_view.Wiki', autospec=True)
         MockWikiClass = wiki_patcher.start()
         self.mock_wiki = MockWikiClass()
         self.addCleanup(wiki_patcher.stop)
