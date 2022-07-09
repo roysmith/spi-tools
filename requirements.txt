@@ -25,7 +25,7 @@ oauthlib==3.1.0
 opensearch-py==1.0.0
 pip-tools==4.3.0
 pycparser==2.21
-PyJWT==2.3.0
+PyJWT==2.4.0
 pylint==2.5.3
 pylint-django==2.2.0
 pylint-plugin-utils==0.6
