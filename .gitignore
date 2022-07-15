@@ -3,3 +3,8 @@ __pycache__/
 *.sqlite3
 *~
 /env/
+
+# pywikibot crap
+apicache-py3/
+pywikibot.lwp
+throttle.ctrl
