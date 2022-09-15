@@ -21,7 +21,7 @@ function spiTools_addLink(pageTitle) {
 
 async function spiTools_init(caseName) {
     const baseURL = 'https://spi-tools.toolforge.org/spi/?caseName=';
-    window.open(encodeURI(baseURL + caseName));
+    window.open(baseURL + encodeURIComponent(caseName));
 };
 
 /**
