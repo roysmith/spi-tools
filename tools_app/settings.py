@@ -19,6 +19,9 @@ import datetime
 import tools_app.git
 from uuid import uuid4
 
+# True if running unit tests
+TESTING = 'manage.py' in sys.argv[0]
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -26,7 +29,10 @@ WWW_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
 LOG_DIR = os.path.join(os.environ.get('HOME'), 'logs/django')
 PROFILE_DIR = LOG_DIR
 
-VERSION_ID = tools_app.git.get_info()
+# This is horribly ugly; we need to not call git.get_info() here during
+# testing becasue otherwise it gets called before test_git can patch it.
+VERSION_ID = 'TESTING VERSION_ID' if TESTING else tools_app.git.get_info()
+
 SERVER_START_TIME_UTC = datetime.datetime.utcnow()
 
 
@@ -41,9 +47,6 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = TOOL_NAME.lower().endswith('-dev')
-
-# True if running unit tests
-TESTING = 'manage.py' in sys.argv[0]
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
