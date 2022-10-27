@@ -4,12 +4,17 @@ from dataclasses import dataclass, field
 from typing import List
 from ipaddress import IPv4Address, IPv4Network
 from itertools import chain
+import logging
 import re
+import time
 
 from mwparserfromhell import parse
 from mwparserfromhell.wikicode import Wikicode
 
 from django.core.cache import cache
+
+
+logger = logging.getLogger('spi.spi_utils')
 
 # pylint: disable=invalid-name
 
@@ -57,15 +62,38 @@ class CacheableSpiCase:
         revisions = chain.from_iterable([wiki.page(t).revisions(count=1) for t in titles])
         rev_id = max(r.rev_id for r in revisions)
         key = f'spi.CacheableSpiCase.{master_name}'
-        case = cache.get(key, version=rev_id)
+        case = CacheableSpiCase.get_from_cache(key, version=rev_id)
         if case is None:
             spi_case = SpiCase.for_master(wiki, master_name)
             case = CacheableSpiCase(master_name,
                                     rev_id,
                                     list(spi_case.find_all_users()),
                                     list(spi_case.find_all_ips()))
-            cache.set(key, case, version=rev_id)
+            CacheableSpiCase.set_to_cache(key, case, version=rev_id)
         return case
+
+
+    @staticmethod
+    def get_from_cache(key, version):
+        """Get from cache, with some added instrumentation.
+
+        """
+        t0 = time.time()
+        case = cache.get(key, version=version)
+        dt = time.time() - t0
+        logger.info("CacheableSpiCase: get(%s, %s) took %.3f sec", key, version, dt)
+        return case
+
+
+    @staticmethod
+    def set_to_cache(key, case, version):
+        """Set to cache, with some added instrumentation.
+
+        """
+        t0 = time.time()
+        cache.set(key, case, version=version)
+        dt = time.time() - t0
+        logger.info("CacheableSpiCase: set(%s, ..., %s) took %.3f sec", key, version, dt)
 
 
 @dataclass
