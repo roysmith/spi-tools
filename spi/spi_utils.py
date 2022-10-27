@@ -57,43 +57,50 @@ class CacheableSpiCase:
 
 
     @staticmethod
-    def get(wiki, master_name):
+    def get(wiki, master_name, use_cache=True):
         titles = (f'Wikipedia:Sockpuppet investigations/{master_name}{suffix}' for suffix in ['', '/Archive'])
         revisions = chain.from_iterable([wiki.page(t).revisions(count=1) for t in titles])
         rev_id = max(r.rev_id for r in revisions)
         key = f'spi.CacheableSpiCase.{master_name}'
-        case = CacheableSpiCase.get_from_cache(key, version=rev_id)
+        case = CacheableSpiCase._get(key, version=rev_id, use_cache=use_cache)
         if case is None:
             spi_case = SpiCase.for_master(wiki, master_name)
             case = CacheableSpiCase(master_name,
                                     rev_id,
                                     list(spi_case.find_all_users()),
                                     list(spi_case.find_all_ips()))
-            CacheableSpiCase.set_to_cache(key, case, version=rev_id)
+            CacheableSpiCase._set(key, case, version=rev_id, use_cache=use_cache)
         return case
 
 
     @staticmethod
-    def get_from_cache(key, version):
+    def _get(key, version, use_cache):
         """Get from cache, with some added instrumentation.
 
         """
-        t0 = time.time()
-        case = cache.get(key, version=version)
-        dt = time.time() - t0
-        logger.info("CacheableSpiCase: get(%s, %s) took %.3f sec", key, version, dt)
-        return case
+        if use_cache:
+            t0 = time.time()
+            case = cache.get(key, version=version)
+            dt = time.time() - t0
+            logger.info("CacheableSpiCase: get(%s, %s) took %.3f sec", key, version, dt)
+            return case
+        else:
+            logger.info("CacheableSpiCase: get(%s, %s) bypassed", key, version)
+            return None
 
 
     @staticmethod
-    def set_to_cache(key, case, version):
+    def _set(key, case, version, use_cache):
         """Set to cache, with some added instrumentation.
 
         """
-        t0 = time.time()
-        cache.set(key, case, version=version)
-        dt = time.time() - t0
-        logger.info("CacheableSpiCase: set(%s, ..., %s) took %.3f sec", key, version, dt)
+        if use_cache:
+            t0 = time.time()
+            cache.set(key, case, version=version)
+            dt = time.time() - t0
+            logger.info("CacheableSpiCase: set(%s, ..., %s) took %.3f sec", key, version, dt)
+        else:
+            logger.info("CacheableSpiCase: set(%s, ..., %s) bypassed", key, version)
 
 
 @dataclass
