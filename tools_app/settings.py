@@ -19,6 +19,9 @@ import datetime
 import tools_app.git
 from uuid import uuid4
 
+# True if running unit tests
+TESTING = 'manage.py' in sys.argv[0]
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -26,7 +29,10 @@ WWW_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
 LOG_DIR = os.path.join(os.environ.get('HOME'), 'logs/django')
 PROFILE_DIR = LOG_DIR
 
-VERSION_ID = tools_app.git.get_info()
+# This is horribly ugly; we need to not call git.get_info() here during
+# testing becasue otherwise it gets called before test_git can patch it.
+VERSION_ID = 'TESTING VERSION_ID' if TESTING else tools_app.git.get_info()
+
 SERVER_START_TIME_UTC = datetime.datetime.utcnow()
 
 
@@ -41,9 +47,6 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = TOOL_NAME.lower().endswith('-dev')
-
-# True if running unit tests
-TESTING = 'manage.py' in sys.argv[0]
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
@@ -83,20 +86,19 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
+    'django_tools.middlewares.ThreadLocal.ThreadLocalMiddleware',
     'tools_app.middleware.RequestAugmentationMiddleware',
     'tools_app.middleware.LoggingMiddleware',
 ]
 
 
-# This configuration uses a short timeout and invalidates every cache
-# entry on every server restart, which only makes sense for a
-# development environment.
-#
 # WARNING: some keys may not be usable on non-redis backends.  See
 # https://docs.djangoproject.com/en/2.2/topics/cache/#cache-key-transformation
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache' if TESTING else 'django_redis.cache.RedisCache',
+
+# This configuration uses a short timeout and invalidates every cache
+# entry on every server restart.
+REDIS_CACHE = {
+        'BACKEND': 'django_redis.cache.RedisCache',
         'LOCATION': 'redis://tools-redis.svc.eqiad.wmflabs:6379/0',
         'TIMEOUT': 300,
         'KEY_PREFIX': str(uuid4()),
@@ -105,7 +107,15 @@ CACHES = {
             'IGNORE_EXCEPTIONS': True,
         }
     }
-}
+DUMMY_CACHE = {
+     'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
+
+CACHES = {
+    'default': DUMMY_CACHE if TESTING else REDIS_CACHE,
+    'dummy': DUMMY_CACHE,
+    }
+
 DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS = True
 DJANGO_REDIS_LOGGER = 'tools_app.redis'
 

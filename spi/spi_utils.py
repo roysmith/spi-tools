@@ -4,12 +4,17 @@ from dataclasses import dataclass, field
 from typing import List
 from ipaddress import IPv4Address, IPv4Network
 from itertools import chain
+import logging
 import re
+import time
 
 from mwparserfromhell import parse
 from mwparserfromhell.wikicode import Wikicode
 
-from django.core.cache import cache
+from spi import icache as cache
+
+
+logger = logging.getLogger('spi.spi_utils')
 
 # pylint: disable=invalid-name
 

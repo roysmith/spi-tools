@@ -1,10 +1,10 @@
 from functools import partial
 import logging
 
-from django.core.cache import cache
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
+from spi import icache as cache
 from spi.forms import CaseNameForm
 from spi.cu_log_view import CuLogView
 from spi.spi_utils import get_current_case_names

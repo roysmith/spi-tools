@@ -22,4 +22,5 @@ def debug(request):
             'SERVER_UP_TIME': datetime.timedelta(seconds=int(uptime.total_seconds())),
             'PRODUCTION_HOST_NAME': production_host_name,
             'PID': os.getpid(),
+            'TOOL_NAME': settings.TOOL_NAME,
             }
