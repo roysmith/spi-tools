@@ -86,20 +86,19 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
+    'django_tools.middlewares.ThreadLocal.ThreadLocalMiddleware',
     'tools_app.middleware.RequestAugmentationMiddleware',
     'tools_app.middleware.LoggingMiddleware',
 ]
 
 
-# This configuration uses a short timeout and invalidates every cache
-# entry on every server restart, which only makes sense for a
-# development environment.
-#
 # WARNING: some keys may not be usable on non-redis backends.  See
 # https://docs.djangoproject.com/en/2.2/topics/cache/#cache-key-transformation
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache' if TESTING else 'django_redis.cache.RedisCache',
+
+# This configuration uses a short timeout and invalidates every cache
+# entry on every server restart.
+REDIS_CACHE = {
+        'BACKEND': 'django_redis.cache.RedisCache',
         'LOCATION': 'redis://tools-redis.svc.eqiad.wmflabs:6379/0',
         'TIMEOUT': 300,
         'KEY_PREFIX': str(uuid4()),
@@ -108,7 +107,15 @@ CACHES = {
             'IGNORE_EXCEPTIONS': True,
         }
     }
-}
+DUMMY_CACHE = {
+     'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
+
+CACHES = {
+    'default': DUMMY_CACHE if TESTING else REDIS_CACHE,
+    'dummy': DUMMY_CACHE,
+    }
+
 DJANGO_REDIS_LOG_IGNORED_EXCEPTIONS = True
 DJANGO_REDIS_LOGGER = 'tools_app.redis'
 

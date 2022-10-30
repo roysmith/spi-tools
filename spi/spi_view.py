@@ -3,9 +3,9 @@ from enum import IntEnum
 import logging
 import re
 
-from django.core.cache import cache
 from django.views import View
 
+from spi import icache as cache
 from spi.spi_utils import CacheableSpiCase
 from wiki_interface import Wiki
 

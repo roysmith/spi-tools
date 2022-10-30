@@ -27,9 +27,9 @@ def set(key, value, *args, **kwargs):
         t0 = time.time()
         django_cache.set(key, value, *args, **kwargs)
         dt = time.time() - t0
-        logger.info("icache.set(%s) took %.3f sec", key, dt)
+        logger.info("set(%s) took %.3f sec", key, dt)
     else:
-        logger.info("icache.set(%s) bypassed", key)
+        logger.info("set(%s) bypassed", key)
 
 
 def get(key, *args, **kwargs):
@@ -37,10 +37,10 @@ def get(key, *args, **kwargs):
         t0 = time.time()
         data = django_cache.get(key, *args, **kwargs)
         dt = time.time() - t0
-        logger.info("icache.get(%s) took %.3f sec", key, dt)
+        logger.info("get(%s) took %.3f sec", key, dt)
         return data
     else:
-        logger.info("icache.get(%s) bypassed", key)
+        logger.info("get(%s) bypassed", key)
         return None
 
 
@@ -49,8 +49,8 @@ def get_or_set(key, default, *args, **kwargs):
         t0 = time.time()
         data = django_cache.get_or_set(key, default, *args, **kwargs)
         dt = time.time() - t0
-        logger.info("icache.get_or_set(%s) took %.3f sec", key, dt)
+        logger.info("get_or_set(%s) took %.3f sec", key, dt)
         return data
     else:
-        logger.info("icache.get_or_set(%s) bypassed", key)
+        logger.info("get_or_set(%s) bypassed", key)
         return None

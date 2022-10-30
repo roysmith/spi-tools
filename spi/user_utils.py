@@ -3,8 +3,7 @@ from typing import List
 from itertools import chain
 import logging
 
-from django.core.cache import cache
-
+from spi import icache as cache
 from wiki_interface import WikiContrib
 
 

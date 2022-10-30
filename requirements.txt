@@ -2,6 +2,8 @@ asgiref==3.5.2
 astroid==2.4.2
 async-timeout==4.0.2
 asyncmock==0.4.2
+bleach==5.0.1
+bx-py-utils==70
 certifi==2019.9.11
 cffi==1.15.0
 chardet==3.0.4
@@ -14,6 +16,8 @@ Django==3.2.16
 django-debug-toolbar==3.2.4
 django-log-request-id==1.6.0
 django-redis==5.2.0
+django-tools==0.54.0
+icdiff==2.0.5
 idna==2.8
 importlib-metadata==4.12.0
 isort==4.3.21
@@ -30,6 +34,7 @@ oauthlib==3.1.0
 opensearch-py==1.0.0
 packaging==21.3
 pip-tools==4.3.0
+pprintpp==0.4.0
 pycparser==2.21
 PyJWT==2.4.0
 pylint==2.5.3
@@ -56,6 +61,7 @@ typed-ast==1.4.1
 typing_extensions==4.0.1
 urllib3==1.26.5
 wcwidth==0.1.7
+webencodings==0.5.1
 wikitextparser==0.28.0
 wrapt==1.12.1
 zipp==3.8.1
