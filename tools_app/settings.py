@@ -263,11 +263,8 @@ LOGGING = {
     'handlers': {
         'file': {
             'level': LOG_LEVEL,
-            'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filename': os.path.join(LOG_DIR, LOG_NAME),
-            'when': 'D',
-            'backupCount': 7,
-            'utc': True,
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOG_DIR, f'{LOG_NAME}.{SERVER_START_TIME_UTC.isoformat()}'),
             'filters': ['request_id'],
             'formatter': 'file_formatter',
         },
