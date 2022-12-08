@@ -4,7 +4,7 @@ async-timeout==4.0.2
 asyncmock==0.4.2
 bleach==5.0.1
 bx-py-utils==70
-certifi==2019.9.11
+certifi==2022.12.7
 cffi==1.15.0
 chardet==3.0.4
 Click==7.0
