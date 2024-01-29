@@ -1,6 +1,7 @@
 {% extends "tools_app/base.html" %}
 
 {% block content %}
+  <h1><small>Edit comment search</small></h1>
   <form action="" method="post">
     {{ csrf_input }}
     <p class="mb-2">{{ form.search_terms }}</p>
