@@ -58,7 +58,6 @@ class ViewTestCase(TestCase):
 
 
 
-@unittest.skipUnless(settings.ELASTICSEARCH, 'not installed yet')
 class IndexViewTest(ViewTestCase):
     #pylint: disable=arguments-differ
     def setUp(self):
@@ -77,18 +76,11 @@ class IndexViewTest(ViewTestCase):
 
     def test_post_renders_results_template(self):
         data = {'search_terms': 'foo'}
-        es_result = {'_shards': {'failed': 0, 'skipped': 0, 'successful': 1, 'total': 1},
+        os_result = {'_shards': {'failed': 0, 'skipped': 0, 'successful': 1, 'total': 1},
                      'hits': {'hits': [{'_id': 'GKgpmn4B8Fs0LHO50FIx',
                                         '_index': 'spi-tools-dev-es-index',
                                         '_score': 4.292108,
-                                        '_source': {'comment': 'SMcCandlish moved page [[Talk:New '
-                                                    'Hampshire State Tartan]] to '
-                                                    '[[Talk:New Hampshire state '
-                                                    'tartan]]: [[MOS:CAPS]], '
-                                                    '[[WP:NCCAPS]], and to be '
-                                                    '[[WP:CONSISTENT]] with other '
-                                                    'articles on tartans, and flags, '
-                                                    'and state/national [foo], and etc.',
+                                        '_source': {'comment': 'blah, blah',
                                                     'page_id': 5399120,
                                                     'rev_id': 945483029,
                                                     'user': 'SMcCandlish'},
@@ -98,9 +90,11 @@ class IndexViewTest(ViewTestCase):
                      'timed_out': False,
                      'took': 2}
         with patch('search.views.OpenSearch') as mock_os:
-            mock_os().search.return_value = es_result
+            mock_os().search.return_value = os_result
             response = self.client.post('/search/', data)
         self.assertEqual(response.templates[0], 'search/results.html')
-        self.assertEqual(response.context['results'], [{'page_id': 5399120,
+        self.assertEqual(response.context['results'], [{'comment': 'blah, blah',
+                                                        'page_id': 5399120,
                                                         'rev_id': 945483029,
+                                                        'user': 'SMcCandlish',
                                                         }])
