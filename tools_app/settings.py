@@ -25,7 +25,8 @@ TESTING = 'manage.py' in sys.argv[0]
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-WWW_DIR = os.path.dirname(os.path.dirname(BASE_DIR))
+PYTHON_DIR = os.path.dirname(BASE_DIR)
+WWW_DIR = os.path.dirname(PYTHON_DIR)
 LOG_DIR = os.path.join(os.environ.get('HOME'), 'logs/django')
 PROFILE_DIR = LOG_DIR
 
@@ -243,18 +244,19 @@ LOG_LEVEL = 'INFO' if 'dev' in TOOL_NAME else 'INFO'
 LOG_REQUEST_ID_HEADER = "HTTP_X_REQUEST_ID"
 
 
-ELASTICSEARCH_CONFIG_FILE = Path.home() / '.elasticsearch.ini'
-if ELASTICSEARCH_CONFIG_FILE.exists():
-    ELASTICSEARCH_CONFIG = ConfigParser()
-    ELASTICSEARCH_CONFIG.read(ELASTICSEARCH_CONFIG_FILE)
-    ELASTICSEARCH = {
-        'user': ELASTICSEARCH_CONFIG.get('elasticsearch', 'user'),
-        'password': ELASTICSEARCH_CONFIG.get('elasticsearch', 'password'),
-        'server': 'elasticsearch.svc.tools.eqiad1.wikimedia.cloud:80',
-        'index': 'spi-tools-dev-es-index',
+OPENSEARCH_CONFIG_FILE = Path(PYTHON_DIR) / 'opensearch.ini'
+if OPENSEARCH_CONFIG_FILE.exists():
+    OPENSEARCH_CONFIG = ConfigParser()
+    OPENSEARCH_CONFIG.read(OPENSEARCH_CONFIG_FILE)
+    OPENSEARCH = {
+        'user': OPENSEARCH_CONFIG.get('opensearch', 'user'),
+        'password': OPENSEARCH_CONFIG.get('opensearch', 'password'),
+        'host': OPENSEARCH_CONFIG.get('opensearch', 'host'),
+        'port': OPENSEARCH_CONFIG.get('opensearch', 'port'),
+        'index': OPENSEARCH_CONFIG.get('opensearch', 'index'),
     }
 else:
-    ELASTICSEARCH = {}
+    OPENSEARCH = {}
 
 
 LOGGING = {
