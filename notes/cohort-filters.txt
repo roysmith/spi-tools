@@ -1,0 +1,74 @@
+# Cohort filters
+
+It is common while processing SPI cases to want to group accounts for
+detailed examination.  Examples might be:
+
+- All the named accounts in this case that were reported after X date.
+- All the named accounts in this case that are tagged as proven or confirmd.
+- Some specific list of enumerated accounts.
+- All the accounts in this case with more than 100 edits.
+
+The current spi-tools SockSelectView (route /spi/sock-select) allows
+for a limited subset of these operations, namely a single date cutoff,
+or picking an enumeration manually.  This has proven to be
+insufficiently powerful.
+
+We can generalize the idea to a set of filters which can be combined
+in arbitrary ways.  All filters have an one or more inputs, and a
+single output.  All inputs and outputs are justs set of users, which
+we call a *cohort*.  Cohorts have properties typical of set types in
+various languages; specificaly they are unordered and members are
+unique.
+
+A user can be a named account, and IP address, or an IP range.  In
+other words, anything that you can put at "User:" as a wikimedia page
+title.  For the most part, a user is just a string, although filters
+may imbue specific semantics, ex: "All IP addresses within a given CIDR
+range".
+
+A filter with zero inputs is a source; this would most commonly be
+"All the users named in a given case".  Another possibility would be a
+specific list of users, i.e. "{User:Foo, User:Bar, User:Baz}"
+
+A filter will typically produce a subset of its input(s) on output,
+but this is not strictly required.  A source is one obvious example of
+this, but you could also imagine things like, "For each input user
+'U', produce 'U', 'U-foo', and 'U-bar'", which might potentially be
+useful when dealing with a sockfarm that uses a highly regimented
+naming scheme.
+
+Filters can be combined in various (but not arbitrary) ways.  The fact
+that a filter may only have a single output implies (I think) that the
+graphs must strictly be trees.  Let's assume that's true.
+
+A given type of filter need not have a fixed number of inputs.  For
+example, a filter might produce the union of all its inputs, and
+allow an arbitrary number of them.  This might be used to collect user
+names from multiple cases and treat them as a single meta-case.
+
+Every filter will have a unique identifier, and may also (optionally)
+have an arbitrary display name.  Filters must be serializable in such
+a way that they can be persisted in a database and retrieved for later
+reuse.
+
+# GUI builder
+
+What is needed is a way to con
+
+
+
+
+
+
+
+
+
+      +-------------------------------------------------------+
+      |	                                                      |
+      |   +-------------------+         +---------------+     |
+      |   |   CASE SELECT     |         |  CASE SELECT  |     |
+      |   |-------------------|         |---------------|     |
+      |   |   Name = Foo      |         |  Name = Bar   |     |
+      |   +-------------------+         +---------------+     |
+      |	       	       	       	       	       	       	      |
+      +-------------------------------------------------------+

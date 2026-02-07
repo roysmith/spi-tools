@@ -25,24 +25,24 @@ class IndexView(View):
                    }
         if form.is_valid():
             search_terms = form.cleaned_data['search_terms']
-            auth=(settings.ELASTICSEARCH['user'], settings.ELASTICSEARCH['password'])
-            es = OpenSearch(settings.ELASTICSEARCH['server'],
-                            http_auth=auth)
+            OPENSEARCH = settings.OPENSEARCH
+            client = OpenSearch(f'{OPENSEARCH["host"]}:{OPENSEARCH["port"]}',
+                                http_auth=(OPENSEARCH['user'], OPENSEARCH['password']),
+                                use_ssl=True,
+                                verify_certs=False,
+                                ssl_show_warn=False,
+                                )
             query = {
-                "query": {
-                    "bool": {
-                        "must": [
-                            {"match": {"comment": search_terms}}
-                        ]
+                'query': {
+                    'query_string': {
+                        'query': 'co:added un:bear',
                     }
                 }
             }
-            es_results = es.search(body=query, index=settings.ELASTICSEARCH['index'])
+            os_results = client.search(body=query, index=OPENSEARCH['index'])
             results = []
-            for hit in es_results['hits']['hits']:
-                r = {'page_id': hit['_source']['page_id'],
-                     'rev_id': hit['_source']['rev_id'],
-                     }
+            for hit in os_results['hits']['hits']:
+                r = hit['_source']
                 results.append(r)
             context['results'] = results
             return render(request, 'search/results.html', context)
