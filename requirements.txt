@@ -48,7 +48,7 @@ pytz==2019.2
 pywikibot==7.4.0
 redis==4.3.4
 regex==2019.8.19
-requests==2.25.1
+requests==2.32.4
 requests-oauthlib==1.2.0
 sh==1.13.1
 six==1.12.0
