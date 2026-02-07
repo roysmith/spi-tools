@@ -2,7 +2,6 @@ from unittest.mock import patch
 import unittest
 from pprint import pprint
 import os
-import pytest
 
 from django.conf import settings
 from django.test import TestCase, Client
@@ -17,7 +16,7 @@ from search.forms import SearchForm
 
 # pylint: disable=invalid-name
 
-@pytest.mark.skipif('GITHUB_ACTION' in os.environ, reason='Does not work on github')
+@unittest.skipIf('GITHUB_ACTION' in os.environ, 'Does not work on github')
 class ViewTestCase(TestCase):
     """Base class for all search view tests.
 
