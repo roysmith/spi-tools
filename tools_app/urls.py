@@ -1,6 +1,6 @@
 """tools_app URL Configuration"""
 
-import debug_toolbar
+# import debug_toolbar
 
 from django.conf import settings
 from django.contrib import admin
@@ -25,5 +25,5 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += [
         re_path(r'static/(?P<path>.*)', staticfile_views.serve),
-        path('__debug__/', include(debug_toolbar.urls)),
+        # path('__debug__/', include(debug_toolbar.urls)),
     ]
