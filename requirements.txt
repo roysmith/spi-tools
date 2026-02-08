@@ -18,7 +18,7 @@ django-log-request-id==1.6.0
 django-redis==5.2.0
 django-tools==0.54.0
 icdiff==2.0.5
-idna==2.8
+idna==3.7
 importlib-metadata==4.12.0
 isort==4.3.21
 Jinja2==2.11.3
