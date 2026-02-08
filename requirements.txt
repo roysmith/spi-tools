@@ -45,7 +45,7 @@ pyparsing==3.0.9
 python-dateutil==2.8.1
 python3-openid==3.1.0
 pywikibot==7.4.0
-redis==4.3.4
+redis==4.4.4
 regex==2019.8.19
 requests==2.32.4
 requests-oauthlib==1.2.0
