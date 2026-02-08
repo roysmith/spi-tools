@@ -44,7 +44,6 @@ PyMySQL==0.9.3
 pyparsing==3.0.9
 python-dateutil==2.8.1
 python3-openid==3.1.0
-pytz==2019.2
 pywikibot==7.4.0
 redis==4.3.4
 regex==2019.8.19
