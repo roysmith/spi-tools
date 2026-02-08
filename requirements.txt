@@ -1,4 +1,4 @@
-asgiref==3.6.0
+asgiref==3.11.1
 astroid==2.4.2
 async-timeout==4.0.2
 asyncmock==0.4.2
@@ -12,7 +12,7 @@ cryptography==44.0.1
 cssselect==1.1.0
 defusedxml==0.6.0
 Deprecated==1.2.13
-Django==4.2.28
+Django==5.0.14
 django-debug-toolbar==3.2.4
 django-log-request-id==1.6.0
 django-redis==5.2.0
