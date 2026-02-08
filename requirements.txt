@@ -4,7 +4,7 @@ async-timeout==4.0.2
 asyncmock==0.4.2
 bleach==5.0.1
 bx-py-utils==70
-certifi==2019.9.11
+certifi==2026.1.4
 cffi==2.0.0
 chardet==3.0.4
 Click==7.0
@@ -31,7 +31,7 @@ more-itertools==8.6.0
 mwclient==0.10.0
 mwparserfromhell==0.5.4
 oauthlib==3.1.0
-opensearch-py==1.0.0
+opensearch-py==3.1.0
 packaging==21.3
 pip-tools==4.3.0
 pprintpp==0.4.0
@@ -58,7 +58,7 @@ toml==0.10.1
 toolforge==4.3.0
 typed-ast==1.5.5
 typing_extensions==4.0.1
-urllib3==1.26.5
+urllib3==2.6.3
 wcwidth==0.1.7
 webencodings==0.5.1
 wikitextparser==0.28.0
