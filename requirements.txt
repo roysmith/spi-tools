@@ -12,7 +12,7 @@ cryptography==44.0.1
 cssselect==1.1.0
 defusedxml==0.6.0
 Deprecated==1.2.13
-Django==5.0.14
+Django==5.1.15
 django-debug-toolbar==6.2.0
 django-log-request-id==1.6.0
 django-redis==5.2.0
