@@ -19,8 +19,8 @@ import datetime
 import tools_app.git
 from uuid import uuid4
 
-# True if running unit tests
-TESTING = 'manage.py' in sys.argv[0]
+# True if running unit tests.
+TESTING = 'manage.py' in sys.argv[0] and 'test' in sys.argv[1]
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
