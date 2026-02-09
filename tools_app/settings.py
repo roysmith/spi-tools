@@ -73,12 +73,10 @@ INSTALLED_APPS = [
     'wiki_interface',
     'tools_app.apps.ToolsAppConfig',
     'social_django',
-    # 'debug_toolbar',
 ]
 
 MIDDLEWARE = [
     'log_request_id.middleware.RequestIDMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -92,6 +90,10 @@ MIDDLEWARE = [
     'tools_app.middleware.LoggingMiddleware',
 ]
 
+ENABLE_DEBUG_TOOLBAR = DEBUG and "test" not in sys.argv
+if ENABLE_DEBUG_TOOLBAR:
+    INSTALLED_APPS.append("debug_toolbar")
+    MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
 
 # WARNING: some keys may not be usable on non-redis backends.  See
 # https://docs.djangoproject.com/en/2.2/topics/cache/#cache-key-transformation
