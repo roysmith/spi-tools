@@ -261,6 +261,15 @@ else:
     OPENSEARCH = {}
 
 
+# If DJANGO_STATIC_LOG_FILE is set, we don't stick a timestamp on
+# the end of the log file path.  This makes it simpler to tail
+# the log in a development environment.
+if os.environ.get('DJANGO_STATIC_LOG_FILE'):
+    LOG_FILE_PATH = os.path.join(LOG_DIR, f'{LOG_NAME}')
+else:
+    LOG_FILE_PATH = os.path.join(LOG_DIR, f'{LOG_NAME}.{SERVER_START_TIME_UTC.isoformat()}')
+
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -268,7 +277,7 @@ LOGGING = {
         'file': {
             'level': LOG_LEVEL,
             'class': 'logging.FileHandler',
-            'filename': os.path.join(LOG_DIR, f'{LOG_NAME}.{SERVER_START_TIME_UTC.isoformat()}'),
+            'filename': LOG_FILE_PATH,
             'filters': ['request_id'],
             'formatter': 'file_formatter',
         },
