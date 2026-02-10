@@ -22,6 +22,9 @@ from uuid import uuid4
 # True if running unit tests.
 TESTING = 'manage.py' in sys.argv[0] and 'test' in sys.argv[1]
 
+# True if running a development server
+RUNSERVER = 'manage.py' in sys.argv[0] and 'runserver' in sys.argv[1]
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -47,7 +50,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET')
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = TOOL_NAME.lower().endswith('-dev')
+DEBUG = RUNSERVER or TOOL_NAME.lower().endswith('-dev')
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
@@ -242,7 +245,7 @@ FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o711
 os.environ['PYTHONASYNCIODEBUG'] = '1' if DEBUG else '0'
 
 LOG_NAME = 'django-test.log' if TESTING else 'django.log'
-LOG_LEVEL = 'INFO' if 'dev' in TOOL_NAME else 'INFO'
+LOG_LEVEL = 'DEBUG' if 'dev' in TOOL_NAME or RUNSERVER else 'INFO'
 LOG_REQUEST_ID_HEADER = "HTTP_X_REQUEST_ID"
 
 
@@ -261,10 +264,10 @@ else:
     OPENSEARCH = {}
 
 
-# If DJANGO_STATIC_LOG_FILE is set, we don't stick a timestamp on
+# If running as a development server, don't stick a timestamp on
 # the end of the log file path.  This makes it simpler to tail
-# the log in a development environment.
-if os.environ.get('DJANGO_STATIC_LOG_FILE'):
+# the log
+if RUNSERVER:
     LOG_FILE_PATH = os.path.join(LOG_DIR, f'{LOG_NAME}')
 else:
     LOG_FILE_PATH = os.path.join(LOG_DIR, f'{LOG_NAME}.{SERVER_START_TIME_UTC.isoformat()}')
