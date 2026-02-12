@@ -161,19 +161,16 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
+# https://python-social-auth.readthedocs.io/en/latest/backends/mediawiki.html
 SOCIAL_AUTH_MEDIAWIKI_KEY = os.environ.get('MEDIAWIKI_KEY')
 SOCIAL_AUTH_MEDIAWIKI_SECRET = os.environ.get('MEDIAWIKI_SECRET')
-SOCIAL_AUTH_MEDIAWIKI_URL = 'https://meta.wikimedia.org/w/index.php'
-
-if RUNSERVER:
-    SOCIAL_AUTH_MEDIAWIKI_CALLBACK = 'http://127.0.0.1:8000/oauth/complete/mediawiki/'
-else:
-    SOCIAL_AUTH_MEDIAWIKI_CALLBACK = 'https://%s.toolforge.org/oauth/complete/mediawiki/' % TOOL_NAME
-
+SOCIAL_AUTH_MEDIAWIKI_URL = os.environ.get('MEDIAWIKI_URL')
+SOCIAL_AUTH_MEDIAWIKI_CALLBACK = os.environ.get('MEDIAWIKI_CALLBACK')
 
 # This seems to be needed when using social-auth-app-django > 3.1.0
 # See https://github.com/python-social-auth/social-app-django/issues/256
 SOCIAL_AUTH_PROTECTED_USER_FIELDS = ['groups']
+
 
 # For use with mwclient library
 MEDIAWIKI_SITE_NAME = 'example.com' if TESTING else 'en.wikipedia.org'
