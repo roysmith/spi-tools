@@ -50,7 +50,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET')
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = RUNSERVER or TOOL_NAME.lower().endswith('-dev')
+DEBUG = RUNSERVER
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
