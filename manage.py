@@ -9,6 +9,8 @@ def main():
     config = get_config()
     os.environ["DJANGO_SETTINGS_MODULE"] = config["django"]["settings_module"]
     os.environ["DJANGO_SECRET"] = config["django"]["secret"]
+    os.environ["MEDIAWIKI_KEY"] = config["oauth"]["mediawiki_key"]
+    os.environ["MEDIAWIKI_SECRET"] = config["oauth"]["mediawiki_secret"]
 
     try:
         from django.core.management import execute_from_command_line
