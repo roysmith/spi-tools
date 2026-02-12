@@ -19,8 +19,11 @@ import datetime
 import tools_app.git
 from uuid import uuid4
 
-# True if running unit tests
-TESTING = 'manage.py' in sys.argv[0]
+# True if running unit tests.
+TESTING = 'manage.py' in sys.argv[0] and 'test' in sys.argv[1]
+
+# True if running a development server
+RUNSERVER = 'manage.py' in sys.argv[0] and 'runserver' in sys.argv[1]
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -47,7 +50,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET')
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = TOOL_NAME.lower().endswith('-dev')
+DEBUG = RUNSERVER
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
@@ -73,12 +76,10 @@ INSTALLED_APPS = [
     'wiki_interface',
     'tools_app.apps.ToolsAppConfig',
     'social_django',
-    # 'debug_toolbar',
 ]
 
 MIDDLEWARE = [
     'log_request_id.middleware.RequestIDMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -92,6 +93,10 @@ MIDDLEWARE = [
     'tools_app.middleware.LoggingMiddleware',
 ]
 
+ENABLE_DEBUG_TOOLBAR = DEBUG and "test" not in sys.argv
+if ENABLE_DEBUG_TOOLBAR:
+    INSTALLED_APPS.append("debug_toolbar")
+    MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
 
 # WARNING: some keys may not be usable on non-redis backends.  See
 # https://docs.djangoproject.com/en/2.2/topics/cache/#cache-key-transformation
@@ -156,14 +161,16 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
+# https://python-social-auth.readthedocs.io/en/latest/backends/mediawiki.html
 SOCIAL_AUTH_MEDIAWIKI_KEY = os.environ.get('MEDIAWIKI_KEY')
 SOCIAL_AUTH_MEDIAWIKI_SECRET = os.environ.get('MEDIAWIKI_SECRET')
-SOCIAL_AUTH_MEDIAWIKI_URL = 'https://meta.wikimedia.org/w/index.php'
-SOCIAL_AUTH_MEDIAWIKI_CALLBACK = 'https://%s.toolforge.org/oauth/complete/mediawiki/' % TOOL_NAME
+SOCIAL_AUTH_MEDIAWIKI_URL = os.environ.get('MEDIAWIKI_URL')
+SOCIAL_AUTH_MEDIAWIKI_CALLBACK = os.environ.get('MEDIAWIKI_CALLBACK')
 
 # This seems to be needed when using social-auth-app-django > 3.1.0
 # See https://github.com/python-social-auth/social-app-django/issues/256
 SOCIAL_AUTH_PROTECTED_USER_FIELDS = ['groups']
+
 
 # For use with mwclient library
 MEDIAWIKI_SITE_NAME = 'example.com' if TESTING else 'en.wikipedia.org'
@@ -227,8 +234,11 @@ USE_TZ = True
 # Static files setup.  For more information, see:
 #   https://wikitech.wikimedia.org/wiki/Portal:Toolforge/Tool_Accounts
 #   https://docs.djangoproject.com/en/2.2/howto/static-files
-STATIC_URL = f'//tools-static.wmflabs.org/{TOOL_NAME}/'
-STATIC_ROOT = f'{WWW_DIR}/static/'
+if RUNSERVER:
+    STATIC_URL = '/static/'
+else:
+    STATIC_URL = f'//tools-static.wmflabs.org/{TOOL_NAME}/'
+    STATIC_ROOT = f'{WWW_DIR}/static/'
 
 # Unused?
 FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o711
@@ -240,7 +250,7 @@ FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o711
 os.environ['PYTHONASYNCIODEBUG'] = '1' if DEBUG else '0'
 
 LOG_NAME = 'django-test.log' if TESTING else 'django.log'
-LOG_LEVEL = 'INFO' if 'dev' in TOOL_NAME else 'INFO'
+LOG_LEVEL = 'DEBUG' if 'dev' in TOOL_NAME or RUNSERVER else 'INFO'
 LOG_REQUEST_ID_HEADER = "HTTP_X_REQUEST_ID"
 
 
@@ -259,6 +269,15 @@ else:
     OPENSEARCH = {}
 
 
+# If running as a development server, don't stick a timestamp on
+# the end of the log file path.  This makes it simpler to tail
+# the log
+if RUNSERVER:
+    LOG_FILE_PATH = os.path.join(LOG_DIR, f'{LOG_NAME}')
+else:
+    LOG_FILE_PATH = os.path.join(LOG_DIR, f'{LOG_NAME}.{SERVER_START_TIME_UTC.isoformat()}')
+
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -266,7 +285,7 @@ LOGGING = {
         'file': {
             'level': LOG_LEVEL,
             'class': 'logging.FileHandler',
-            'filename': os.path.join(LOG_DIR, f'{LOG_NAME}.{SERVER_START_TIME_UTC.isoformat()}'),
+            'filename': LOG_FILE_PATH,
             'filters': ['request_id'],
             'formatter': 'file_formatter',
         },
