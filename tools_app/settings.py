@@ -161,20 +161,24 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
+
+# For use with mwclient library
+MEDIAWIKI_SITE_NAME = 'example.com' if TESTING else 'en.wikipedia.org'
+MEDIAWIKI_USER_AGENT = 'spi-tools (runserver)' if RUNSERVER else f'{TOOL_NAME} (toolforge)'
+
+
 # https://python-social-auth.readthedocs.io/en/latest/backends/mediawiki.html
 SOCIAL_AUTH_MEDIAWIKI_KEY = os.environ.get('MEDIAWIKI_KEY')
 SOCIAL_AUTH_MEDIAWIKI_SECRET = os.environ.get('MEDIAWIKI_SECRET')
 SOCIAL_AUTH_MEDIAWIKI_URL = os.environ.get('MEDIAWIKI_URL')
 SOCIAL_AUTH_MEDIAWIKI_CALLBACK = os.environ.get('MEDIAWIKI_CALLBACK')
+SOCIAL_AUTH_USER_AGENT = MEDIAWIKI_USER_AGENT
+
 
 # This seems to be needed when using social-auth-app-django > 3.1.0
 # See https://github.com/python-social-auth/social-app-django/issues/256
 SOCIAL_AUTH_PROTECTED_USER_FIELDS = ['groups']
 
-
-# For use with mwclient library
-MEDIAWIKI_SITE_NAME = 'example.com' if TESTING else 'en.wikipedia.org'
-MEDIAWIKI_USER_AGENT = f'{TOOL_NAME} (toolforge)'
 
 # It would be neater to use django.urls.reverse() here, but that's
 # apparently not available when this is executed.
