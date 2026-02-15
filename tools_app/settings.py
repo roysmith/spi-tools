@@ -350,3 +350,8 @@ LOGGING = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+# For low-level backend debugging, uncomment the following
+# and set LOGGING['loggers']['urllib3']['level'] to 'DEBUG'
+#   from http.client import HTTPConnection
+#   HTTPConnection.debuglevel = 1
