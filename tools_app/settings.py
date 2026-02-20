@@ -18,6 +18,9 @@ import sys
 import datetime
 import tools_app.git
 from uuid import uuid4
+import spi_config
+
+config = spi_config.get_config()
 
 # True if running unit tests.
 TESTING = 'manage.py' in sys.argv[0] and 'test' in sys.argv[1]
@@ -46,7 +49,7 @@ TOOL_NAME = m.group('tool_name') if m else 'unknown'
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET')
+SECRET_KEY = config["django"]["secret"]
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -168,12 +171,11 @@ MEDIAWIKI_USER_AGENT = 'spi-tools (runserver)' if RUNSERVER else f'{TOOL_NAME} (
 
 
 # https://python-social-auth.readthedocs.io/en/latest/backends/mediawiki.html
-SOCIAL_AUTH_MEDIAWIKI_KEY = os.environ.get('MEDIAWIKI_KEY')
-SOCIAL_AUTH_MEDIAWIKI_SECRET = os.environ.get('MEDIAWIKI_SECRET')
-SOCIAL_AUTH_MEDIAWIKI_URL = os.environ.get('MEDIAWIKI_URL')
-SOCIAL_AUTH_MEDIAWIKI_CALLBACK = os.environ.get('MEDIAWIKI_CALLBACK')
+SOCIAL_AUTH_MEDIAWIKI_KEY = config["oauth"]["mediawiki_key"]
+SOCIAL_AUTH_MEDIAWIKI_SECRET = config["oauth"]["mediawiki_secret"]
+SOCIAL_AUTH_MEDIAWIKI_URL = config["oauth"]["mediawiki_url"]
+SOCIAL_AUTH_MEDIAWIKI_CALLBACK = config["oauth"]["mediawiki_callback"]
 SOCIAL_AUTH_USER_AGENT = MEDIAWIKI_USER_AGENT
-
 
 # This seems to be needed when using social-auth-app-django > 3.1.0
 # See https://github.com/python-social-auth/social-app-django/issues/256
