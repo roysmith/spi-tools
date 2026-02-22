@@ -4,6 +4,6 @@ from django.core.wsgi import get_wsgi_application
 
 
 config = get_config()
-os.environ["DJANGO_SETTINGS_MODULE"] = config["django"]["settings_module"]
+os.environ["DJANGO_SETTINGS_MODULE"] = "tools_app.settings"
 
 app = get_wsgi_application()

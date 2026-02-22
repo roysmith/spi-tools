@@ -8,7 +8,7 @@ import spi_config
 
 def main():
     config = spi_config.get_config()
-    os.environ["DJANGO_SETTINGS_MODULE"] = config["django"]["settings_module"]
+    os.environ["DJANGO_SETTINGS_MODULE"] = "tools_app.settings"
 
     try:
         from django.core.management import execute_from_command_line
