@@ -1,23 +1,16 @@
-import configparser
+import tomllib
 import os
 from pathlib import Path
 
-def get_config():
+def get_config() -> dict:
     """Read and parse the application's config file.
 
-    Cryptographic (i.e. secret) keys are in the config file, so enforce that it
-    must have secure file system permissions.
+    Cryptographic (i.e. secret) keys are in the config file, so it
+    should have secure file system permissions (i.e. not readable
+    except by the owner).
     """
-    ini_path = os.environ.get("SPI_TOOLS_CONFIG_FILE",
-                              (Path.home() / "www/python/config.ini").as_posix())
+    config_path = os.environ.get("SPI_TOOLS_CONFIG_FILE",
+                              (Path.home() / "www/python/config.toml").as_posix())
 
-    # Apparently git doesn't preserve file modes, so this fails on
-    # unsafe-sample-config.ini
-    #
-    # ini_mode = os.stat(ini_path).st_mode
-    # if ini_mode & 0o77:
-    #     raise RuntimeError("%s has mode %o: access by non-owner disallowed" %
-    #                        (ini_path, ini_mode))
-    config = configparser.ConfigParser()
-    config.read(ini_path)
-    return config
+    config_file = open(config_path, 'rb')
+    return tomllib.load(config_file)
