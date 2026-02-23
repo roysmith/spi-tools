@@ -19,15 +19,14 @@
 
 
 [django]
-        settings_module = tools_app.settings
-        secret = xxx
+    secret = "xxx"
 
 [oauth]
-        mediawiki_key = xxx
-        mediawiki_secret = xxx
-	mediawiki_url = https://meta.wikimedia.org/w/index.php
-	# Pick the right callback URL, probably one of:
-	#   spi-tools.toolforge.org/oauth/complete/mediawiki/
-	#   spi-tools-dev.toolforge.org/oauth/complete/mediawiki/
-	#   http://127.0.0.1:8000/oauth/complete/mediawiki/
-	mediawiki_callback = xxx
+    mediawiki_key = "xxx"
+    mediawiki_secret = "xxx"
+    mediawiki_url = "https://meta.wikimedia.org/w/index.php"
+    # Pick the right callback URL, probably one of:
+    #   spi-tools.toolforge.org/oauth/complete/mediawiki/
+    #   spi-tools-dev.toolforge.org/oauth/complete/mediawiki/
+    #   http://127.0.0.1:8000/oauth/complete/mediawiki/
+    mediawiki_callback = "xxx"
